@@ -40,12 +40,25 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
+  const removeBooking = useCallback((projectId, bookingId) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+              ...project,
+              bookings: project.bookings.filter(booking => booking.id !== bookingId)
+            }
+          : project
+      )
+    );
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
 
   return (
-    <ProjectContext.Provider value={{ projects, updateBooking, addBooking }}>
+    <ProjectContext.Provider value={{ projects, updateBooking, addBooking, removeBooking }}>
       {children}
     </ProjectContext.Provider>
   );

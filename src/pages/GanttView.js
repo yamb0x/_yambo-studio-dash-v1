@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from 'react';
-import { Box, Typography, Paper, Divider } from '@mui/material';
-import { useDrop } from 'react-dnd';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, Paper, Divider, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { DndProvider, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import ProjectList from '../components/Gantt/ProjectList';
 import GanttChart from '../components/Gantt/GanttChart';
 import ArtistList from '../components/Gantt/ArtistList';
@@ -8,14 +10,31 @@ import { useProjects } from '../contexts/ProjectContext';
 import moment from 'moment';
 
 function GanttView() {
-  const { projects, addBooking } = useProjects();
+  const { projects, addBooking, removeBooking } = useProjects();
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
+
+  useEffect(() => {
+    console.log("Selected Project:", selectedProject);
+    console.log("Bookings:", selectedProject?.bookings);
+  }, [selectedProject]);
 
   const handleAddBooking = useCallback((newBooking) => {
     addBooking(newBooking);
     forceUpdate({});
   }, [addBooking]);
+
+  const handleRemoveBooking = useCallback((bookingId) => {
+    if (selectedProject) {
+      console.log("Removing booking:", bookingId);
+      removeBooking(selectedProject.id, bookingId);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
+      }));
+      forceUpdate({});
+    }
+  }, [removeBooking, selectedProject]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
@@ -51,17 +70,55 @@ function GanttView() {
         width: '300px',
         borderRight: '1px solid #e0e0e0', 
         overflowY: 'auto',
-        flexShrink: 0
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <Paper elevation={0} sx={{ height: '100%', borderRadius: 0 }}>
+        <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
           <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
           <ProjectList
             selectedProject={selectedProject}
             onSelectProject={setSelectedProject}
           />
-          <Divider sx={{ my: 2 }} />
+        </Paper>
+        <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
           <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
           <ArtistList />
+        </Paper>
+        <Paper elevation={0} sx={{ borderRadius: 0, flexGrow: 1, bgcolor: '#f0f0f0', minHeight: '200px' }}>
+          <Typography variant="h6" sx={{ p: 2, bgcolor: '#e0e0e0' }}>Debug: Booked Artists</Typography>
+          {selectedProject ? (
+            selectedProject.bookings && selectedProject.bookings.length > 0 ? (
+              <List>
+                {selectedProject.bookings.map((booking) => (
+                  <ListItem
+                    key={booking.id}
+                    secondaryAction={
+                      <IconButton 
+                        edge="end" 
+                        aria-label="delete" 
+                        onClick={() => {
+                          console.log("Delete button clicked for booking:", booking.id);
+                          handleRemoveBooking(booking.id);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                  >
+                    <ListItemText
+                      primary={booking.artistName}
+                      secondary={`${booking.startDate} - ${booking.endDate}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography sx={{ p: 2 }}>No bookings for this project</Typography>
+            )
+          ) : (
+            <Typography sx={{ p: 2 }}>Select a project to see bookings</Typography>
+          )}
         </Paper>
       </Box>
       <Box ref={drop} sx={{ flexGrow: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
@@ -78,4 +135,10 @@ function GanttView() {
   );
 }
 
-export default GanttView;
+export default function WrappedGanttView() {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <GanttView />
+    </DndProvider>
+  );
+}
