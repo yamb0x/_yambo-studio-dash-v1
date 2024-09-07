@@ -20,7 +20,7 @@ function App() {
           <Router>
             <div className="App">
               <Header />
-              <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+              <Container maxWidth={false} disableGutters>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/gantt" element={<GanttView />} />

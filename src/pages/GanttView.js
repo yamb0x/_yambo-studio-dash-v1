@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Typography, Paper, Divider, Box } from '@mui/material';
+import { Box, Typography, Paper, Divider } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import ProjectList from '../components/Gantt/ProjectList';
@@ -24,32 +24,30 @@ function GanttView() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <Grid container spacing={2}>
-        <Grid item xs={3}>
-          <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>Projects</Typography>
+      <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100vw' }}>
+        <Box sx={{ width: '250px', borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
+          <Paper elevation={0} sx={{ height: '100%', borderRadius: 0 }}>
+            <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
             <ProjectList
               selectedProject={selectedProject}
               onSelectProject={setSelectedProject}
             />
             <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" gutterBottom>Artists</Typography>
+            <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
             <ArtistList />
           </Paper>
-        </Grid>
-        <Grid item xs={9}>
-          <Paper elevation={3} sx={{ p: 2, height: '100%', overflowX: 'auto' }}>
-            <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
-            {selectedProject ? (
-              <GanttChart project={selectedProject} bookings={bookings} />
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Typography>Please select a project</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+        <Box sx={{ flexGrow: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
+          <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
+          {selectedProject ? (
+            <GanttChart project={selectedProject} bookings={bookings} />
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography>Please select a project</Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
     </DndProvider>
   );
 }
