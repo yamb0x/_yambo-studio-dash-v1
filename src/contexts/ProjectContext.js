@@ -53,12 +53,16 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
+  const addProject = useCallback((newProject) => {
+    setProjects(prevProjects => [...prevProjects, { ...newProject, id: Date.now() }]);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
 
   return (
-    <ProjectContext.Provider value={{ projects, updateBooking, addBooking, removeBooking }}>
+    <ProjectContext.Provider value={{ projects, updateBooking, addBooking, removeBooking, addProject }}>
       {children}
     </ProjectContext.Provider>
   );

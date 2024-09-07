@@ -8,9 +8,11 @@ import GanttChart from '../components/Gantt/GanttChart';
 import ArtistList from '../components/Gantt/ArtistList';
 import { useProjects } from '../contexts/ProjectContext';
 import moment from 'moment';
+import { useArtists } from '../contexts/ArtistContext';
 
 function GanttView() {
   const { projects, addBooking, removeBooking } = useProjects();
+  const { artists } = useArtists();  // Add this line
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
 
@@ -50,6 +52,9 @@ function GanttView() {
         const startDate = moment(selectedProject.startDate).add(droppedWeek, 'weeks');
         const endDate = startDate.clone().add(6, 'days');
 
+        const artist = artists.find(a => a.id === item.id);
+        const dailyRate = parseFloat(artist ? artist.dailyRate : 0);
+
         const newBooking = {
           id: Date.now(),
           projectId: selectedProject.id,
@@ -57,6 +62,7 @@ function GanttView() {
           artistName: item.name,
           startDate: startDate.format('YYYY-MM-DD'),
           endDate: endDate.format('YYYY-MM-DD'),
+          dailyRate: dailyRate,  // This should now be a number
         };
 
         handleAddBooking(newBooking);
