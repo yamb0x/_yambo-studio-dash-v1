@@ -14,7 +14,15 @@ import RightPanel from '../components/Gantt/RightPanel';
 const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
 
 function GanttView() {
-  const { projects, addBooking, removeBooking, addDelivery, editDelivery, deleteDelivery } = useProjects();
+  const { 
+    projects, 
+    addBooking, 
+    removeBooking, 
+    addDelivery, 
+    editDelivery, 
+    deleteDelivery,
+    updateProjectBudget 
+  } = useProjects();
   const { artists } = useArtists();  // Add this line
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
@@ -62,6 +70,16 @@ function GanttView() {
       }));
     }
   }, [selectedProject, deleteDelivery]);
+
+  const handleUpdateBudget = useCallback((newBudget) => {
+    if (selectedProject) {
+      updateProjectBudget(selectedProject.id, newBudget);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        budget: newBudget
+      }));
+    }
+  }, [selectedProject, updateProjectBudget]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
@@ -188,6 +206,7 @@ function GanttView() {
             onAddDelivery={handleAddDelivery}
             onEditDelivery={handleEditDelivery}
             onDeleteDelivery={handleDeleteDelivery}
+            onUpdateBudget={handleUpdateBudget}
           />
         )}
       </Box>

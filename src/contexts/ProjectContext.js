@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 
 const ProjectContext = createContext();
 
@@ -102,6 +102,16 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
+  const updateProjectBudget = useCallback((projectId, newBudget) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? { ...project, budget: newBudget }
+          : project
+      )
+    );
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
@@ -116,7 +126,8 @@ export function ProjectProvider({ children }) {
       deleteProject,
       addDelivery,
       editDelivery,
-      deleteDelivery
+      deleteDelivery,
+      updateProjectBudget // Add this new function to the context
     }}>
       {children}
     </ProjectContext.Provider>
