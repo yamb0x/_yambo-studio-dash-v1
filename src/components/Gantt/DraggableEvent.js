@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
-import { useDrag } from 'react-dnd';
+import React, { useState } from 'react';
+import { Resizable } from 'react-resizable';
+import Draggable from 'react-draggable';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
-import { useArtists } from '../../contexts/ArtistContext'; // Make sure to import this
+import { useArtists } from '../../contexts/ArtistContext';
+import { useProjects } from '../../contexts/ProjectContext';
 
-// Function to generate a random color
+// Import the CSS for react-resizable
+import 'react-resizable/css/styles.css';
+
 const getRandomColor = () => {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -14,67 +18,97 @@ const getRandomColor = () => {
   return color;
 };
 
-function DraggableEvent({ booking, project, weekWidth, index }) {
-  const { artists } = useArtists(); // Use the ArtistContext to get the daily rate
-  const [{ isDragging }, drag] = useDrag({
-    type: 'BOOKING',
-    item: { id: booking.id, type: 'BOOKING', booking },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
+  const { artists } = useArtists();
+  const { updateBooking } = useProjects();
+
+  const [width, setWidth] = useState((moment(booking.endDate).diff(moment(booking.startDate), 'days') + 1) * (weekWidth / 7));
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const projectStart = moment(project.startDate);
   const bookingStart = moment(booking.startDate);
-  const bookingEnd = moment(booking.endDate);
 
   const startOffset = bookingStart.diff(projectStart, 'days');
-  const duration = bookingEnd.diff(bookingStart, 'days') + 1;
+  const duration = moment(booking.endDate).diff(bookingStart, 'days') + 1;
 
-  // Generate a random color for each booking
-  const backgroundColor = useMemo(() => getRandomColor(), []);
+  const backgroundColor = getRandomColor();
 
-  const EVENT_HEIGHT = 70; // Increased height to accommodate more text
-  const EVENT_MARGIN = 5; // Margin between events
-  const INITIAL_OFFSET = 60; // Initial offset to leave space for day labels
+  const EVENT_HEIGHT = 70;
+  const EVENT_MARGIN = 5;
+  const INITIAL_OFFSET = 60;
 
-  // Find the artist in the artists array to get the daily rate
   const artist = artists.find(a => a.id === booking.artistId);
   const dailyRate = artist ? artist.dailyRate : 'N/A';
 
+  const handleResize = (e, { size }) => {
+    const newWidth = size.width;
+    setWidth(newWidth);
+    const newDuration = Math.round((newWidth / weekWidth) * 7);
+    const newEndDate = moment(booking.startDate).add(newDuration - 1, 'days');
+    onUpdate(project.id, { ...booking, endDate: newEndDate.format('YYYY-MM-DD') });
+  };
+
+  const handleDrag = (e, { x }) => {
+    setPosition({ x, y: 0 });
+    const newStartOffset = Math.round((x / weekWidth) * 7);
+    const newStartDate = moment(project.startDate).add(startOffset + newStartOffset, 'days');
+    const newEndDate = moment(newStartDate).add(duration - 1, 'days');
+    onUpdate(project.id, {
+      ...booking,
+      startDate: newStartDate.format('YYYY-MM-DD'),
+      endDate: newEndDate.format('YYYY-MM-DD'),
+    });
+  };
+
   return (
-    <Box
-      ref={drag}
-      sx={{
-        position: 'absolute',
-        left: (startOffset * weekWidth) / 7,
-        width: (duration * weekWidth) / 7,
-        height: EVENT_HEIGHT,
-        backgroundColor: backgroundColor, // Random color
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'move',
-        opacity: isDragging ? 0.5 : 1,
-        fontSize: '0.75rem',
-        overflow: 'hidden',
-        padding: '4px',
-        top: INITIAL_OFFSET + index * (EVENT_HEIGHT + EVENT_MARGIN), // Calculate vertical position based on index
-        zIndex: 10, // Ensure widgets are above the day labels
-      }}
+    <Draggable
+      axis="x"
+      bounds="parent"
+      position={position}
+      onDrag={handleDrag}
+      grid={[weekWidth / 7, 0]}
     >
-      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-        {booking.artistName}
-      </Typography>
-      <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
-        Rate: ${dailyRate}/day
-      </Typography>
-      <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
-        Duration: {duration} days
-      </Typography>
-    </Box>
+      <Resizable
+        width={width}
+        height={EVENT_HEIGHT}
+        onResize={handleResize}
+        draggableOpts={{ grid: [weekWidth / 7, 0] }}
+        minConstraints={[weekWidth / 7, EVENT_HEIGHT]}
+        maxConstraints={[weekWidth * 52, EVENT_HEIGHT]}
+        handle={<div className="react-resizable-handle react-resizable-handle-e" />}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            left: (startOffset * weekWidth) / 7,
+            width: width,
+            height: EVENT_HEIGHT,
+            backgroundColor: backgroundColor,
+            color: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'move',
+            fontSize: '0.75rem',
+            overflow: 'hidden',
+            padding: '4px',
+            top: INITIAL_OFFSET + index * (EVENT_HEIGHT + EVENT_MARGIN),
+            zIndex: 10,
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+            {booking.artistName}
+          </Typography>
+          <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
+            Rate: ${dailyRate}/day
+          </Typography>
+          <Typography variant="caption" sx={{ fontSize: '0.6rem' }}>
+            Duration: {duration} days
+          </Typography>
+        </Box>
+      </Resizable>
+    </Draggable>
   );
 }
 

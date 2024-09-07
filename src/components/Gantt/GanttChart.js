@@ -1,60 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
-import { useDrop } from 'react-dnd';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 
-const WEEK_WIDTH = 200; // Fixed width for each week in pixels
-const DAY_WIDTH = WEEK_WIDTH / 5; // Width of each day (assuming 5 working days)
-const CHART_HEIGHT = 500; // Height of the entire chart
+const WEEK_WIDTH = 200;
+const DAY_WIDTH = WEEK_WIDTH / 5;
+const CHART_HEIGHT = 500;
 
-function GanttChart({ project, bookings: initialBookings }) {
-  const { updateBooking, addBooking } = useProjects();
-  const [bookings, setBookings] = useState(initialBookings || []);
-
-  useEffect(() => {
-    setBookings(initialBookings || []);
-  }, [initialBookings]);
+function GanttChart({ project }) {
+  const { updateBooking } = useProjects();
 
   const startDate = moment(project.startDate);
   const endDate = moment(project.endDate);
   const duration = endDate.diff(startDate, 'weeks') + 1;
 
-  const [, drop] = useDrop({
-    accept: ['BOOKING', 'ARTIST'],
-    drop: (item, monitor) => {
-      const dropPosition = monitor.getClientOffset();
-      const chartRect = document.getElementById('gantt-chart').getBoundingClientRect();
-      const dropX = dropPosition.x - chartRect.left;
-      const dropY = dropPosition.y - chartRect.top;
-
-      const droppedWeek = Math.floor(dropX / WEEK_WIDTH);
-      const droppedDay = Math.floor((dropX % WEEK_WIDTH) / DAY_WIDTH);
-      const droppedDate = startDate.clone().add(droppedWeek, 'weeks').add(droppedDay, 'days');
-
-      if (item.type === 'BOOKING') {
-        const updatedBooking = {
-          ...item.booking,
-          startDate: droppedDate.format('YYYY-MM-DD'),
-          endDate: droppedDate.clone().add(moment(item.booking.endDate).diff(moment(item.booking.startDate), 'days'), 'days').format('YYYY-MM-DD'),
-        };
-        updateBooking(updatedBooking);
-        setBookings(prevBookings => prevBookings.map(booking => booking.id === updatedBooking.id ? updatedBooking : booking));
-      } else if (item.type === 'ARTIST') {
-        const newBooking = {
-          id: Date.now(),
-          projectId: project.id,
-          artistId: item.id,
-          artistName: item.name,
-          startDate: droppedDate.format('YYYY-MM-DD'),
-          endDate: droppedDate.clone().add(7, 'days').format('YYYY-MM-DD'),
-        };
-        addBooking(newBooking);
-        setBookings(prevBookings => [...prevBookings, newBooking]);
-      }
-    },
-  });
+  const handleUpdate = (projectId, updatedBooking) => {
+    updateBooking(projectId, updatedBooking);
+  };
 
   const renderWeeks = () => {
     return Array.from({ length: duration }, (_, index) => {
@@ -70,7 +33,7 @@ function GanttChart({ project, bookings: initialBookings }) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0, // Prevent week from shrinking
+            flexShrink: 0,
           }}
         >
           <Typography variant="body2">Week {index + 1}</Typography>
@@ -92,7 +55,7 @@ function GanttChart({ project, bookings: initialBookings }) {
           height: CHART_HEIGHT,
           display: 'flex',
           borderRight: '1px solid #ccc',
-          flexShrink: 0, // Prevent week from shrinking
+          flexShrink: 0,
         }}
       >
         {days.map((day, dayIndex) => (
@@ -105,7 +68,7 @@ function GanttChart({ project, bookings: initialBookings }) {
               display: 'flex',
               justifyContent: 'center',
               pt: 1,
-              flexShrink: 0, // Prevent day from shrinking
+              flexShrink: 0,
             }}
           >
             <Typography variant="caption">{day}</Typography>
@@ -116,19 +79,20 @@ function GanttChart({ project, bookings: initialBookings }) {
   };
 
   const renderBookings = () => {
-    return bookings.map((booking, index) => (
+    return (project.bookings || []).map((booking, index) => (
       <DraggableEvent
         key={booking.id}
         booking={booking}
         project={project}
         weekWidth={WEEK_WIDTH}
         index={index}
+        onUpdate={handleUpdate}
       />
     ));
   };
 
   return (
-    <Box ref={drop} id="gantt-chart" sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
+    <Box id="gantt-chart" sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
       <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', minWidth: WEEK_WIDTH * duration }}>
         {renderWeeks()}
       </Box>
