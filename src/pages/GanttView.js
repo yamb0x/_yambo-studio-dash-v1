@@ -74,9 +74,17 @@ function GanttView() {
   });
 
   const handleAddDelivery = (delivery) => {
-    // Implement the logic to add a delivery to the project
-    console.log('Adding delivery:', delivery);
-    // You'll need to update your project state or context here
+    if (selectedProject) {
+      const updatedProject = {
+        ...selectedProject,
+        deliveries: [...(selectedProject.deliveries || []), delivery],
+      };
+      // Update the project in your state management system
+      // This might involve calling a function from your ProjectContext
+      // For example:
+      // updateProject(updatedProject);
+      setSelectedProject(updatedProject);
+    }
   };
 
   return (
@@ -156,15 +164,11 @@ function GanttView() {
         flexShrink: 0,
         overflowY: 'auto'
       }}>
-        {selectedProject ? (
+        {selectedProject && (
           <RightPanel 
             project={selectedProject} 
             onAddDelivery={handleAddDelivery}
           />
-        ) : (
-          <Box sx={{ p: 2 }}>
-            <Typography>Select a project to view details</Typography>
-          </Box>
         )}
       </Box>
     </Box>

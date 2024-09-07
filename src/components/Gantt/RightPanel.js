@@ -18,10 +18,15 @@ function RightPanel({ project, onAddDelivery }) {
   };
 
   const handleAddDelivery = () => {
-    onAddDelivery({ name: deliveryName, date: deliveryDate });
-    setOpenDialog(false);
-    setDeliveryName('');
-    setDeliveryDate('');
+    if (deliveryName && deliveryDate) {
+      onAddDelivery({
+        name: deliveryName,
+        date: deliveryDate,
+      });
+      setOpenDialog(false);
+      setDeliveryName('');
+      setDeliveryDate('');
+    }
   };
 
   return (

@@ -121,6 +121,42 @@ function GanttChart({ project }) {
     ));
   };
 
+  const renderDeliveries = () => {
+    return (project.deliveries || []).map((delivery, index) => {
+      const deliveryDate = moment(delivery.date);
+      const offsetDays = deliveryDate.diff(startDate, 'days');
+      return (
+        <Box
+          key={index}
+          sx={{
+            position: 'absolute',
+            left: `${offsetDays * DAY_WIDTH}px`,
+            top: 0,
+            width: '2px',
+            height: CHART_HEIGHT,
+            backgroundColor: 'red',
+            zIndex: 1000,
+          }}
+        >
+          <Typography
+            sx={{
+              position: 'absolute',
+              top: CHART_HEIGHT,
+              left: '50%',
+              transform: 'translateX(-50%) rotate(-90deg)',
+              transformOrigin: 'left top',
+              whiteSpace: 'nowrap',
+              fontSize: '0.75rem',
+              color: 'red',
+            }}
+          >
+            {delivery.name}
+          </Typography>
+        </Box>
+      );
+    });
+  };
+
   return (
     <Box 
       id="gantt-chart" 
@@ -134,6 +170,7 @@ function GanttChart({ project }) {
       <Box sx={{ display: 'flex', height: CHART_HEIGHT, position: 'relative', minWidth: WEEK_WIDTH * duration }}>
         {renderDays()}
         {renderBookings()}
+        {renderDeliveries()}
       </Box>
     </Box>
   );
