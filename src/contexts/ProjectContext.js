@@ -61,6 +61,47 @@ export function ProjectProvider({ children }) {
     setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
   }, []);
 
+  const addDelivery = useCallback((projectId, newDelivery) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+              ...project,
+              deliveries: [...(project.deliveries || []), newDelivery]
+            }
+          : project
+      )
+    );
+  }, []);
+
+  const editDelivery = useCallback((projectId, updatedDelivery) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+              ...project,
+              deliveries: project.deliveries.map(delivery =>
+                delivery.id === updatedDelivery.id ? updatedDelivery : delivery
+              )
+            }
+          : project
+      )
+    );
+  }, []);
+
+  const deleteDelivery = useCallback((projectId, deliveryId) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+              ...project,
+              deliveries: project.deliveries.filter(delivery => delivery.id !== deliveryId)
+            }
+          : project
+      )
+    );
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
@@ -72,7 +113,10 @@ export function ProjectProvider({ children }) {
       addBooking, 
       removeBooking, 
       addProject, 
-      deleteProject 
+      deleteProject,
+      addDelivery,
+      editDelivery,
+      deleteDelivery
     }}>
       {children}
     </ProjectContext.Provider>

@@ -14,7 +14,7 @@ import RightPanel from '../components/Gantt/RightPanel';
 const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
 
 function GanttView() {
-  const { projects, addBooking, removeBooking } = useProjects();
+  const { projects, addBooking, removeBooking, addDelivery, editDelivery, deleteDelivery } = useProjects();
   const { artists } = useArtists();  // Add this line
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
@@ -40,6 +40,28 @@ function GanttView() {
       forceUpdate({});
     }
   }, [removeBooking, selectedProject]);
+
+  const handleEditDelivery = useCallback((updatedDelivery) => {
+    if (selectedProject) {
+      editDelivery(selectedProject.id, updatedDelivery);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        deliveries: prevProject.deliveries.map(delivery =>
+          delivery.id === updatedDelivery.id ? updatedDelivery : delivery
+        )
+      }));
+    }
+  }, [selectedProject, editDelivery]);
+
+  const handleDeleteDelivery = useCallback((deliveryId) => {
+    if (selectedProject) {
+      deleteDelivery(selectedProject.id, deliveryId);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        deliveries: prevProject.deliveries.filter(delivery => delivery.id !== deliveryId)
+      }));
+    }
+  }, [selectedProject, deleteDelivery]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
@@ -73,19 +95,15 @@ function GanttView() {
     },
   });
 
-  const handleAddDelivery = (delivery) => {
+  const handleAddDelivery = useCallback((newDelivery) => {
     if (selectedProject) {
-      const updatedProject = {
-        ...selectedProject,
-        deliveries: [...(selectedProject.deliveries || []), delivery],
-      };
-      // Update the project in your state management system
-      // This might involve calling a function from your ProjectContext
-      // For example:
-      // updateProject(updatedProject);
-      setSelectedProject(updatedProject);
+      addDelivery(selectedProject.id, newDelivery);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        deliveries: [...(prevProject.deliveries || []), newDelivery]
+      }));
     }
-  };
+  }, [selectedProject, addDelivery]);
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
@@ -168,6 +186,8 @@ function GanttView() {
           <RightPanel 
             project={selectedProject} 
             onAddDelivery={handleAddDelivery}
+            onEditDelivery={handleEditDelivery}
+            onDeleteDelivery={handleDeleteDelivery}
           />
         )}
       </Box>

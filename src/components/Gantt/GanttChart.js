@@ -132,22 +132,26 @@ function GanttChart({ project }) {
             position: 'absolute',
             left: `${offsetDays * DAY_WIDTH}px`,
             top: 0,
-            width: '2px',
+            width: '2px', // Back to 2px width
             height: CHART_HEIGHT,
-            backgroundColor: 'red',
+            background: 'linear-gradient(to bottom, rgba(255,0,0,0.2), rgba(255,0,0,1))', // Gradient effect
             zIndex: 1000,
           }}
         >
           <Typography
             sx={{
               position: 'absolute',
-              top: CHART_HEIGHT,
+              top: CHART_HEIGHT / 2, // Position text in the middle of the line
               left: '50%',
               transform: 'translateX(-50%) rotate(-90deg)',
-              transformOrigin: 'left top',
+              transformOrigin: 'left center', // Adjust origin for center alignment
               whiteSpace: 'nowrap',
-              fontSize: '0.75rem',
+              fontSize: '0.875rem', // Smaller text (14px if base font size is 16px)
               color: 'red',
+              fontWeight: 300, // Light weight font
+              backgroundColor: 'rgba(255, 255, 255, 0.7)', // Add a semi-transparent background
+              padding: '2px 4px', // Add some padding
+              borderRadius: '2px', // Rounded corners for the background
             }}
           >
             {delivery.name}
