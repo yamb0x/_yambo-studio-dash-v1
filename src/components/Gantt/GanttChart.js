@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 
 const WEEK_WIDTH = 200;
-const DAY_WIDTH = WEEK_WIDTH / 5;
-const CHART_HEIGHT = 500;
+const CHART_HEIGHT = 400;
+const DAY_WIDTH = WEEK_WIDTH / 7; // Define DAY_WIDTH based on WEEK_WIDTH
 
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
@@ -23,7 +23,11 @@ function GanttChart({ project }) {
     updateBooking(projectId, updatedBooking);
   };
 
-  const handleDrop = (e) => {
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
     const bookingId = e.dataTransfer.getData('bookingId');
     if (bookingId) {
@@ -31,7 +35,7 @@ function GanttChart({ project }) {
       if (booking) {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        const newStartOffset = Math.round((x / WEEK_WIDTH) * 7);
+        const newStartOffset = Math.round(x / DAY_WIDTH);
         const newStartDate = moment(currentProject.startDate).add(newStartOffset, 'days');
         const duration = moment(booking.endDate).diff(moment(booking.startDate), 'days');
         const newEndDate = newStartDate.clone().add(duration, 'days');
@@ -43,7 +47,7 @@ function GanttChart({ project }) {
         });
       }
     }
-  };
+  }, [currentProject, handleUpdate]);
 
   const renderWeeks = () => {
     return Array.from({ length: duration }, (_, index) => {
@@ -121,7 +125,7 @@ function GanttChart({ project }) {
     <Box 
       id="gantt-chart" 
       sx={{ overflowX: 'auto', overflowY: 'hidden' }}
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', minWidth: WEEK_WIDTH * duration }}>
@@ -135,4 +139,4 @@ function GanttChart({ project }) {
   );
 }
 
-export default React.memo(GanttChart);
+export default GanttChart;
