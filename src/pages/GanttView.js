@@ -11,6 +11,8 @@ import moment from 'moment';
 import { useArtists } from '../contexts/ArtistContext';
 import RightPanel from '../components/Gantt/RightPanel';
 
+const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
+
 function GanttView() {
   const { projects, addBooking, removeBooking } = useProjects();
   const { artists } = useArtists();  // Add this line
@@ -79,13 +81,13 @@ function GanttView() {
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
+      {/* Left Panel */}
       <Box sx={{ 
-        width: '300px',
+        width: SIDE_PANEL_WIDTH,
         borderRight: '1px solid #e0e0e0', 
-        overflowY: 'auto',
-        flexShrink: 0,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        flexShrink: 0,
       }}>
         <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
           <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
@@ -134,7 +136,9 @@ function GanttView() {
           )}
         </Paper>
       </Box>
-      <Box ref={drop} sx={{ flexGrow: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
+
+      {/* Center Panel (Gantt Chart) */}
+      <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
         <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
         {selectedProject ? (
           <GanttChart key={selectedProject.id} project={selectedProject} />
@@ -144,12 +148,25 @@ function GanttView() {
           </Box>
         )}
       </Box>
-      {selectedProject && (
-        <RightPanel 
-          project={selectedProject} 
-          onAddDelivery={handleAddDelivery}
-        />
-      )}
+
+      {/* Right Panel */}
+      <Box sx={{ 
+        width: SIDE_PANEL_WIDTH, 
+        borderLeft: '1px solid #e0e0e0',
+        flexShrink: 0,
+        overflowY: 'auto'
+      }}>
+        {selectedProject ? (
+          <RightPanel 
+            project={selectedProject} 
+            onAddDelivery={handleAddDelivery}
+          />
+        ) : (
+          <Box sx={{ p: 2 }}>
+            <Typography>Select a project to view details</Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
