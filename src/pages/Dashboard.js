@@ -1,15 +1,7 @@
 import React from 'react';
-import { Typography, Container } from '@mui/material';
 
 function Dashboard() {
-  return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      {/* Add summary widgets here */}
-    </Container>
-  );
+  return <h2>Dashboard</h2>;
 }
 
 export default Dashboard;

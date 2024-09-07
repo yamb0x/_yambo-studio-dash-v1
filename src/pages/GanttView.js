@@ -15,7 +15,7 @@ function GanttView() {
   useEffect(() => {
     if (selectedProject) {
       // Fetch bookings for the selected project
-      // This is a placeholder - replace with actual API call
+      // This is a placeholder - replace with actual API call or data fetching logic
       setBookings([]);
     }
   }, [selectedProject]);

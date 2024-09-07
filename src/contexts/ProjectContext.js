@@ -1,9 +1,16 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const ProjectContext = createContext();
 
 export const ProjectProvider = ({ children }) => {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => {
+    const storedProjects = localStorage.getItem('projects');
+    return storedProjects ? JSON.parse(storedProjects) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('projects', JSON.stringify(projects));
+  }, [projects]);
 
   const addProject = (project) => {
     setProjects([...projects, { ...project, id: Date.now() }]);

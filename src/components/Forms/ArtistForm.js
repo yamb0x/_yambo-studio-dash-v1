@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, MenuItem, Rating, Typography } from '@mui/material';
+import { TextField, Button, Box, InputAdornment, MenuItem, Rating, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import { useArtists } from '../../contexts/ArtistContext';
 
 // Complete list of countries
@@ -262,6 +262,7 @@ function ArtistForm({ artist = {}, onClose }) {
     skills: '',
     email: '',
     website: '',
+    favorite: false,
     ...artist
   });
 
@@ -352,6 +353,15 @@ function ArtistForm({ artist = {}, onClose }) {
         name="website"
         value={formData.website}
         onChange={handleChange}
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={formData.favorite}
+            onChange={(e) => setFormData(prevData => ({ ...prevData, favorite: e.target.checked }))}
+          />
+        }
+        label="Favorite"
       />
       <Button type="submit" variant="contained" color="primary">
         {artist.id ? 'Update Artist' : 'Add Artist'}

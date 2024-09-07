@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Container, Button, Modal, Box } from '@mui/material';
+import { Typography, Container, Button, Modal, Box, Paper, Grid } from '@mui/material';
 import ProjectTable from '../components/Database/ProjectTable';
 import ArtistTable from '../components/Database/ArtistTable';
 import ProjectForm from '../components/Forms/ProjectForm';
@@ -21,20 +21,46 @@ function DatabaseView() {
   const [openArtistModal, setOpenArtistModal] = useState(false);
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Database View
-      </Typography>
+    <Container maxWidth="xl" disableGutters>
+      <Box sx={{ px: 3, py: 2 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
+          Database
+        </Typography>
+      </Box>
       
-      <Button onClick={() => setOpenProjectModal(true)} variant="contained" color="primary" sx={{ mb: 2 }}>
-        Add New Project
-      </Button>
-      <ProjectTable />
-      
-      <Button onClick={() => setOpenArtistModal(true)} variant="contained" color="primary" sx={{ my: 2 }}>
-        Add New Artist
-      </Button>
-      <ArtistTable />
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
+              <Typography variant="h5">Projects</Typography>
+              <Button 
+                onClick={() => setOpenProjectModal(true)} 
+                variant="outlined" 
+                color="primary"
+              >
+                Add New Project
+              </Button>
+            </Box>
+            <ProjectTable />
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
+              <Typography variant="h5">Artists</Typography>
+              <Button 
+                onClick={() => setOpenArtistModal(true)} 
+                variant="outlined" 
+                color="primary"
+              >
+                Add New Artist
+              </Button>
+            </Box>
+            <ArtistTable />
+          </Paper>
+        </Grid>
+      </Grid>
 
       <Modal open={openProjectModal} onClose={() => setOpenProjectModal(false)}>
         <Box sx={modalStyle}>

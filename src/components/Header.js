@@ -4,9 +4,9 @@ import { Link as RouterLink } from 'react-router-dom';
 
 function Header() {
   return (
-    <AppBar position="static">
+    <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid #000' }}>
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
           Studio Dashboard
         </Typography>
         <Box>

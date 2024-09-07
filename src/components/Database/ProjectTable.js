@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Modal, Box } from '@mui/material';
+import { 
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+  IconButton, TableSortLabel, Modal, Box
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjects } from '../../contexts/ProjectContext';
@@ -18,44 +21,73 @@ const modalStyle = {
 
 function ProjectTable() {
   const { projects, deleteProject } = useProjects();
+  const [orderBy, setOrderBy] = useState('name');
+  const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
 
   const handleEdit = (project) => {
     setEditingProject(project);
     setOpenModal(true);
   };
 
-  const handleDelete = (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      deleteProject(projectId);
-    }
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setEditingProject(null);
   };
+
+  const sortedProjects = projects.sort((a, b) => {
+    if (b[orderBy] < a[orderBy]) {
+      return order === 'asc' ? 1 : -1;
+    }
+    if (b[orderBy] > a[orderBy]) {
+      return order === 'asc' ? -1 : 1;
+    }
+    return 0;
+  });
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer>
+        <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'name'}
+                  direction={orderBy === 'name' ? order : 'asc'}
+                  onClick={() => handleRequestSort('name')}
+                >
+                  Name
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>End Date</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Budget</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right" sx={{ width: '100px' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {projects.map((project) => (
-              <TableRow key={project.id}>
+            {sortedProjects.map((project) => (
+              <TableRow key={project.id} hover>
                 <TableCell>{project.name}</TableCell>
                 <TableCell>{project.startDate}</TableCell>
                 <TableCell>{project.endDate}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEdit(project)}>
-                    <EditIcon />
+                <TableCell>${project.budget}</TableCell>
+                <TableCell>{project.status}</TableCell>
+                <TableCell align="right" sx={{ width: '100px' }}>
+                  <IconButton size="small" onClick={() => handleEdit(project)}>
+                    <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(project.id)}>
-                    <DeleteIcon />
+                  <IconButton size="small" onClick={() => deleteProject(project.id)}>
+                    <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -64,9 +96,9 @@ function ProjectTable() {
         </Table>
       </TableContainer>
 
-      <Modal open={openModal} onClose={() => setOpenModal(false)}>
+      <Modal open={openModal} onClose={handleCloseModal}>
         <Box sx={modalStyle}>
-          <ProjectForm project={editingProject} onClose={() => setOpenModal(false)} />
+          <ProjectForm project={editingProject} onClose={handleCloseModal} />
         </Box>
       </Modal>
     </>
