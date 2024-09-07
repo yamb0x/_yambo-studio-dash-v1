@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Box, Typography, Grid } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Typography } from '@mui/material';
 import moment from 'moment';
-import { useDrop } from 'react-dnd';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 

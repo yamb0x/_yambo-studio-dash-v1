@@ -9,6 +9,7 @@ import ArtistList from '../components/Gantt/ArtistList';
 import { useProjects } from '../contexts/ProjectContext';
 import moment from 'moment';
 import { useArtists } from '../contexts/ArtistContext';
+import RightPanel from '../components/Gantt/RightPanel';
 
 function GanttView() {
   const { projects, addBooking, removeBooking } = useProjects();
@@ -69,6 +70,12 @@ function GanttView() {
       }
     },
   });
+
+  const handleAddDelivery = (delivery) => {
+    // Implement the logic to add a delivery to the project
+    console.log('Adding delivery:', delivery);
+    // You'll need to update your project state or context here
+  };
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
@@ -137,6 +144,12 @@ function GanttView() {
           </Box>
         )}
       </Box>
+      {selectedProject && (
+        <RightPanel 
+          project={selectedProject} 
+          onAddDelivery={handleAddDelivery}
+        />
+      )}
     </Box>
   );
 }
