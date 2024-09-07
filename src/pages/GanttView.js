@@ -24,8 +24,13 @@ function GanttView() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100vw' }}>
-        <Box sx={{ width: '250px', borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
+      <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
+        <Box sx={{ 
+          width: '300px', // Adjust this value to match the width of the title
+          borderRight: '1px solid #e0e0e0', 
+          overflowY: 'auto',
+          flexShrink: 0
+        }}>
           <Paper elevation={0} sx={{ height: '100%', borderRadius: 0 }}>
             <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
             <ProjectList
