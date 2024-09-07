@@ -3,10 +3,10 @@ import { useDrag } from 'react-dnd';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-function DraggableEvent({ booking, project, weekWidth }) {
+function DraggableEvent({ booking, project, weekWidth, style }) {
   const [{ isDragging }, drag] = useDrag({
     type: 'BOOKING',
-    item: { id: booking.id, type: 'BOOKING' },
+    item: { id: booking.id, type: 'BOOKING', booking },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -38,6 +38,7 @@ function DraggableEvent({ booking, project, weekWidth }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        ...style,
       }}
     >
       <Typography variant="caption">{booking.artistName}</Typography>

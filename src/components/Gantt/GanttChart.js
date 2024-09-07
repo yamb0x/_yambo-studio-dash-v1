@@ -1,16 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
+import { useDrop } from 'react-dnd';
 import DraggableEvent from './DraggableEvent';
+import { useProjects } from '../../contexts/ProjectContext';
 
 const WEEK_WIDTH = 200; // Fixed width for each week in pixels
 const DAY_WIDTH = WEEK_WIDTH / 5; // Width of each day (assuming 5 working days)
 const CHART_HEIGHT = 500; // Height of the entire chart
 
-function GanttChart({ project, bookings }) {
+function GanttChart({ project, bookings: initialBookings }) {
+  const { updateBooking, addBooking } = useProjects();
+  const [bookings, setBookings] = useState(initialBookings || []);
+
+  useEffect(() => {
+    setBookings(initialBookings || []);
+  }, [initialBookings]);
+
   const startDate = moment(project.startDate);
   const endDate = moment(project.endDate);
   const duration = endDate.diff(startDate, 'weeks') + 1;
+
+  const [, drop] = useDrop({
+    accept: ['BOOKING', 'ARTIST'],
+    drop: (item, monitor) => {
+      const dropPosition = monitor.getClientOffset();
+      const chartRect = document.getElementById('gantt-chart').getBoundingClientRect();
+      const dropX = dropPosition.x - chartRect.left;
+      const dropY = dropPosition.y - chartRect.top;
+
+      const droppedWeek = Math.floor(dropX / WEEK_WIDTH);
+      const droppedDay = Math.floor((dropX % WEEK_WIDTH) / DAY_WIDTH);
+      const droppedDate = startDate.clone().add(droppedWeek, 'weeks').add(droppedDay, 'days');
+
+      if (item.type === 'BOOKING') {
+        const updatedBooking = {
+          ...item.booking,
+          startDate: droppedDate.format('YYYY-MM-DD'),
+          endDate: droppedDate.clone().add(moment(item.booking.endDate).diff(moment(item.booking.startDate), 'days'), 'days').format('YYYY-MM-DD'),
+        };
+        updateBooking(updatedBooking);
+        setBookings(prevBookings => prevBookings.map(booking => booking.id === updatedBooking.id ? updatedBooking : booking));
+      } else if (item.type === 'ARTIST') {
+        const newBooking = {
+          id: Date.now(),
+          projectId: project.id,
+          artistId: item.id,
+          artistName: item.name,
+          startDate: droppedDate.format('YYYY-MM-DD'),
+          endDate: droppedDate.clone().add(7, 'days').format('YYYY-MM-DD'),
+        };
+        addBooking(newBooking);
+        setBookings(prevBookings => [...prevBookings, newBooking]);
+      }
+    },
+  });
 
   const renderWeeks = () => {
     return Array.from({ length: duration }, (_, index) => {
@@ -84,7 +128,7 @@ function GanttChart({ project, bookings }) {
   };
 
   return (
-    <Box sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
+    <Box ref={drop} id="gantt-chart" sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
       <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', minWidth: WEEK_WIDTH * duration }}>
         {renderWeeks()}
       </Box>
