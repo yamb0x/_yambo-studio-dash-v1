@@ -7,7 +7,7 @@ function Header() {
     <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid #000' }}>
       <Toolbar>
         <Typography variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-          Studio Dashboard
+          Yambo Studio Dashboard v0.1
         </Typography>
         <Box>
           <Button color="inherit" component={RouterLink} to="/">
