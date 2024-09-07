@@ -122,7 +122,7 @@ function GanttChart({ project, bookings: initialBookings }) {
         booking={booking}
         project={project}
         weekWidth={WEEK_WIDTH}
-        style={{ top: index * 30 }} // Adjust this value to change vertical spacing between bookings
+        index={index}
       />
     ));
   };
