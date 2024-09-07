@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
 function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
@@ -16,47 +16,39 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
   const totalDays = duration;
   const totalCosts = dailyRate * totalDays;
 
-  const debugInfo = `
-    Days Booked: ${daysBooked}
-    Artist: ${artistName}
-    Daily Rate: $${dailyRate.toFixed(2)}
-    Total Days: ${totalDays}
-    Total Costs: $${totalCosts.toFixed(2)}
-  `;
-
-  console.log('Booking data:', booking); // Add this line for debugging
-
   return (
-    <Tooltip title={debugInfo} arrow placement="top">
-      <Box
-        draggable
-        onDragStart={(e) => {
-          e.dataTransfer.setData('bookingId', booking.id);
-        }}
-        sx={{
-          position: 'absolute',
-          left: `${(startOffset / 7) * weekWidth}px`,
-          top: index * 40 + 10,
-          width: `${(duration / 7) * weekWidth}px`,
-          height: 30,
-          backgroundColor: 'primary.main',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'move',
-          zIndex: 1000,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <Typography variant="body2" noWrap>
-          {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
-        </Typography>
-      </Box>
-    </Tooltip>
+    <Box
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('bookingId', booking.id);
+      }}
+      sx={{
+        position: 'absolute',
+        left: `${(startOffset / 7) * weekWidth}px`,
+        top: index * 40 + 10,
+        width: `${(duration / 7) * weekWidth}px`,
+        height: 'auto',
+        minHeight: 30,
+        backgroundColor: 'primary.main',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        cursor: 'move',
+        zIndex: 1000,
+        overflow: 'hidden',
+        padding: '2px 4px',
+      }}
+    >
+      <Typography variant="body2" noWrap>
+        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
+      </Typography>
+      <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
+        Days: {daysBooked} | Rate: ${dailyRate.toFixed(2)} | Total: ${totalCosts.toFixed(2)}
+      </Typography>
+    </Box>
   );
 }
 
-export default React.memo(DraggableEvent);
+export default DraggableEvent;
