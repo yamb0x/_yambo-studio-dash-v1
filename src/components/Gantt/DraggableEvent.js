@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Resizable } from 'react-resizable';
 import Draggable from 'react-draggable';
 import { Box, Typography } from '@mui/material';
+import { styled } from '@mui/system';
 import moment from 'moment';
 import { useArtists } from '../../contexts/ArtistContext';
 
-// Import the CSS for react-resizable
 import 'react-resizable/css/styles.css';
 
 const getRandomColor = () => {
@@ -16,6 +16,22 @@ const getRandomColor = () => {
   }
   return color;
 };
+
+const ResizeHandle = styled('div')(({ theme }) => ({
+  position: 'absolute',
+  width: '8px',
+  height: '100%',
+  backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  zIndex: 1,
+  '&.react-resizable-handle-w': {
+    left: 0,
+    cursor: 'w-resize',
+  },
+  '&.react-resizable-handle-e': {
+    right: 0,
+    cursor: 'e-resize',
+  },
+}));
 
 function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
   const { artists } = useArtists();
@@ -38,15 +54,29 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
   const artist = artists.find(a => a.id === booking.artistId);
   const dailyRate = artist ? artist.dailyRate : 'N/A';
 
-  const handleResize = (e, { size }) => {
+  const handleResize = useCallback((e, { size, handle }) => {
     const newWidth = size.width;
     setWidth(newWidth);
     const newDuration = Math.round((newWidth / weekWidth) * 7);
-    const newEndDate = moment(booking.startDate).add(newDuration - 1, 'days');
-    onUpdate(project.id, { ...booking, endDate: newEndDate.format('YYYY-MM-DD') });
-  };
+    
+    if (handle === 'w') {
+      // Resizing from the left (start date)
+      const newStartDate = moment(booking.endDate).subtract(newDuration - 1, 'days');
+      onUpdate(project.id, {
+        ...booking,
+        startDate: newStartDate.format('YYYY-MM-DD'),
+      });
+    } else {
+      // Resizing from the right (end date)
+      const newEndDate = moment(booking.startDate).add(newDuration - 1, 'days');
+      onUpdate(project.id, {
+        ...booking,
+        endDate: newEndDate.format('YYYY-MM-DD'),
+      });
+    }
+  }, [booking, project.id, weekWidth, onUpdate]);
 
-  const handleDrag = (e, { x }) => {
+  const handleDrag = useCallback((e, { x }) => {
     setPosition({ x, y: 0 });
     const newStartOffset = Math.round((x / weekWidth) * 7);
     const newStartDate = moment(project.startDate).add(startOffset + newStartOffset, 'days');
@@ -56,7 +86,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
       startDate: newStartDate.format('YYYY-MM-DD'),
       endDate: newEndDate.format('YYYY-MM-DD'),
     });
-  };
+  }, [booking, duration, project.id, project.startDate, startOffset, weekWidth, onUpdate]);
 
   return (
     <Draggable
@@ -73,7 +103,10 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
         draggableOpts={{ grid: [weekWidth / 7, 0] }}
         minConstraints={[weekWidth / 7, EVENT_HEIGHT]}
         maxConstraints={[weekWidth * 52, EVENT_HEIGHT]}
-        handle={<div className="react-resizable-handle react-resizable-handle-e" />}
+        handle={(h, ref) => (
+          <ResizeHandle className={`react-resizable-handle react-resizable-handle-${h}`} ref={ref} />
+        )}
+        handleSize={[8, 8]}
       >
         <Box
           sx={{
