@@ -52,15 +52,13 @@ export function ProjectProvider({ children }) {
   };
 
   const addBooking = (newBooking) => {
-    setProjects((prevProjects) => {
-      return prevProjects.map((project) => {
-        if (project.id === newBooking.projectId) {
-          const updatedBookings = [...project.bookings, { ...newBooking, id: Date.now() }];
-          return { ...project, bookings: updatedBookings };
-        }
-        return project;
-      });
-    });
+    setProjects((prevProjects) =>
+      prevProjects.map((project) =>
+        project.id === newBooking.projectId
+          ? { ...project, bookings: [...(project.bookings || []), newBooking] }
+          : project
+      )
+    );
   };
 
   const value = {
@@ -72,5 +70,9 @@ export function ProjectProvider({ children }) {
     addBooking,
   };
 
-  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
+  return (
+    <ProjectContext.Provider value={value}>
+      {children}
+    </ProjectContext.Provider>
+  );
 }

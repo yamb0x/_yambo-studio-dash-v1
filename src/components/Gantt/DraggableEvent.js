@@ -4,7 +4,6 @@ import Draggable from 'react-draggable';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 import { useArtists } from '../../contexts/ArtistContext';
-import { useProjects } from '../../contexts/ProjectContext';
 
 // Import the CSS for react-resizable
 import 'react-resizable/css/styles.css';
@@ -20,7 +19,6 @@ const getRandomColor = () => {
 
 function DraggableEvent({ booking, project, weekWidth, index, onUpdate }) {
   const { artists } = useArtists();
-  const { updateBooking } = useProjects();
 
   const [width, setWidth] = useState((moment(booking.endDate).diff(moment(booking.startDate), 'days') + 1) * (weekWidth / 7));
   const [position, setPosition] = useState({ x: 0, y: 0 });
