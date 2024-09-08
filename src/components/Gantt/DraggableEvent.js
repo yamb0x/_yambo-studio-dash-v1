@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Link } from '@mui/material';
 import moment from 'moment';
 
-function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color }) {
+function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName }) {
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const eventRef = useRef(null);
@@ -11,13 +11,15 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
 
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
+  const numberOfDays = bookingEnd.diff(bookingStart, 'days') + 1;
+  const dailyRate = booking.dailyRate || 0;
+  const totalCost = dailyRate * numberOfDays;
 
   useEffect(() => {
     const startOffset = bookingStart.diff(startDate, 'days');
-    const duration = bookingEnd.diff(bookingStart, 'days') + 1;
     setEventLeft(artistColumnWidth + (startOffset * dayWidth));
-    setEventWidth(duration * dayWidth);
-  }, [booking, startDate, artistColumnWidth, dayWidth]);
+    setEventWidth(numberOfDays * dayWidth);
+  }, [booking, startDate, artistColumnWidth, dayWidth, numberOfDays]);
 
   const handleMouseDown = (e) => {
     if (e.target.classList.contains('resize-handle')) {
@@ -73,6 +75,18 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
     return moment(startDate).add(dayOffset, 'days');
   };
 
+  const handleArtistClick = (e) => {
+    e.stopPropagation(); // Prevent dragging when clicking the link
+  };
+
+  const formatUrl = (url) => {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
   return (
     <Box
       ref={eventRef}
@@ -94,13 +108,30 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',
         transition: 'none',
+        padding: '2px',
+        overflow: 'hidden',
       }}
     >
-      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#000' }}>
-        {getDateFromPosition(eventLeft).format('DD/MM/YYYY')}
-      </Typography>
-      <Typography variant="caption" sx={{ color: '#000' }}>
-        {booking.startDate} - {booking.endDate}
+      <Link
+        href={formatUrl(booking.artistWebsite)}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleArtistClick}
+        sx={{
+          textDecoration: 'underline',
+          color: '#000',
+          fontWeight: 'bold',
+          fontSize: '0.8rem',
+          whiteSpace: 'nowrap',
+          '&:hover': {
+            color: '#0056b3',
+          },
+        }}
+      >
+        {artistName}
+      </Link>
+      <Typography variant="caption" sx={{ color: '#000', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+        {`$${dailyRate} x ${numberOfDays} = $${totalCost}`}
       </Typography>
       <Box
         className="resize-handle"

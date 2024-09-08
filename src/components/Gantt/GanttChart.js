@@ -37,14 +37,13 @@ function GanttChart({ project }) {
   const indicatorOffset = projectStartDate.diff(chartStartDate, 'days') * DAY_WIDTH;
 
   const groupedBookings = useMemo(() => {
-    const groups = {};
-    currentProject.bookings.forEach(booking => {
-      if (!groups[booking.artistName]) {
-        groups[booking.artistName] = [];
+    return currentProject.bookings.reduce((acc, booking) => {
+      if (!acc[booking.artistName]) {
+        acc[booking.artistName] = [];
       }
-      groups[booking.artistName].push(booking);
-    });
-    return groups;
+      acc[booking.artistName].push(booking);
+      return acc;
+    }, {});
   }, [currentProject.bookings]);
 
   const artistColors = useMemo(() => {
@@ -262,6 +261,7 @@ function GanttChart({ project }) {
                   timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
                   projectStartDate={projectStartDate}
                   color={artistColors[artistName]}
+                  artistName={artistName}
                 />
               ))}
             </Box>

@@ -12,20 +12,22 @@ export function ProjectProvider({ children }) {
     return savedProjects ? JSON.parse(savedProjects) : [];
   });
 
-  const updateBooking = useCallback((projectId, updatedBooking) => {
-    setProjects(prevProjects => 
-      prevProjects.map(project => 
-        project.id === projectId
-          ? {
-              ...project,
-              bookings: project.bookings.map(booking =>
-                booking.id === updatedBooking.id ? updatedBooking : booking
-              )
-            }
-          : project
-      )
-    );
-  }, []);
+  const updateBooking = (projectId, updatedBooking) => {
+    setProjects(prevProjects => {
+      return prevProjects.map(project => {
+        if (project.id === projectId) {
+          const updatedBookings = project.bookings.map(booking => 
+            booking.id === updatedBooking.id ? updatedBooking : booking
+          );
+          return {
+            ...project,
+            bookings: updatedBookings,
+          };
+        }
+        return project;
+      });
+    });
+  };
 
   const addBooking = useCallback((newBooking) => {
     setProjects(prevProjects =>
