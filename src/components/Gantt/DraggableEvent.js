@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-const RESIZE_HANDLE_WIDTH = 10; // Width of the resize handle in pixels
+const RESIZE_HANDLE_WIDTH = 10;
 
 function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDate, onDragStart }) {
   const [isResizing, setIsResizing] = useState(false);
@@ -11,10 +11,10 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
 
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
-  const startOffset = bookingStart.diff(startDate, 'days');
-  const adjustedStartOffset = startOffset - (Math.floor(startOffset / 7) * 2); // Adjust for weekends
-  const duration = bookingEnd.diff(bookingStart, 'days') + 1;
-  const adjustedDuration = calculateWorkingDays(bookingStart, bookingEnd);
+  const projectStart = moment(startDate);
+
+  const startOffset = calculateWorkingDayOffset(projectStart, bookingStart);
+  const duration = calculateWorkingDays(bookingStart, bookingEnd);
 
   useEffect(() => {
     const element = eventRef.current;
@@ -34,7 +34,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       document.body.appendChild(dragImage);
       e.dataTransfer.setDragImage(dragImage, 0, 0);
       
-      onDragStart({...booking, duration: adjustedDuration});
+      onDragStart({...booking, duration});
 
       setTimeout(() => {
         document.body.removeChild(dragImage);
@@ -63,7 +63,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
 
       if (resizeDirection === 'left') {
         const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newStartDate = startDate.clone().add(adjustedStartOffset + newStartOffset, 'days');
+        const newStartDate = calculateWorkingDayDate(projectStart, startOffset + newStartOffset);
         if (newStartDate.isBefore(bookingEnd)) {
           onUpdate(project.id, {
             ...booking,
@@ -72,7 +72,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
         }
       } else if (resizeDirection === 'right') {
         const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newEndDate = startDate.clone().add(adjustedStartOffset + newEndOffset, 'days');
+        const newEndDate = calculateWorkingDayDate(projectStart, startOffset + newEndOffset);
         if (newEndDate.isAfter(bookingStart)) {
           onUpdate(project.id, {
             ...booking,
@@ -98,11 +98,23 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [booking, onDragStart, adjustedDuration, isResizing, resizeDirection, onUpdate, project.id, startDate, adjustedStartOffset, weekWidth, bookingStart, bookingEnd]);
+  }, [booking, onDragStart, duration, isResizing, resizeDirection, onUpdate, project.id, startDate, startOffset, weekWidth, bookingStart, bookingEnd, projectStart]);
+
+  function calculateWorkingDayOffset(start, end) {
+    let days = 0;
+    let current = start.clone().startOf('day');
+    while (current.isBefore(end, 'day')) {
+      if (current.day() !== 0 && current.day() !== 6) {
+        days++;
+      }
+      current.add(1, 'day');
+    }
+    return days;
+  }
 
   function calculateWorkingDays(start, end) {
     let days = 0;
-    let current = start.clone();
+    let current = start.clone().startOf('day');
     while (current.isSameOrBefore(end, 'day')) {
       if (current.day() !== 0 && current.day() !== 6) {
         days++;
@@ -112,23 +124,17 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     return days;
   }
 
-  function getWorkingDateRange(start, end) {
-    let firstWorkingDay = start.clone();
-    let lastWorkingDay = end.clone();
-
-    while (firstWorkingDay.day() === 0 || firstWorkingDay.day() === 6) {
-      firstWorkingDay.add(1, 'day');
+  function calculateWorkingDayDate(baseDate, offset) {
+    let date = baseDate.clone().startOf('day');
+    let daysAdded = 0;
+    while (daysAdded < offset) {
+      date.add(1, 'day');
+      if (date.day() !== 0 && date.day() !== 6) {
+        daysAdded++;
+      }
     }
-
-    while (lastWorkingDay.day() === 0 || lastWorkingDay.day() === 6) {
-      lastWorkingDay.subtract(1, 'day');
-    }
-
-    return { firstWorkingDay, lastWorkingDay };
+    return date;
   }
-
-  const { firstWorkingDay, lastWorkingDay } = getWorkingDateRange(bookingStart, bookingEnd);
-  const totalCost = adjustedDuration * booking.dailyRate;
 
   return (
     <Box
@@ -136,9 +142,9 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       draggable={!isResizing}
       sx={{
         position: 'absolute',
-        left: `${(adjustedStartOffset / 5) * weekWidth}px`,
+        left: `${(startOffset / 5) * weekWidth}px`,
         top: index * 40 + 10,
-        width: `${(adjustedDuration / 5) * weekWidth}px`,
+        width: `${(duration / 5) * weekWidth}px`,
         height: 'auto',
         minHeight: 30,
         backgroundColor: 'primary.main',
@@ -168,10 +174,10 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({firstWorkingDay.format('DD/MM')} - {lastWorkingDay.format('DD/MM')})
+        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
-        Working Days: {adjustedDuration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${totalCost.toFixed(2)}
+        Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
       </Typography>
     </Box>
   );

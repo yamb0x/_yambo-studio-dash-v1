@@ -51,8 +51,9 @@ function GanttChart({ project }) {
       const rect = ganttChartElement.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const newStartOffset = Math.floor(x / DAY_WIDTH);
-      const newStartDate = startDate.clone().add(newStartOffset, 'days');
-      const newEndDate = newStartDate.clone().add(draggedBooking.duration - 1, 'days');
+      
+      const newStartDate = calculateWorkingDayDate(startDate, newStartOffset);
+      const newEndDate = calculateWorkingDayDate(newStartDate, draggedBooking.duration - 1);
 
       handleUpdate(currentProject.id, {
         ...draggedBooking,
@@ -63,6 +64,18 @@ function GanttChart({ project }) {
       setDraggedBooking(null);
     }
   }, [currentProject.id, draggedBooking, handleUpdate, startDate]);
+
+  const calculateWorkingDayDate = (baseDate, offset) => {
+    let date = baseDate.clone().startOf('day');
+    let daysAdded = 0;
+    while (daysAdded < offset) {
+      date.add(1, 'day');
+      if (date.day() !== 0 && date.day() !== 6) {
+        daysAdded++;
+      }
+    }
+    return date;
+  };
 
   const renderWeeks = () => {
     const weeks = [];
