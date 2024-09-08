@@ -53,7 +53,12 @@ function GanttChart({ project }) {
       const newStartOffset = Math.floor(x / DAY_WIDTH);
       
       const newStartDate = calculateWorkingDayDate(startDate, newStartOffset);
-      const newEndDate = calculateWorkingDayDate(newStartDate, draggedBooking.duration - 1);
+      let newEndDate = calculateWorkingDayDate(newStartDate, draggedBooking.duration - 1);
+
+      // Ensure the end date is a working day
+      while (newEndDate.day() === 0 || newEndDate.day() === 6) {
+        newEndDate.subtract(1, 'day');
+      }
 
       handleUpdate(currentProject.id, {
         ...draggedBooking,
@@ -69,10 +74,19 @@ function GanttChart({ project }) {
     let date = baseDate.clone().startOf('day');
     let daysAdded = 0;
     while (daysAdded < offset) {
-      date.add(1, 'day');
       if (date.day() !== 0 && date.day() !== 6) {
         daysAdded++;
       }
+      if (daysAdded < offset) {
+        date.add(1, 'day');
+      }
+    }
+    return ensureWorkingDay(date);
+  };
+
+  const ensureWorkingDay = (date) => {
+    while (date.day() === 0 || date.day() === 6) {
+      date.add(1, 'day');
     }
     return date;
   };

@@ -9,12 +9,16 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
   const [resizeDirection, setResizeDirection] = useState(null);
   const eventRef = useRef(null);
 
+  const projectStart = moment(startDate).startOf('week');
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
-  const projectStart = moment(startDate);
 
-  const startOffset = calculateWorkingDayOffset(projectStart, bookingStart);
+  const startOffset = calculateWeekOffset(projectStart, bookingStart);
   const duration = calculateWorkingDays(bookingStart, bookingEnd);
+
+  // Calculate display dates
+  const displayStart = moment(startDate).startOf('isoWeek'); // Monday
+  const displayEnd = moment(startDate).endOf('isoWeek').subtract(2, 'days'); // Friday
 
   useEffect(() => {
     const element = eventRef.current;
@@ -63,7 +67,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
 
       if (resizeDirection === 'left') {
         const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newStartDate = calculateWorkingDayDate(projectStart, startOffset + newStartOffset);
+        const newStartDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newStartOffset));
         if (newStartDate.isBefore(bookingEnd)) {
           onUpdate(project.id, {
             ...booking,
@@ -72,7 +76,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
         }
       } else if (resizeDirection === 'right') {
         const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newEndDate = calculateWorkingDayDate(projectStart, startOffset + newEndOffset);
+        const newEndDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newEndOffset));
         if (newEndDate.isAfter(bookingStart)) {
           onUpdate(project.id, {
             ...booking,
@@ -100,16 +104,11 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     };
   }, [booking, onDragStart, duration, isResizing, resizeDirection, onUpdate, project.id, startDate, startOffset, weekWidth, bookingStart, bookingEnd, projectStart]);
 
-  function calculateWorkingDayOffset(start, end) {
-    let days = 0;
-    let current = start.clone().startOf('day');
-    while (current.isBefore(end, 'day')) {
-      if (current.day() !== 0 && current.day() !== 6) {
-        days++;
-      }
-      current.add(1, 'day');
-    }
-    return days;
+  function calculateWeekOffset(start, date) {
+    const daysDiff = date.diff(start, 'days');
+    const weeksDiff = Math.floor(daysDiff / 7);
+    const remainingDays = daysDiff % 7;
+    return weeksDiff * 5 + Math.min(remainingDays, 5);
   }
 
   function calculateWorkingDays(start, end) {
@@ -124,8 +123,15 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     return days;
   }
 
+  function ensureWorkingDay(date) {
+    while (date.day() === 0 || date.day() === 6) {
+      date.add(1, 'day');
+    }
+    return date;
+  }
+
   function calculateWorkingDayDate(baseDate, offset) {
-    let date = baseDate.clone().startOf('day');
+    let date = baseDate.clone().startOf('week');
     let daysAdded = 0;
     while (daysAdded < offset) {
       date.add(1, 'day');
@@ -133,7 +139,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
         daysAdded++;
       }
     }
-    return date;
+    return ensureWorkingDay(date);
   }
 
   return (
@@ -174,7 +180,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.clone().subtract(1, 'day').format('DD/MM')})
+        {booking.artistName} ({displayStart.format('DD/MM')} - {displayEnd.format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
