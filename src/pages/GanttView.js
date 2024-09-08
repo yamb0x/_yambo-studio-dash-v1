@@ -26,49 +26,29 @@ function GanttView() {
   } = useProjects();
   const { artists } = useArtists();  // Add this line
   const [selectedProject, setSelectedProject] = useState(null);
+  const [, forceUpdate] = useState();
 
-  const handleSelectProject = useCallback((project) => {
-    setSelectedProject(project);
-  }, []);
-
-  const handleAddProject = useCallback((newProject) => {
-    addProject(newProject);
-  }, [addProject]);
-
-  const handleArtistDrop = useCallback((artistId, dropPosition) => {
-    if (selectedProject) {
-      console.log(`Artist ${artistId} dropped at position ${dropPosition}`);
-    }
+  useEffect(() => {
+    console.log("Selected Project:", selectedProject);
+    console.log("Bookings:", selectedProject?.bookings);
   }, [selectedProject]);
 
-  const handleUpdateBooking = useCallback((updatedBooking) => {
-    if (selectedProject) {
-      const updatedBookings = selectedProject.bookings.map(booking =>
-        booking.id === updatedBooking.id ? updatedBooking : booking
-      );
-      const updatedProject = { ...selectedProject, bookings: updatedBookings };
-      setSelectedProject(updatedProject);
-      updateProject(updatedProject);
-    }
-  }, [selectedProject, updateProject]);
+  const handleAddBooking = useCallback((newBooking) => {
+    addBooking(newBooking);
+    forceUpdate({});
+  }, [addBooking]);
 
-  const handleDeleteBooking = useCallback((bookingId) => {
+  const handleRemoveBooking = useCallback((bookingId) => {
     if (selectedProject) {
-      const updatedBookings = selectedProject.bookings.filter(booking => booking.id !== bookingId);
-      const updatedProject = { ...selectedProject, bookings: updatedBookings };
-      setSelectedProject(updatedProject);
-      updateProject(updatedProject);
+      console.log("Removing booking:", bookingId);
+      removeBooking(selectedProject.id, bookingId);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
+      }));
+      forceUpdate({});
     }
-  }, [selectedProject, updateProject]);
-
-  const handleAddDelivery = useCallback((newDelivery) => {
-    if (selectedProject) {
-      const updatedDeliveries = [...selectedProject.deliveries, newDelivery];
-      const updatedProject = { ...selectedProject, deliveries: updatedDeliveries };
-      setSelectedProject(updatedProject);
-      updateProject(updatedProject);
-    }
-  }, [selectedProject, updateProject]);
+  }, [removeBooking, selectedProject]);
 
   const handleEditDelivery = useCallback((updatedDelivery) => {
     if (selectedProject) {
@@ -165,64 +145,24 @@ function GanttView() {
     }, {});
   }, [selectedProject]);
 
+  const handleSelectProject = useCallback((project) => {
+    setSelectedProject(project);
+  }, []);
+
+  const handleArtistDrop = useCallback((artist) => {
+    // Implement the logic for handling artist drop
+    console.log('Artist dropped:', artist);
+  }, []);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
-      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', height: '100%' }}> {/* Update this line */}
         {/* Left Panel */}
-        <Box sx={{ 
-          width: SIDE_PANEL_WIDTH,
-          borderRight: '1px solid #e0e0e0', 
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          overflow: 'auto',
-        }}>
-          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
-            <ProjectList
-              selectedProject={selectedProject}
-              onSelectProject={setSelectedProject}
-            />
-          </Paper>
-          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
-            <ArtistList />
-          </Paper>
-          <Paper elevation={0} sx={{ borderRadius: 0, flexGrow: 1, bgcolor: '#f0f0f0', minHeight: '200px' }}>
-            <Typography variant="h6" sx={{ p: 2, bgcolor: '#e0e0e0' }}>Debug: Booked Artists</Typography>
-            {selectedProject ? (
-              selectedProject.bookings && selectedProject.bookings.length > 0 ? (
-                <List>
-                  {selectedProject.bookings.map((booking) => (
-                    <ListItem
-                      key={booking.id}
-                      secondaryAction={
-                        <IconButton 
-                          edge="end" 
-                          aria-label="delete" 
-                          onClick={() => {
-                            console.log("Delete button clicked for booking:", booking.id);
-                            handleRemoveBooking(booking.id);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={booking.artistName}
-                        secondary={`${booking.startDate} - ${booking.endDate}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <Typography sx={{ p: 2 }}>No bookings for this project</Typography>
-              )
-            ) : (
-              <Typography sx={{ p: 2 }}>Select a project to see bookings</Typography>
-            )}
-          </Paper>
+        <Box sx={{ width: SIDE_PANEL_WIDTH, borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
+          <ArtistList
+            artists={artists}
+            onArtistDrop={handleArtistDrop}
+          />
         </Box>
 
         {/* Center Panel (Gantt Chart) */}
