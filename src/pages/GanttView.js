@@ -28,31 +28,47 @@ function GanttView() {
   const [selectedProject, setSelectedProject] = useState(null);
 
   const handleSelectProject = useCallback((project) => {
-    if (project && project.id) {
-      setSelectedProject(project);
-    }
+    setSelectedProject(project);
   }, []);
 
   const handleAddProject = useCallback((newProject) => {
     addProject(newProject);
   }, [addProject]);
 
-  const handleAddBooking = useCallback((newBooking) => {
-    addBooking(newBooking);
-    forceUpdate({});
-  }, [addBooking]);
-
-  const handleRemoveBooking = useCallback((bookingId) => {
+  const handleArtistDrop = useCallback((artistId, dropPosition) => {
     if (selectedProject) {
-      console.log("Removing booking:", bookingId);
-      removeBooking(selectedProject.id, bookingId);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
-      }));
-      forceUpdate({});
+      console.log(`Artist ${artistId} dropped at position ${dropPosition}`);
     }
-  }, [removeBooking, selectedProject]);
+  }, [selectedProject]);
+
+  const handleUpdateBooking = useCallback((updatedBooking) => {
+    if (selectedProject) {
+      const updatedBookings = selectedProject.bookings.map(booking =>
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      );
+      const updatedProject = { ...selectedProject, bookings: updatedBookings };
+      setSelectedProject(updatedProject);
+      updateProject(updatedProject);
+    }
+  }, [selectedProject, updateProject]);
+
+  const handleDeleteBooking = useCallback((bookingId) => {
+    if (selectedProject) {
+      const updatedBookings = selectedProject.bookings.filter(booking => booking.id !== bookingId);
+      const updatedProject = { ...selectedProject, bookings: updatedBookings };
+      setSelectedProject(updatedProject);
+      updateProject(updatedProject);
+    }
+  }, [selectedProject, updateProject]);
+
+  const handleAddDelivery = useCallback((newDelivery) => {
+    if (selectedProject) {
+      const updatedDeliveries = [...selectedProject.deliveries, newDelivery];
+      const updatedProject = { ...selectedProject, deliveries: updatedDeliveries };
+      setSelectedProject(updatedProject);
+      updateProject(updatedProject);
+    }
+  }, [selectedProject, updateProject]);
 
   const handleEditDelivery = useCallback((updatedDelivery) => {
     if (selectedProject) {
@@ -149,20 +165,68 @@ function GanttView() {
     }, {});
   }, [selectedProject]);
 
+  const handleSelectProject = useCallback((project) => {
+    setSelectedProject(project);
+  }, []);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
-      <ProjectTabs
-        projects={projects}
-        selectedProject={selectedProject}
-        onSelectProject={handleSelectProject}
-      />
-      <Box sx={{ display: 'flex', height: 'calc(100% - 48px)' }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Left Panel */}
-        <Box sx={{ width: SIDE_PANEL_WIDTH, borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
-          <ArtistList
-            artists={artists}
-            onArtistDrop={handleArtistDrop}
-          />
+        <Box sx={{ 
+          width: SIDE_PANEL_WIDTH,
+          borderRight: '1px solid #e0e0e0', 
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          overflow: 'auto',
+        }}>
+          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
+            <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
+            <ProjectList
+              selectedProject={selectedProject}
+              onSelectProject={handleSelectProject}
+            />
+          </Paper>
+          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
+            <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
+            <ArtistList />
+          </Paper>
+          <Paper elevation={0} sx={{ borderRadius: 0, flexGrow: 1, bgcolor: '#f0f0f0', minHeight: '200px' }}>
+            <Typography variant="h6" sx={{ p: 2, bgcolor: '#e0e0e0' }}>Debug: Booked Artists</Typography>
+            {selectedProject ? (
+              selectedProject.bookings && selectedProject.bookings.length > 0 ? (
+                <List>
+                  {selectedProject.bookings.map((booking) => (
+                    <ListItem
+                      key={booking.id}
+                      secondaryAction={
+                        <IconButton 
+                          edge="end" 
+                          aria-label="delete" 
+                          onClick={() => {
+                            console.log("Delete button clicked for booking:", booking.id);
+                            handleRemoveBooking(booking.id);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText
+                        primary={booking.artistName}
+                        secondary={`${booking.startDate} - ${booking.endDate}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography sx={{ p: 2 }}>No bookings for this project</Typography>
+              )
+            ) : (
+              <Typography sx={{ p: 2 }}>Select a project to see bookings</Typography>
+            )}
+          </Paper>
         </Box>
 
         {/* Center Panel (Gantt Chart) */}
@@ -201,4 +265,10 @@ function GanttView() {
   );
 }
 
-export default GanttView;
+export default function WrappedGanttView() {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <GanttView />
+    </DndProvider>
+  );
+}
