@@ -1,25 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  IconButton, 
-  TextField, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  Collapse,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
-} from '@mui/material';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Box, Typography, TextField, IconButton, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import moment from 'moment';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget }) {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -31,14 +14,18 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [editingDelivery, setEditingDelivery] = useState(null);
   const [expandedDelivery, setExpandedDelivery] = useState(null);
 
+  const calculateBookingDays = useCallback((booking) => {
+    const start = new Date(booking.startDate);
+    const end = new Date(booking.endDate);
+    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  }, []);
+
   const calculateBudgetSpent = useCallback(() => {
     return (project?.bookings || []).reduce((total, booking) => {
-      const startDate = new Date(booking.startDate);
-      const endDate = new Date(booking.endDate);
-      const days = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
+      const days = calculateBookingDays(booking);
       return total + (booking.dailyRate * days);
     }, 0);
-  }, [project?.bookings]);
+  }, [project?.bookings, calculateBookingDays]);
 
   const budgetSpent = calculateBudgetSpent();
   const totalBudget = project?.budget || 0;
@@ -56,13 +43,26 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     }
   };
 
-  const chartData = useMemo(() => {
+  const budgetChartData = useMemo(() => {
     const remaining = Math.max(totalBudget - budgetSpent, 0);
     return [
       { name: 'Spent', value: budgetSpent },
       { name: 'Remaining', value: remaining },
     ];
   }, [totalBudget, budgetSpent]);
+
+  const artistCostsChartData = useMemo(() => {
+    return project?.bookings.reduce((acc, booking) => {
+      const cost = booking.dailyRate * calculateBookingDays(booking);
+      const existingArtist = acc.find(item => item.name === booking.artistName);
+      if (existingArtist) {
+        existingArtist.value += cost;
+      } else {
+        acc.push({ name: booking.artistName, value: cost });
+      }
+      return acc;
+    }, []);
+  }, [project?.bookings, calculateBookingDays]);
 
   const handleAddOrEditDelivery = () => {
     const delivery = {
@@ -106,14 +106,12 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   };
 
   return (
-    <Box sx={{ display: 'flex', width: '100%', p: 2 }}>
-      <Box sx={{ flex: 1, mr: 2 }}>
+    <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2 }}>
+      {/* Project Data */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h6" gutterBottom>Project Data</Typography>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Typography variant="body1" sx={{ mr: 1 }}>
-            Total Budget: $
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Typography variant="body1" sx={{ mr: 1 }}>Total Budget: $</Typography>
           {isEditingBudget ? (
             <TextField
               value={tempBudget}
@@ -124,66 +122,110 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             />
           ) : (
             <>
-              <Typography variant="body1" sx={{ mr: 1 }}>
-                {totalBudget.toFixed(2)}
-              </Typography>
+              <Typography variant="body1" sx={{ mr: 1 }}>{totalBudget.toFixed(2)}</Typography>
               <IconButton size="small" onClick={handleBudgetEdit}>
                 <EditIcon fontSize="small" />
               </IconButton>
             </>
           )}
         </Box>
-
-        <Typography 
-          variant="body1" 
-          sx={{ mb: 2, color: isOverBudget ? 'error.main' : 'inherit' }}
-        >
+        <Typography variant="body1" sx={{ mb: 1, color: isOverBudget ? 'error.main' : 'inherit' }}>
           Budget Spent: ${budgetSpent.toFixed(2)}
         </Typography>
-
-        <Box sx={{ height: 150, width: 150 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={60}
-                fill="#8884d8"
-              >
-                <Cell fill="#000000" />
-                <Cell fill="#CCCCCC" />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </Box>
       </Box>
 
-      <Box sx={{ flex: 2 }}>
+      {/* Budget Pie Chart */}
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="subtitle1" gutterBottom>Budget Overview</Typography>
+        <ResponsiveContainer width="100%" height={150}>
+          <PieChart>
+            <Pie
+              data={budgetChartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={60}
+              fill="#8884d8"
+            >
+              <Cell fill="#000000" />
+              <Cell fill="#CCCCCC" />
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
+
+      {/* Artist Costs Pie Chart */}
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="subtitle1" gutterBottom>Artist Costs</Typography>
+        <ResponsiveContainer width="100%" height={150}>
+          <PieChart>
+            <Pie
+              data={artistCostsChartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={60}
+              fill="#8884d8"
+            >
+              {artistCostsChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
+
+      <Divider orientation="vertical" flexItem />
+
+      {/* Deliveries */}
+      <Box sx={{ flex: 1 }}>
         <Typography variant="h6" gutterBottom>Deliveries</Typography>
-        <Button variant="contained" onClick={() => setOpenDialog(true)} sx={{ mb: 2 }}>
+        <Button variant="contained" onClick={() => setOpenDialog(true)} sx={{ mb: 1 }}>
           Add Delivery
         </Button>
-        <List>
+        <List dense>
           {project.deliveries && project.deliveries.map((delivery) => (
-            <ListItem key={delivery.id}>
+            <ListItem key={delivery.id} secondaryAction={
+              <>
+                <IconButton edge="end" aria-label="edit" onClick={() => handleEditClick(delivery)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(delivery.id)}>
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            }>
               <ListItemText
                 primary={delivery.name}
                 secondary={delivery.date}
               />
-              <IconButton edge="end" aria-label="edit" onClick={() => handleEditClick(delivery)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(delivery.id)}>
-                <DeleteIcon />
-              </IconButton>
             </ListItem>
           ))}
         </List>
       </Box>
 
+      <Divider orientation="vertical" flexItem />
+
+      {/* Booked Artists */}
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h6" gutterBottom>Booked Artists</Typography>
+        <List dense>
+          {project.bookings && project.bookings.map((booking) => (
+            <ListItem key={booking.id}>
+              <ListItemText
+                primary={booking.artistName}
+                secondary={`Daily Rate: $${booking.dailyRate} | Skills: ${booking.skills || 'N/A'}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      {/* Keep the Dialog for adding/editing deliveries */}
       <Dialog open={openDialog} onClose={() => { setOpenDialog(false); resetForm(); }}>
         <DialogTitle>{editingDelivery ? 'Edit Delivery' : 'Add New Delivery'}</DialogTitle>
         <DialogContent>
