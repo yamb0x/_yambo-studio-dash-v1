@@ -12,7 +12,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
 
-  const startOffset = bookingStart.diff(startDate, 'days');
+  // Adjust the startOffset calculation
+  const startOffset = bookingStart.diff(startDate, 'days') - 1;
   const duration = bookingEnd.diff(bookingStart, 'days') + 1;
 
   const getLeftPosition = () => {

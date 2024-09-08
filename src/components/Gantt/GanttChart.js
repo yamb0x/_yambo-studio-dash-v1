@@ -21,12 +21,12 @@ function GanttChart({ project }) {
   }, [projects, project.id]);
 
   const projectStartDate = moment(currentProject.startDate);
-  const startDate = projectStartDate.clone().startOf('isoWeek');
+  const chartStartDate = projectStartDate.clone().startOf('isoWeek');
   const endDate = moment(currentProject.endDate).endOf('isoWeek');
-  const totalDays = endDate.diff(startDate, 'days') + 1;
+  const totalDays = endDate.diff(chartStartDate, 'days') + 1;
   const totalWeeks = Math.ceil(totalDays / 7);
 
-  const indicatorOffset = projectStartDate.diff(startDate, 'days') * DAY_WIDTH;
+  const indicatorOffset = projectStartDate.diff(chartStartDate, 'days') * DAY_WIDTH;
 
   const groupedBookings = useMemo(() => {
     const groups = {};
@@ -56,7 +56,7 @@ function GanttChart({ project }) {
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
     for (let week = 0; week < totalWeeks; week++) {
-      const weekStart = startDate.clone().add(week, 'weeks');
+      const weekStart = chartStartDate.clone().add(week, 'weeks');
       const weekEnd = weekStart.clone().add(4, 'days');
       
       weekHeaders.push(
@@ -104,7 +104,7 @@ function GanttChart({ project }) {
   const renderDays = () => {
     const days = [];
     for (let i = 0; i < totalWeeks * WORKING_DAYS_PER_WEEK; i++) {
-      const currentDate = startDate.clone().add(i, 'days');
+      const currentDate = chartStartDate.clone().add(i, 'days');
       days.push(
         <Box
           key={i}
@@ -155,19 +155,7 @@ function GanttChart({ project }) {
         height: `${(Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP}px`,
         position: 'relative'
       }}>
-        {/* Blue Timeline Indicator (Project Start) */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: `${ARTIST_COLUMN_WIDTH + indicatorOffset}px`,
-            top: 0,
-            bottom: 0,
-            width: `${TIMELINE_INDICATOR_WIDTH}px`,
-            backgroundColor: 'blue',
-            zIndex: 3,
-          }}
-        />
-        {/* Green Debug Indicator (Gantt Start) */}
+        {/* Green Debug Indicator (Fixed at Gantt Start) */}
         <Box
           sx={{
             position: 'absolute',
@@ -179,10 +167,30 @@ function GanttChart({ project }) {
             zIndex: 3,
           }}
         />
-        {/* Week headers */}
-        <Box sx={{ position: 'sticky', top: 0, zIndex: 2, backgroundColor: 'white' }}>
-          <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc' }}>
+        {/* Week headers and Blue Timeline Indicator (Project Start) */}
+        <Box 
+          sx={{ 
+            position: 'sticky', 
+            top: 0, 
+            zIndex: 2, 
+            backgroundColor: 'white',
+            marginLeft: `-${indicatorOffset}px`, // Shift headers to align with green indicator
+          }}
+        >
+          <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', position: 'relative' }}>
             {renderWeekHeaders()}
+            {/* Blue Timeline Indicator (Project Start) */}
+            <Box
+              sx={{
+                position: 'absolute',
+                left: `${ARTIST_COLUMN_WIDTH + indicatorOffset}px`,
+                top: 0,
+                bottom: 0,
+                width: `${TIMELINE_INDICATOR_WIDTH}px`,
+                backgroundColor: 'blue',
+                zIndex: 3,
+              }}
+            />
           </Box>
         </Box>
         {/* Chart content */}
@@ -192,7 +200,8 @@ function GanttChart({ project }) {
           height: `calc(100% - ${CHART_PADDING_TOP}px)`,
           '& .day-separator': {
             pointerEvents: 'none',
-          }
+          },
+          marginLeft: `-${indicatorOffset}px`, // Shift content to align with green indicator
         }}>
           {renderDays()}
           {Object.entries(groupedBookings).map(([artistName, bookings], artistIndex) => (
@@ -231,7 +240,7 @@ function GanttChart({ project }) {
                   dayWidth={DAY_WIDTH}
                   rowHeight={ROW_HEIGHT}
                   onUpdate={handleUpdate}
-                  startDate={startDate}
+                  startDate={chartStartDate}
                   onDragStart={handleDragStart}
                   artistColumnWidth={ARTIST_COLUMN_WIDTH}
                   timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
