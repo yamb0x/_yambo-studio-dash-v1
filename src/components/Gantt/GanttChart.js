@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
+import { COLORS } from '../../constants';
 
 const WEEK_WIDTH = 250;
 const DAY_WIDTH = WEEK_WIDTH / 5;
@@ -11,14 +12,6 @@ const ROW_HEIGHT = 60;
 const CHART_PADDING_TOP = 50;
 const ARTIST_COLUMN_WIDTH = 150;
 const TIMELINE_INDICATOR_WIDTH = 2;
-
-const COLORS = [
-  '#dfdfde',
-  '#a2798f',
-  '#d7c6cf',
-  '#8caba8',
-  '#ebdada',
-];
 
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();

@@ -2,9 +2,10 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, TextField, IconButton, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { COLORS } from '../../constants';
 
-function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget }) {
+function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, artistColors = {} }) {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [tempBudget, setTempBudget] = useState(project?.budget || 0);
   const [openDialog, setOpenDialog] = useState(false);
@@ -31,18 +32,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const totalBudget = project?.budget || 0;
   const isOverBudget = budgetSpent > totalBudget;
 
-  const handleBudgetEdit = () => {
-    setIsEditingBudget(true);
-  };
-
-  const handleBudgetSave = () => {
-    const newBudget = parseFloat(tempBudget);
-    if (!isNaN(newBudget)) {
-      onUpdateBudget(newBudget);
-      setIsEditingBudget(false);
-    }
-  };
-
   const budgetChartData = useMemo(() => {
     const remaining = Math.max(totalBudget - budgetSpent, 0);
     return [
@@ -63,6 +52,18 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       return acc;
     }, []);
   }, [project?.bookings, calculateBookingDays]);
+
+  const handleBudgetEdit = () => {
+    setIsEditingBudget(true);
+  };
+
+  const handleBudgetSave = () => {
+    const newBudget = parseFloat(tempBudget);
+    if (!isNaN(newBudget)) {
+      onUpdateBudget(newBudget);
+      setIsEditingBudget(false);
+    }
+  };
 
   const handleAddOrEditDelivery = () => {
     const delivery = {
@@ -105,8 +106,28 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     setExpandedDelivery(expandedDelivery === deliveryId ? null : deliveryId);
   };
 
+  const getArtistColor = useCallback((artistName) => {
+    return artistColors[artistName] || COLORS[Object.keys(artistColors).length % COLORS.length];
+  }, [artistColors]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Box sx={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc' }}>
+          <Typography>{`${payload[0].name}: $${payload[0].value.toFixed(2)}`}</Typography>
+          <Typography>{`${(payload[0].percent * 100).toFixed(2)}%`}</Typography>
+        </Box>
+      );
+    }
+    return null;
+  };
+
+  const renderColorfulLegendText = (value, entry) => {
+    return <span style={{ color: entry.color, fontWeight: 'bold' }}>{value}</span>;
+  };
+
   return (
-    <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2 }}>
+    <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2, paddingTop: 4 }}> {/* Increased top padding */}
       {/* Project Data */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h6" gutterBottom>Project Data</Typography>
@@ -135,9 +156,9 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       </Box>
 
       {/* Budget Pie Chart */}
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="subtitle1" gutterBottom>Budget Overview</Typography>
-        <ResponsiveContainer width="100%" height={150}>
+        <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
               data={budgetChartData}
@@ -145,21 +166,26 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={60}
+              outerRadius={80}
               fill="#8884d8"
             >
               <Cell fill="#000000" />
               <Cell fill="#CCCCCC" />
             </Pie>
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              formatter={renderColorfulLegendText} 
+              iconSize={10} 
+              wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </Box>
 
       {/* Artist Costs Pie Chart */}
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="subtitle1" gutterBottom>Artist Costs</Typography>
-        <ResponsiveContainer width="100%" height={150}>
+        <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
               data={artistCostsChartData}
@@ -167,14 +193,19 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={60}
+              outerRadius={80}
               fill="#8884d8"
             >
               {artistCostsChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
+                <Cell key={`cell-${index}`} fill={getArtistColor(entry.name)} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              formatter={renderColorfulLegendText} 
+              iconSize={10} 
+              wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </Box>

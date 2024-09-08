@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Box, Typography, Paper, Divider, List, ListItem, ListItemText, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DndProvider, useDrop } from 'react-dnd';
@@ -10,6 +10,7 @@ import { useProjects } from '../contexts/ProjectContext';
 import moment from 'moment';
 import { useArtists } from '../contexts/ArtistContext';
 import RightPanel from '../components/Gantt/RightPanel';
+import { COLORS } from '../constants'; // Make sure you have this file with color constants
 
 const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
 
@@ -123,6 +124,17 @@ function GanttView() {
     }
   }, [selectedProject, addDelivery]);
 
+  const artistColors = useMemo(() => {
+    if (!selectedProject || !selectedProject.bookings) {
+      return {};
+    }
+    const artists = Array.from(new Set(selectedProject.bookings.map(b => b.artistName)));
+    return artists.reduce((acc, artist, index) => {
+      acc[artist] = COLORS[index % COLORS.length];
+      return acc;
+    }, {});
+  }, [selectedProject]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -210,6 +222,7 @@ function GanttView() {
             onEditDelivery={handleEditDelivery}
             onDeleteDelivery={handleDeleteDelivery}
             onUpdateBudget={handleUpdateBudget}
+            artistColors={artistColors}
           />
         </Box>
       )}
