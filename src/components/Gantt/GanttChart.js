@@ -4,9 +4,9 @@ import moment from 'moment';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 
-const WEEK_WIDTH = 250; // Increased to accommodate 5 days
+const WEEK_WIDTH = 250;
 const CHART_HEIGHT = 400;
-const DAY_WIDTH = WEEK_WIDTH / 5; // Now 5 days per week
+const DAY_WIDTH = WEEK_WIDTH / 5;
 
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
@@ -39,6 +39,7 @@ function GanttChart({ project }) {
       const dragPreview = document.getElementById('drag-preview');
       if (dragPreview) {
         dragPreview.style.left = `${newStartOffset}px`;
+        dragPreview.style.width = `${(draggedBooking.duration / 5) * WEEK_WIDTH}px`;
       }
     }
   }, [draggedBooking]);
@@ -51,8 +52,7 @@ function GanttChart({ project }) {
       const x = e.clientX - rect.left;
       const newStartOffset = Math.floor(x / DAY_WIDTH);
       const newStartDate = startDate.clone().add(newStartOffset, 'days');
-      const duration = moment(draggedBooking.endDate).diff(moment(draggedBooking.startDate), 'days');
-      const newEndDate = newStartDate.clone().add(duration, 'days');
+      const newEndDate = newStartDate.clone().add(draggedBooking.duration - 1, 'days');
 
       handleUpdate(currentProject.id, {
         ...draggedBooking,
@@ -68,10 +68,11 @@ function GanttChart({ project }) {
     const weeks = [];
     for (let i = 0; i < duration; i++) {
       const weekStart = startDate.clone().add(i, 'weeks');
+      const weekEnd = weekStart.clone().add(4, 'days');
       weeks.push(
         <Box key={i} sx={{ width: WEEK_WIDTH, borderRight: '1px solid #ccc', flexShrink: 0, textAlign: 'center' }}>
           <Typography variant="caption" sx={{ padding: '4px' }}>
-            Week {weekStart.format('W')} ({weekStart.format('DD/MM')} - {weekStart.clone().add(4, 'days').format('DD/MM')})
+            Week {weekStart.format('W')} ({weekStart.format('DD/MM')} - {weekEnd.format('DD/MM')})
           </Typography>
         </Box>
       );
@@ -119,7 +120,7 @@ function GanttChart({ project }) {
         index={index}
         onUpdate={handleUpdate}
         startDate={startDate}
-        onDragStart={handleDragStart}  // Add this line
+        onDragStart={handleDragStart}
       />
     ));
   };
