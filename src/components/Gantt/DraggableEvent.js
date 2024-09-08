@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-const RESIZE_HANDLE_WIDTH = 10;
+const RESIZE_HANDLE_WIDTH = 10; // Width of the resize handle in pixels
 
 function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDate, onDragStart }) {
   const [isResizing, setIsResizing] = useState(false);
@@ -113,7 +113,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
 
   function calculateWorkingDays(start, end) {
     let days = 0;
-    let current = start.clone().startOf('day');
+    let current = start.clone();
     while (current.isSameOrBefore(end, 'day')) {
       if (current.day() !== 0 && current.day() !== 6) {
         days++;
@@ -141,6 +141,8 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     }
     return ensureWorkingDay(date);
   }
+
+  const totalCost = duration * booking.dailyRate;
 
   return (
     <Box
@@ -182,7 +184,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
         {booking.artistName} ({displayStart.format('DD/MM')} - {displayEnd.format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
-        Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
+        Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${totalCost.toFixed(2)}
       </Typography>
     </Box>
   );
