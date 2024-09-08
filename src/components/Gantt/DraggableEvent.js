@@ -174,7 +174,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
+        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.clone().subtract(1, 'day').format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
