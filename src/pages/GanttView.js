@@ -156,6 +156,9 @@ function GanttView() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
+      <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
+        <ProjectList selectedProject={selectedProject} onSelectProject={handleSelectProject} />
+      </Box>
       <Box sx={{ display: 'flex', height: '100%' }}> {/* Update this line */}
         {/* Left Panel */}
         <Box sx={{ width: SIDE_PANEL_WIDTH, borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
