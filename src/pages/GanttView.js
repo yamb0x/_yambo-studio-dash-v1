@@ -165,10 +165,6 @@ function GanttView() {
     }, {});
   }, [selectedProject]);
 
-  const handleSelectProject = useCallback((project) => {
-    setSelectedProject(project);
-  }, []);
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -185,7 +181,7 @@ function GanttView() {
             <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
             <ProjectList
               selectedProject={selectedProject}
-              onSelectProject={handleSelectProject}
+              onSelectProject={setSelectedProject}
             />
           </Paper>
           <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
