@@ -106,92 +106,80 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   };
 
   return (
-    <Box sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-      <Typography variant="h6" gutterBottom>Project Data</Typography>
-      
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body1" display="inline">
-          Total Budget: $
-        </Typography>
-        {isEditingBudget ? (
-          <TextField
-            value={tempBudget}
-            onChange={(e) => setTempBudget(e.target.value)}
-            onBlur={handleBudgetSave}
-            size="small"
-            sx={{ width: '100px' }}
-          />
-        ) : (
-          <>
-            <Typography variant="body1" display="inline">
-              {totalBudget.toFixed(2)}
-            </Typography>
-            <IconButton size="small" onClick={handleBudgetEdit}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </>
-        )}
-      </Box>
-
-      <Typography 
-        variant="body1" 
-        sx={{ mb: 2, color: isOverBudget ? 'error.main' : 'inherit' }}
-      >
-        Budget Spent: ${budgetSpent.toFixed(2)}
-      </Typography>
-
-      <Box sx={{ height: 200, mb: 2 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-            >
-              <Cell fill="#000000" />
-              <Cell fill="#CCCCCC" />
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-      </Box>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom>Deliveries</Typography>
-        <Button variant="contained" onClick={() => setOpenDialog(true)}>Add Delivery</Button>
+    <Box sx={{ display: 'flex', width: '100%', p: 2 }}>
+      <Box sx={{ flex: 1, mr: 2 }}>
+        <Typography variant="h6" gutterBottom>Project Data</Typography>
         
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Typography variant="body1" sx={{ mr: 1 }}>
+            Total Budget: $
+          </Typography>
+          {isEditingBudget ? (
+            <TextField
+              value={tempBudget}
+              onChange={(e) => setTempBudget(e.target.value)}
+              onBlur={handleBudgetSave}
+              size="small"
+              sx={{ width: '100px' }}
+            />
+          ) : (
+            <>
+              <Typography variant="body1" sx={{ mr: 1 }}>
+                {totalBudget.toFixed(2)}
+              </Typography>
+              <IconButton size="small" onClick={handleBudgetEdit}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+
+        <Typography 
+          variant="body1" 
+          sx={{ mb: 2, color: isOverBudget ? 'error.main' : 'inherit' }}
+        >
+          Budget Spent: ${budgetSpent.toFixed(2)}
+        </Typography>
+
+        <Box sx={{ height: 150, width: 150 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={60}
+                fill="#8884d8"
+              >
+                <Cell fill="#000000" />
+                <Cell fill="#CCCCCC" />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 2 }}>
+        <Typography variant="h6" gutterBottom>Deliveries</Typography>
+        <Button variant="contained" onClick={() => setOpenDialog(true)} sx={{ mb: 2 }}>
+          Add Delivery
+        </Button>
         <List>
           {project.deliveries && project.deliveries.map((delivery) => (
-            <React.Fragment key={delivery.id}>
-              <ListItem
-                secondaryAction={
-                  <>
-                    <IconButton edge="end" aria-label="edit" onClick={() => handleEditClick(delivery)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(delivery.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                    <IconButton edge="end" aria-label="expand" onClick={() => toggleExpand(delivery.id)}>
-                      {expandedDelivery === delivery.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </>
-                }
-              >
-                <ListItemText
-                  primary={delivery.name}
-                  secondary={moment(delivery.date).format('MMMM D, YYYY')}
-                />
-              </ListItem>
-              <Collapse in={expandedDelivery === delivery.id} timeout="auto" unmountOnExit>
-                <Box sx={{ pl: 4, pr: 2, pb: 2 }}>
-                  <Typography variant="body2">{delivery.notes || 'No notes available.'}</Typography>
-                </Box>
-              </Collapse>
-            </React.Fragment>
+            <ListItem key={delivery.id}>
+              <ListItemText
+                primary={delivery.name}
+                secondary={delivery.date}
+              />
+              <IconButton edge="end" aria-label="edit" onClick={() => handleEditClick(delivery)}>
+                <EditIcon />
+              </IconButton>
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(delivery.id)}>
+                <DeleteIcon />
+              </IconButton>
+            </ListItem>
           ))}
         </List>
       </Box>

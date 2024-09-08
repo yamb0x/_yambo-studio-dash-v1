@@ -124,83 +124,86 @@ function GanttView() {
   }, [selectedProject, addDelivery]);
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
-      {/* Left Panel */}
-      <Box sx={{ 
-        width: SIDE_PANEL_WIDTH,
-        borderRight: '1px solid #e0e0e0', 
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-      }}>
-        <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
-          <ProjectList
-            selectedProject={selectedProject}
-            onSelectProject={setSelectedProject}
-          />
-        </Paper>
-        <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
-          <ArtistList />
-        </Paper>
-        <Paper elevation={0} sx={{ borderRadius: 0, flexGrow: 1, bgcolor: '#f0f0f0', minHeight: '200px' }}>
-          <Typography variant="h6" sx={{ p: 2, bgcolor: '#e0e0e0' }}>Debug: Booked Artists</Typography>
-          {selectedProject ? (
-            selectedProject.bookings && selectedProject.bookings.length > 0 ? (
-              <List>
-                {selectedProject.bookings.map((booking) => (
-                  <ListItem
-                    key={booking.id}
-                    secondaryAction={
-                      <IconButton 
-                        edge="end" 
-                        aria-label="delete" 
-                        onClick={() => {
-                          console.log("Delete button clicked for booking:", booking.id);
-                          handleRemoveBooking(booking.id);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={booking.artistName}
-                      secondary={`${booking.startDate} - ${booking.endDate}`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {/* Left Panel */}
+        <Box sx={{ 
+          width: SIDE_PANEL_WIDTH,
+          borderRight: '1px solid #e0e0e0', 
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          overflow: 'auto',
+        }}>
+          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
+            <Typography variant="h6" sx={{ p: 2 }}>Projects</Typography>
+            <ProjectList
+              selectedProject={selectedProject}
+              onSelectProject={setSelectedProject}
+            />
+          </Paper>
+          <Paper elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid #e0e0e0' }}>
+            <Typography variant="h6" sx={{ p: 2 }}>Artists</Typography>
+            <ArtistList />
+          </Paper>
+          <Paper elevation={0} sx={{ borderRadius: 0, flexGrow: 1, bgcolor: '#f0f0f0', minHeight: '200px' }}>
+            <Typography variant="h6" sx={{ p: 2, bgcolor: '#e0e0e0' }}>Debug: Booked Artists</Typography>
+            {selectedProject ? (
+              selectedProject.bookings && selectedProject.bookings.length > 0 ? (
+                <List>
+                  {selectedProject.bookings.map((booking) => (
+                    <ListItem
+                      key={booking.id}
+                      secondaryAction={
+                        <IconButton 
+                          edge="end" 
+                          aria-label="delete" 
+                          onClick={() => {
+                            console.log("Delete button clicked for booking:", booking.id);
+                            handleRemoveBooking(booking.id);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText
+                        primary={booking.artistName}
+                        secondary={`${booking.startDate} - ${booking.endDate}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography sx={{ p: 2 }}>No bookings for this project</Typography>
+              )
             ) : (
-              <Typography sx={{ p: 2 }}>No bookings for this project</Typography>
-            )
+              <Typography sx={{ p: 2 }}>Select a project to see bookings</Typography>
+            )}
+          </Paper>
+        </Box>
+
+        {/* Center Panel (Gantt Chart) */}
+        <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'auto' }}>
+          <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
+          {selectedProject ? (
+            <GanttChart key={selectedProject.id} project={selectedProject} />
           ) : (
-            <Typography sx={{ p: 2 }}>Select a project to see bookings</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography>Please select a project</Typography>
+            </Box>
           )}
-        </Paper>
+        </Box>
       </Box>
 
-      {/* Center Panel (Gantt Chart) */}
-      <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
-        <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
-        {selectedProject ? (
-          <GanttChart key={selectedProject.id} project={selectedProject} />
-        ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <Typography>Please select a project</Typography>
-          </Box>
-        )}
-      </Box>
-
-      {/* Right Panel */}
-      <Box sx={{ 
-        width: SIDE_PANEL_WIDTH, 
-        borderLeft: '1px solid #e0e0e0',
-        flexShrink: 0,
-        overflowY: 'auto'
-      }}>
-        {selectedProject && (
+      {/* Bottom Panel (former Right Panel) */}
+      {selectedProject && (
+        <Box sx={{ 
+          height: '30%', // Adjust this value to change the height of the bottom panel
+          borderTop: '1px solid #e0e0e0',
+          overflowY: 'auto',
+          display: 'flex',
+        }}>
           <RightPanel 
             project={selectedProject} 
             onAddDelivery={handleAddDelivery}
@@ -208,8 +211,8 @@ function GanttView() {
             onDeleteDelivery={handleDeleteDelivery}
             onUpdateBudget={handleUpdateBudget}
           />
-        )}
-      </Box>
+        </Box>
+      )}
     </Box>
   );
 }
