@@ -1,8 +1,12 @@
 export const COLORS = [
-  '#dfdfde',
-  '#a2798f',
-  '#d7c6cf',
-  '#8caba8',
-  '#ebdada',
-  // You can add more colors here if needed
+  '#FF6384',
+  '#36A2EB',
+  '#FFCE56',
+  '#4BC0C0',
+  '#9966FF',
+  '#FF9F40',
+  '#FF6384',
+  '#C9CBCF',
+  '#7BC225',
+  '#FFA1B5',
 ];
