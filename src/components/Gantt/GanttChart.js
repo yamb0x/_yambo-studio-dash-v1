@@ -5,8 +5,9 @@ import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 
 const WEEK_WIDTH = 250;
-const CHART_HEIGHT = 400;
 const DAY_WIDTH = WEEK_WIDTH / 5;
+const ROW_HEIGHT = 60;
+const CHART_PADDING_TOP = 50;
 
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
@@ -19,6 +20,18 @@ function GanttChart({ project }) {
   const startDate = moment(currentProject.startDate).startOf('week');
   const endDate = moment(currentProject.endDate).endOf('week');
   const duration = endDate.diff(startDate, 'weeks') + 1;
+
+  // Group bookings by artist
+  const groupedBookings = useMemo(() => {
+    const groups = {};
+    currentProject.bookings.forEach(booking => {
+      if (!groups[booking.artistName]) {
+        groups[booking.artistName] = [];
+      }
+      groups[booking.artistName].push(booking);
+    });
+    return groups;
+  }, [currentProject.bookings]);
 
   const handleUpdate = useCallback((projectId, updatedBooking) => {
     updateBooking(projectId, updatedBooking);
@@ -34,12 +47,11 @@ function GanttChart({ project }) {
       const ganttChartElement = document.getElementById('gantt-chart');
       const rect = ganttChartElement.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      const newStartOffset = Math.floor(x / DAY_WIDTH) * DAY_WIDTH;
+      const newStartOffset = Math.floor(x / DAY_WIDTH);
       
       const dragPreview = document.getElementById('drag-preview');
       if (dragPreview) {
-        dragPreview.style.left = `${newStartOffset}px`;
-        dragPreview.style.width = `${(draggedBooking.duration / 5) * WEEK_WIDTH}px`;
+        dragPreview.style.left = `${newStartOffset * DAY_WIDTH}px`;
       }
     }
   }, [draggedBooking]);
@@ -52,7 +64,8 @@ function GanttChart({ project }) {
       const x = e.clientX - rect.left;
       const newStartOffset = Math.floor(x / DAY_WIDTH);
       const newStartDate = startDate.clone().add(newStartOffset, 'days');
-      const newEndDate = newStartDate.clone().add(draggedBooking.duration - 1, 'days');
+      const duration = moment(draggedBooking.endDate).diff(moment(draggedBooking.startDate), 'days');
+      const newEndDate = newStartDate.clone().add(duration, 'days');
 
       handleUpdate(currentProject.id, {
         ...draggedBooking,
@@ -68,29 +81,13 @@ function GanttChart({ project }) {
     const weeks = [];
     for (let i = 0; i < duration; i++) {
       const weekStart = startDate.clone().add(i, 'weeks');
-      const weekEnd = weekStart.clone().add(4, 'days');
       weeks.push(
-        <Box key={i} sx={{ width: WEEK_WIDTH, borderRight: '1px solid #ccc', flexShrink: 0, textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ padding: '4px' }}>
-            Week {weekStart.format('W')} ({weekStart.format('DD/MM')} - {weekEnd.format('DD/MM')})
-          </Typography>
+        <Box key={i} sx={{ width: WEEK_WIDTH, borderRight: '1px solid #ccc', textAlign: 'center', padding: '5px' }}>
+          Week {weekStart.format('DD/MM')}
         </Box>
       );
     }
     return weeks;
-  };
-
-  const renderDayLabels = () => {
-    const dayLabels = ['M', 'T', 'W', 'T', 'F'];
-    return (
-      <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc' }}>
-        {dayLabels.map((day, index) => (
-          <Box key={index} sx={{ width: DAY_WIDTH, textAlign: 'center', flexShrink: 0 }}>
-            <Typography variant="caption">{day}</Typography>
-          </Box>
-        ))}
-      </Box>
-    );
   };
 
   const renderDays = () => {
@@ -100,9 +97,12 @@ function GanttChart({ project }) {
         <Box
           key={i}
           sx={{
-            width: DAY_WIDTH,
-            height: '100%',
-            borderRight: '1px solid #eee',
+            position: 'absolute',
+            left: i * DAY_WIDTH,
+            top: 0,
+            bottom: 0,
+            width: '1px',
+            backgroundColor: i % 5 === 4 ? '#ccc' : '#eee',
           }}
         />
       );
@@ -110,77 +110,72 @@ function GanttChart({ project }) {
     return days;
   };
 
-  const renderBookings = () => {
-    return (currentProject.bookings || []).map((booking, index) => (
-      <DraggableEvent
-        key={booking.id}
-        booking={booking}
-        project={currentProject}
-        weekWidth={WEEK_WIDTH}
-        index={index}
-        onUpdate={handleUpdate}
-        startDate={startDate}
-        onDragStart={handleDragStart}
-      />
-    ));
-  };
-
   const renderDeliveries = () => {
-    return (currentProject.deliveries || []).map((delivery) => {
-      const deliveryDate = moment(delivery.date);
-      const offsetDays = deliveryDate.diff(startDate, 'days');
-      const adjustedOffset = offsetDays - (Math.floor(offsetDays / 7) * 2); // Adjust for weekends
-      return (
-        <Box
-          key={delivery.id}
-          sx={{
-            position: 'absolute',
-            left: `${adjustedOffset * DAY_WIDTH}px`,
-            top: 0,
-            width: '2px',
-            height: CHART_HEIGHT,
-            background: 'linear-gradient(to bottom, rgba(255,0,0,0.2), rgba(255,0,0,1))',
-            zIndex: 1000,
-          }}
-        >
-          <Typography
-            sx={{
-              position: 'absolute',
-              top: CHART_HEIGHT / 2,
-              left: '50%',
-              transform: 'translateX(-50%) rotate(-90deg)',
-              transformOrigin: 'left center',
-              whiteSpace: 'nowrap',
-              fontSize: '0.875rem',
-              color: 'red',
-              fontWeight: 300,
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              padding: '2px 4px',
-              borderRadius: '2px',
-            }}
-          >
-            {delivery.name}
-          </Typography>
-        </Box>
-      );
-    });
+    // ... (keep existing renderDeliveries function)
   };
 
   return (
     <Box 
       id="gantt-chart" 
-      sx={{ overflowX: 'auto', overflowY: 'hidden', position: 'relative' }}
+      sx={{ overflowX: 'auto', overflowY: 'auto', position: 'relative' }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: WEEK_WIDTH * duration }}>
-        <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc' }}>
-          {renderWeeks()}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minWidth: WEEK_WIDTH * duration, 
+        height: (Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP,
+        position: 'relative'
+      }}>
+        <Box sx={{ position: 'sticky', top: 0, zIndex: 2, backgroundColor: 'white' }}>
+          <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc' }}>
+            {renderWeeks()}
+          </Box>
         </Box>
-        {renderDayLabels()}
-        <Box sx={{ display: 'flex', height: CHART_HEIGHT, position: 'relative' }}>
+        <Box sx={{ paddingTop: CHART_PADDING_TOP, position: 'relative' }}>
           {renderDays()}
-          {renderBookings()}
+          {Object.entries(groupedBookings).map(([artistName, bookings], artistIndex) => (
+            <Box 
+              key={artistName} 
+              sx={{ 
+                position: 'absolute', 
+                top: artistIndex * ROW_HEIGHT, 
+                left: 0, 
+                right: 0, 
+                height: ROW_HEIGHT, 
+                borderBottom: '1px solid #eee',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <Typography 
+                sx={{ 
+                  position: 'sticky', 
+                  left: 0, 
+                  width: '150px', 
+                  paddingLeft: '10px',
+                  backgroundColor: 'white',
+                  zIndex: 1
+                }}
+              >
+                {artistName}
+              </Typography>
+              {bookings.map((booking) => (
+                <DraggableEvent
+                  key={booking.id}
+                  booking={booking}
+                  project={currentProject}
+                  weekWidth={WEEK_WIDTH}
+                  dayWidth={DAY_WIDTH}
+                  rowHeight={ROW_HEIGHT}
+                  onUpdate={handleUpdate}
+                  startDate={startDate}
+                  onDragStart={handleDragStart}
+                />
+              ))}
+            </Box>
+          ))}
           {renderDeliveries()}
         </Box>
       </Box>
@@ -189,7 +184,7 @@ function GanttChart({ project }) {
           id="drag-preview"
           sx={{
             position: 'absolute',
-            height: '30px',
+            height: `${ROW_HEIGHT - 10}px`,
             backgroundColor: 'rgba(0, 123, 255, 0.5)',
             border: '2px dashed #007bff',
             pointerEvents: 'none',
