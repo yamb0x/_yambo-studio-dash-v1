@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-const RESIZE_HANDLE_WIDTH = 10;
+const RESIZE_HANDLE_WIDTH = 10; // Width of the resize handle in pixels
 
 function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart }) {
   const [isResizing, setIsResizing] = useState(false);
@@ -11,9 +11,10 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
 
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
+  const projectStart = moment(startDate);
 
-  const startOffset = bookingStart.diff(startDate, 'days');
-  const duration = bookingEnd.diff(bookingStart, 'days') + 1;
+  const startOffset = calculateWorkingDayOffset(projectStart, bookingStart);
+  const duration = calculateWorkingDays(bookingStart, bookingEnd);
 
   useEffect(() => {
     const element = eventRef.current;
@@ -24,7 +25,20 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         e.preventDefault();
         return;
       }
-      onDragStart(booking);
+
+      e.dataTransfer.setData('text/plain', JSON.stringify(booking));
+      e.dataTransfer.effectAllowed = 'move';
+      
+      const dragImage = document.createElement('div');
+      dragImage.style.opacity = '0';
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+      
+      onDragStart({...booking, duration});
+
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
     };
 
     const handleMouseDown = (e) => {
@@ -47,7 +61,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       const rect = element.getBoundingClientRect();
       if (resizeDirection === 'left') {
         const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newStartDate = startDate.clone().add(startOffset + newStartOffset, 'days');
+        const newStartDate = calculateWorkingDayDate(projectStart, startOffset + newStartOffset);
         if (newStartDate.isBefore(bookingEnd)) {
           onUpdate(project.id, {
             ...booking,
@@ -56,7 +70,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         }
       } else if (resizeDirection === 'right') {
         const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newEndDate = startDate.clone().add(startOffset + newEndOffset, 'days');
+        const newEndDate = calculateWorkingDayDate(projectStart, startOffset + newEndOffset);
         if (newEndDate.isAfter(bookingStart)) {
           onUpdate(project.id, {
             ...booking,
@@ -82,7 +96,43 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [booking, onDragStart, isResizing, resizeDirection, onUpdate, project.id, startDate, startOffset, dayWidth, bookingStart, bookingEnd]);
+  }, [booking, onDragStart, duration, isResizing, resizeDirection, onUpdate, project.id, startDate, startOffset, weekWidth, bookingStart, bookingEnd, projectStart]);
+
+  function calculateWorkingDayOffset(start, end) {
+    let days = 0;
+    let current = start.clone().startOf('day');
+    while (current.isBefore(end, 'day')) {
+      if (current.day() !== 0 && current.day() !== 6) {
+        days++;
+      }
+      current.add(1, 'day');
+    }
+    return days;
+  }
+
+  function calculateWorkingDays(start, end) {
+    let days = 0;
+    let current = start.clone().startOf('day');
+    while (current.isSameOrBefore(end, 'day')) {
+      if (current.day() !== 0 && current.day() !== 6) {
+        days++;
+      }
+      current.add(1, 'day');
+    }
+    return days;
+  }
+
+  function calculateWorkingDayDate(baseDate, offset) {
+    let date = baseDate.clone().startOf('day');
+    let daysAdded = 0;
+    while (daysAdded < offset) {
+      date.add(1, 'day');
+      if (date.day() !== 0 && date.day() !== 6) {
+        daysAdded++;
+      }
+    }
+    return date;
+  }
 
   return (
     <Box
@@ -90,10 +140,11 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       draggable={!isResizing}
       sx={{
         position: 'absolute',
-        left: `${startOffset * dayWidth}px`,
-        top: '5px',
-        width: `${duration * dayWidth}px`,
-        height: `${rowHeight - 10}px`,
+        left: `${(startOffset / 5) * weekWidth}px`,
+        top: index * 40 + 10,
+        width: `${(duration / 5) * weekWidth}px`,
+        height: 'auto',
+        minHeight: 30,
         backgroundColor: 'primary.main',
         color: 'white',
         display: 'flex',
@@ -121,10 +172,10 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
+        {booking.artistName} ({firstWorkingDay.format('DD/MM')} - {lastWorkingDay.format('DD/MM')})
       </Typography>
-      <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
-        Days: {duration} | Rate: ${booking.dailyRate?.toFixed(2) || 'N/A'} | Total: ${(duration * (booking.dailyRate || 0)).toFixed(2)}
+      <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
+        Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
       </Typography>
     </Box>
   );
