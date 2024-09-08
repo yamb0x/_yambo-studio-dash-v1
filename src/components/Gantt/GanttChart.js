@@ -13,7 +13,7 @@ const CHART_PADDING_TOP = 50;
 const ARTIST_COLUMN_WIDTH = 150;
 const TIMELINE_INDICATOR_WIDTH = 2;
 
-function GanttChart({ project }) {
+function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
   const { projects, updateBooking } = useProjects();
   const [draggedBooking, setDraggedBooking] = useState(null);
 
@@ -30,6 +30,10 @@ function GanttChart({ project }) {
   const indicatorOffset = projectStartDate.diff(chartStartDate, 'days') * DAY_WIDTH;
 
   const groupedBookings = useMemo(() => {
+    if (!currentProject || !currentProject.bookings || !Array.isArray(currentProject.bookings)) {
+      return {};
+    }
+
     return currentProject.bookings.reduce((acc, booking) => {
       if (!acc[booking.artistName]) {
         acc[booking.artistName] = [];

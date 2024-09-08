@@ -169,6 +169,16 @@ function RightPanel({
     return <span style={{ color: entry.color, fontWeight: 'bold' }}>{value}</span>;
   };
 
+  const deliveriesData = useMemo(() => {
+    if (!project || !project.deliveries || !Array.isArray(project.deliveries)) {
+      return [];
+    }
+
+    return project.deliveries.reduce((acc, delivery) => {
+      // ... existing reduction logic
+    }, []);
+  }, [project]);
+
   return (
     <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2, paddingTop: 4 }}>
       {/* Project Data */}
@@ -311,7 +321,7 @@ function RightPanel({
           Add Delivery
         </Button>
         <List dense>
-          {project.deliveries && project.deliveries.map((delivery) => (
+          {deliveriesData.map((delivery) => (
             <ListItem key={delivery.id} secondaryAction={
               <>
                 <IconButton edge="end" aria-label="edit" onClick={() => handleEditClick(delivery)}>

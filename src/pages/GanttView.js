@@ -16,18 +16,14 @@ function GanttView() {
   const [selectedProject, setSelectedProject] = useState(null);
 
   const handleSelectProject = useCallback((project) => {
-    setSelectedProject(project);
+    if (project && project.id) {
+      setSelectedProject(project);
+    }
   }, []);
 
   const handleAddProject = useCallback((newProject) => {
     addProject(newProject);
   }, [addProject]);
-
-  const handleArtistDrop = useCallback((artistId, dropPosition) => {
-    if (selectedProject) {
-      console.log(`Artist ${artistId} dropped at position ${dropPosition}`);
-    }
-  }, [selectedProject]);
 
   const handleUpdateBooking = useCallback((updatedBooking) => {
     if (selectedProject) {
@@ -108,7 +104,7 @@ function GanttView() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <ProjectTabs
-        projects={projects}
+        projects={projects || []}
         selectedProject={selectedProject}
         onSelectProject={handleSelectProject}
       />
@@ -116,7 +112,7 @@ function GanttView() {
         {/* Left Panel */}
         <Box sx={{ width: SIDE_PANEL_WIDTH, borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
           <ArtistList
-            artists={artists}
+            artists={artists || []}
             onArtistDrop={handleArtistDrop}
           />
         </Box>

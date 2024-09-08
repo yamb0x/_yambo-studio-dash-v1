@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const ProjectContext = createContext();
 
@@ -7,10 +7,19 @@ export function useProjects() {
 }
 
 export function ProjectProvider({ children }) {
-  const [projects, setProjects] = useState(() => {
-    const savedProjects = localStorage.getItem('projects');
-    return savedProjects ? JSON.parse(savedProjects) : [];
-  });
+  const [projects, setProjects] = useState([]);
+
+  const addProject = useCallback((newProject) => {
+    setProjects(prevProjects => [...prevProjects, newProject]);
+  }, []);
+
+  const updateProject = useCallback((updatedProject) => {
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === updatedProject.id ? updatedProject : project
+      )
+    );
+  }, []);
 
   const updateBooking = (projectId, updatedBooking) => {
     setProjects(prevProjects => {
@@ -53,14 +62,6 @@ export function ProjectProvider({ children }) {
           : project
       )
     );
-  }, []);
-
-  const addProject = useCallback((newProject) => {
-    setProjects(prevProjects => [...prevProjects, { ...newProject, id: Date.now() }]);
-  }, []);
-
-  const deleteProject = useCallback((projectId) => {
-    setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
   }, []);
 
   const addDelivery = useCallback((projectId, newDelivery) => {
@@ -129,7 +130,8 @@ export function ProjectProvider({ children }) {
       addDelivery,
       editDelivery,
       deleteDelivery,
-      updateProjectBudget // Add this new function to the context
+      updateProjectBudget,
+      updateProject // Add this new function to the context
     }}>
       {children}
     </ProjectContext.Provider>
