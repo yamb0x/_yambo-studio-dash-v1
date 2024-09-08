@@ -149,10 +149,6 @@ function GanttView() {
     }, {});
   }, [selectedProject]);
 
-  const handleSelectProject = useCallback((project) => {
-    setSelectedProject(project);
-  }, []);
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <ProjectTabs
@@ -205,10 +201,4 @@ function GanttView() {
   );
 }
 
-export default function WrappedGanttView() {
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <GanttView />
-    </DndProvider>
-  );
-}
+export default GanttView;

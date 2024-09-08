@@ -115,6 +115,10 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
+  const deleteProject = useCallback((projectId) => {
+    setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
