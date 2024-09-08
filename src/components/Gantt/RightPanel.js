@@ -1,13 +1,39 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Box, Typography, TextField, IconButton, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  IconButton, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Button, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  Divider,
+  Slider
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { COLORS } from '../../constants';
 
-function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, artistColors = {} }) {
+function RightPanel({ 
+  project, 
+  onAddDelivery, 
+  onEditDelivery, 
+  onDeleteDelivery, 
+  onUpdateBudget, 
+  onUpdateRevenue = () => {}, 
+  artistColors = {} 
+}) {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [tempBudget, setTempBudget] = useState(project?.budget || 0);
+  const [tempRevenue, setTempRevenue] = useState(project?.revenue || 0);
+  const [revenuePercentage, setRevenuePercentage] = useState(25); // Default to 25%
   const [openDialog, setOpenDialog] = useState(false);
   const [deliveryName, setDeliveryName] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -30,15 +56,18 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
 
   const budgetSpent = calculateBudgetSpent();
   const totalBudget = project?.budget || 0;
+  const revenue = project?.revenue || 0;
   const isOverBudget = budgetSpent > totalBudget;
 
   const budgetChartData = useMemo(() => {
+    const spent = Math.min(budgetSpent, totalBudget);
     const remaining = Math.max(totalBudget - budgetSpent, 0);
     return [
-      { name: 'Spent', value: budgetSpent },
+      { name: 'Spent', value: spent },
       { name: 'Remaining', value: remaining },
+      { name: 'Revenue', value: revenue },
     ];
-  }, [totalBudget, budgetSpent]);
+  }, [totalBudget, budgetSpent, revenue]);
 
   const artistCostsChartData = useMemo(() => {
     return project?.bookings.reduce((acc, booking) => {
@@ -53,15 +82,29 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     }, []);
   }, [project?.bookings, calculateBookingDays]);
 
-  const handleBudgetEdit = () => {
-    setIsEditingBudget(true);
-  };
+  const handleBudgetEdit = () => setIsEditingBudget(true);
+  const handleRevenueEdit = () => setIsEditingRevenue(true);
 
   const handleBudgetSave = () => {
     const newBudget = parseFloat(tempBudget);
     if (!isNaN(newBudget)) {
       onUpdateBudget(newBudget);
       setIsEditingBudget(false);
+    }
+  };
+
+  const handleRevenuePercentageChange = (event, newValue) => {
+    setRevenuePercentage(newValue);
+    const newRevenue = (project?.budget || 0) * (newValue / 100);
+    setTempRevenue(newRevenue);
+    onUpdateRevenue(newRevenue);
+  };
+
+  const handleRevenueSave = () => {
+    const newRevenue = parseFloat(tempRevenue);
+    if (!isNaN(newRevenue)) {
+      onUpdateRevenue(newRevenue);
+      setIsEditingRevenue(false);
     }
   };
 
@@ -127,10 +170,12 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   };
 
   return (
-    <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2, paddingTop: 4 }}> {/* Increased top padding */}
+    <Box sx={{ display: 'flex', width: '100%', p: 2, gap: 2, paddingTop: 4 }}>
       {/* Project Data */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h6" gutterBottom>Project Data</Typography>
+        
+        {/* Total Budget */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Typography variant="body1" sx={{ mr: 1 }}>Total Budget: $</Typography>
           {isEditingBudget ? (
@@ -143,17 +188,63 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             />
           ) : (
             <>
-              <Typography variant="body1" sx={{ mr: 1 }}>{totalBudget.toFixed(2)}</Typography>
+              <Typography variant="body1" sx={{ mr: 1 }}>{(project?.budget || 0).toFixed(2)}</Typography>
               <IconButton size="small" onClick={handleBudgetEdit}>
                 <EditIcon fontSize="small" />
               </IconButton>
             </>
           )}
         </Box>
-        <Typography variant="body1" sx={{ mb: 1, color: isOverBudget ? 'error.main' : 'inherit' }}>
+
+        {/* Budget Spent */}
+        <Typography 
+          variant="body1" 
+          sx={{ mb: 1, color: isOverBudget ? 'error.main' : 'inherit' }}
+        >
           Budget Spent: ${budgetSpent.toFixed(2)}
         </Typography>
+
+        {/* Revenue */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Typography variant="body1" sx={{ mr: 1 }}>Revenue: $</Typography>
+          {isEditingRevenue ? (
+            <TextField
+              value={tempRevenue}
+              onChange={(e) => setTempRevenue(e.target.value)}
+              onBlur={handleRevenueSave}
+              size="small"
+              sx={{ width: '100px' }}
+            />
+          ) : (
+            <>
+              <Typography variant="body1" sx={{ mr: 1 }}>{tempRevenue.toFixed(2)}</Typography>
+              <IconButton size="small" onClick={handleRevenueEdit}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+
+        {/* Revenue Percentage Slider */}
+        <Box sx={{ width: '60%', mt: 2 }}>
+          <Typography id="revenue-percentage-slider" gutterBottom>
+            Revenue Percentage: {revenuePercentage}%
+          </Typography>
+          <Slider
+            value={revenuePercentage}
+            onChange={handleRevenuePercentageChange}
+            aria-labelledby="revenue-percentage-slider"
+            valueLabelDisplay="auto"
+            step={1}
+            marks
+            min={10}
+            max={40}
+            sx={{ width: '100%' }}
+          />
+        </Box>
       </Box>
+
+      <Divider orientation="vertical" flexItem />
 
       {/* Budget Pie Chart */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -171,6 +262,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             >
               <Cell fill="#000000" />
               <Cell fill="#CCCCCC" />
+              <Cell fill="#888888" /> {/* Revenue color */}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
             <Legend 

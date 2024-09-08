@@ -74,13 +74,23 @@ function GanttView() {
 
   const handleUpdateBudget = useCallback((newBudget) => {
     if (selectedProject) {
-      updateProjectBudget(selectedProject.id, newBudget);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        budget: newBudget
-      }));
+      const updatedProject = { ...selectedProject, budget: newBudget };
+      // Update the project in your state or send to backend
+      // For example:
+      // updateProject(updatedProject);
+      setSelectedProject(updatedProject);
     }
-  }, [selectedProject, updateProjectBudget]);
+  }, [selectedProject]);
+
+  const handleUpdateRevenue = useCallback((newRevenue) => {
+    if (selectedProject) {
+      const updatedProject = { ...selectedProject, revenue: newRevenue };
+      // Update the project in your state or send to backend
+      // For example:
+      // updateProject(updatedProject);
+      setSelectedProject(updatedProject);
+    }
+  }, [selectedProject]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
@@ -222,6 +232,7 @@ function GanttView() {
             onEditDelivery={handleEditDelivery}
             onDeleteDelivery={handleDeleteDelivery}
             onUpdateBudget={handleUpdateBudget}
+            onUpdateRevenue={handleUpdateRevenue}
             artistColors={artistColors}
           />
         </Box>
