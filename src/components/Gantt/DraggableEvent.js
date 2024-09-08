@@ -16,10 +16,6 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
   const startOffset = calculateWeekOffset(projectStart, bookingStart);
   const duration = calculateWorkingDays(bookingStart, bookingEnd);
 
-  // Calculate display dates
-  const displayStart = moment(startDate).startOf('isoWeek'); // Monday
-  const displayEnd = moment(startDate).endOf('isoWeek').subtract(2, 'days'); // Friday
-
   useEffect(() => {
     const element = eventRef.current;
     if (!element) return;
@@ -180,7 +176,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({displayStart.format('DD/MM')} - {displayEnd.format('DD/MM')})
+        {booking.artistName}
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
