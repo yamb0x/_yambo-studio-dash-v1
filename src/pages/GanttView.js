@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Box, Typography, Paper, List, ListItem, ListItemText, IconButton, Button } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, Paper, Divider, List, ListItem, ListItemText, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -11,7 +11,7 @@ import moment from 'moment';
 import { useArtists } from '../contexts/ArtistContext';
 import RightPanel from '../components/Gantt/RightPanel';
 
-const SIDE_PANEL_WIDTH = 300;
+const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
 
 function GanttView() {
   const { 
@@ -21,12 +21,11 @@ function GanttView() {
     addDelivery, 
     editDelivery, 
     deleteDelivery,
-    updateProjectBudget,
-    updateBooking
+    updateProjectBudget 
   } = useProjects();
-  const { artists } = useArtists();
+  const { artists } = useArtists();  // Add this line
   const [selectedProject, setSelectedProject] = useState(null);
-  const [pendingChanges, setPendingChanges] = useState([]);
+  const [, forceUpdate] = useState();
 
   useEffect(() => {
     console.log("Selected Project:", selectedProject);
@@ -35,10 +34,7 @@ function GanttView() {
 
   const handleAddBooking = useCallback((newBooking) => {
     addBooking(newBooking);
-    setSelectedProject(prevProject => ({
-      ...prevProject,
-      bookings: [...(prevProject.bookings || []), newBooking]
-    }));
+    forceUpdate({});
   }, [addBooking]);
 
   const handleRemoveBooking = useCallback((bookingId) => {
@@ -49,20 +45,9 @@ function GanttView() {
         ...prevProject,
         bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
       }));
+      forceUpdate({});
     }
   }, [removeBooking, selectedProject]);
-
-  const handleUpdateBooking = useCallback((updatedBooking) => {
-    if (selectedProject) {
-      updateBooking(selectedProject.id, updatedBooking);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        bookings: prevProject.bookings.map(booking => 
-          booking.id === updatedBooking.id ? updatedBooking : booking
-        )
-      }));
-    }
-  }, [selectedProject, updateBooking]);
 
   const handleEditDelivery = useCallback((updatedDelivery) => {
     if (selectedProject) {
@@ -96,16 +81,6 @@ function GanttView() {
     }
   }, [selectedProject, updateProjectBudget]);
 
-  const handleAddDelivery = useCallback((newDelivery) => {
-    if (selectedProject) {
-      addDelivery(selectedProject.id, newDelivery);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        deliveries: [...(prevProject.deliveries || []), newDelivery]
-      }));
-    }
-  }, [selectedProject, addDelivery]);
-
   const [, drop] = useDrop({
     accept: 'ARTIST',
     drop: (item, monitor) => {
@@ -130,7 +105,7 @@ function GanttView() {
           artistName: item.name,
           startDate: startDate.format('YYYY-MM-DD'),
           endDate: endDate.format('YYYY-MM-DD'),
-          dailyRate: dailyRate,
+          dailyRate: dailyRate,  // This should now be a number
         };
 
         handleAddBooking(newBooking);
@@ -138,15 +113,15 @@ function GanttView() {
     },
   });
 
-  const budgetSpent = useMemo(() => {
-    if (!selectedProject) return 0;
-    return selectedProject.bookings.reduce((total, booking) => {
-      const start = moment(booking.startDate);
-      const end = moment(booking.endDate);
-      const days = end.diff(start, 'days') + 1;
-      return total + (booking.dailyRate * days);
-    }, 0);
-  }, [selectedProject]);
+  const handleAddDelivery = useCallback((newDelivery) => {
+    if (selectedProject) {
+      addDelivery(selectedProject.id, newDelivery);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        deliveries: [...(prevProject.deliveries || []), newDelivery]
+      }));
+    }
+  }, [selectedProject, addDelivery]);
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', width: '100%' }}>
@@ -181,7 +156,10 @@ function GanttView() {
                       <IconButton 
                         edge="end" 
                         aria-label="delete" 
-                        onClick={() => handleRemoveBooking(booking.id)}
+                        onClick={() => {
+                          console.log("Delete button clicked for booking:", booking.id);
+                          handleRemoveBooking(booking.id);
+                        }}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -207,11 +185,7 @@ function GanttView() {
       <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'hidden' }}>
         <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
         {selectedProject ? (
-          <GanttChart 
-            key={selectedProject.id} 
-            project={selectedProject} 
-            onUpdateBooking={handleUpdateBooking}
-          />
+          <GanttChart key={selectedProject.id} project={selectedProject} />
         ) : (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <Typography>Please select a project</Typography>
@@ -233,7 +207,6 @@ function GanttView() {
             onEditDelivery={handleEditDelivery}
             onDeleteDelivery={handleDeleteDelivery}
             onUpdateBudget={handleUpdateBudget}
-            budgetSpent={budgetSpent}
           />
         )}
       </Box>
@@ -241,4 +214,10 @@ function GanttView() {
   );
 }
 
-export default GanttView;
+export default function WrappedGanttView() {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <GanttView />
+    </DndProvider>
+  );
+}

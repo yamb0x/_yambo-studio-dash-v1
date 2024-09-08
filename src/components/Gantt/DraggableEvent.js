@@ -16,6 +16,10 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
   const startOffset = calculateWeekOffset(projectStart, bookingStart);
   const duration = calculateWorkingDays(bookingStart, bookingEnd);
 
+  // Calculate display dates
+  const displayStart = moment(startDate).startOf('isoWeek'); // Monday
+  const displayEnd = moment(startDate).endOf('isoWeek').subtract(2, 'days'); // Friday
+
   useEffect(() => {
     const element = eventRef.current;
     if (!element) return;
@@ -56,37 +60,35 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     };
 
     const handleMouseMove = (e) => {
-      if (isResizing) {
-        const rect = element.getBoundingClientRect();
-        const dayWidth = weekWidth / 5;
+      if (!isResizing) return;
 
-        if (resizeDirection === 'left') {
-          const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-          const newStartDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newStartOffset));
-          if (newStartDate.isBefore(bookingEnd)) {
-            onUpdate(project.id, {
-              ...booking,
-              startDate: newStartDate.format('YYYY-MM-DD'),
-            });
-          }
-        } else if (resizeDirection === 'right') {
-          const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-          const newEndDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newEndOffset));
-          if (newEndDate.isAfter(bookingStart)) {
-            onUpdate(project.id, {
-              ...booking,
-              endDate: newEndDate.format('YYYY-MM-DD'),
-            });
-          }
+      const rect = element.getBoundingClientRect();
+      const dayWidth = weekWidth / 5;
+
+      if (resizeDirection === 'left') {
+        const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
+        const newStartDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newStartOffset));
+        if (newStartDate.isBefore(bookingEnd)) {
+          onUpdate(project.id, {
+            ...booking,
+            startDate: newStartDate.format('YYYY-MM-DD'),
+          });
+        }
+      } else if (resizeDirection === 'right') {
+        const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
+        const newEndDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newEndOffset));
+        if (newEndDate.isAfter(bookingStart)) {
+          onUpdate(project.id, {
+            ...booking,
+            endDate: newEndDate.format('YYYY-MM-DD'),
+          });
         }
       }
     };
 
     const handleMouseUp = () => {
-      if (isResizing) {
-        setIsResizing(false);
-        setResizeDirection(null);
-      }
+      setIsResizing(false);
+      setResizeDirection(null);
     };
 
     element.addEventListener('dragstart', handleDragStart);
@@ -147,10 +149,9 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       sx={{
         position: 'absolute',
         left: `${(startOffset / 5) * weekWidth}px`,
-        top: index * 40 + 10,
+        top: 0, // All events for the same artist are on the same line
         width: `${(duration / 5) * weekWidth}px`,
-        height: 'auto',
-        minHeight: 30,
+        height: '30px', // Fixed height for all events
         backgroundColor: 'primary.main',
         color: 'white',
         display: 'flex',
@@ -178,7 +179,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName}
+        {booking.artistName} ({displayStart.format('DD/MM')} - {displayEnd.format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}

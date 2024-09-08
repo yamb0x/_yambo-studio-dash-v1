@@ -21,7 +21,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import moment from 'moment';
 
-function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, budgetSpent }) {
+function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget }) {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [tempBudget, setTempBudget] = useState(project?.budget || 0);
   const [openDialog, setOpenDialog] = useState(false);
@@ -31,6 +31,16 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [editingDelivery, setEditingDelivery] = useState(null);
   const [expandedDelivery, setExpandedDelivery] = useState(null);
 
+  const calculateBudgetSpent = useCallback(() => {
+    return (project?.bookings || []).reduce((total, booking) => {
+      const startDate = new Date(booking.startDate);
+      const endDate = new Date(booking.endDate);
+      const days = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
+      return total + (booking.dailyRate * days);
+    }, 0);
+  }, [project?.bookings]);
+
+  const budgetSpent = calculateBudgetSpent();
   const totalBudget = project?.budget || 0;
   const isOverBudget = budgetSpent > totalBudget;
 

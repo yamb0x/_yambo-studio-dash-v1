@@ -8,7 +8,7 @@ const WEEK_WIDTH = 250;
 const CHART_HEIGHT = 400;
 const DAY_WIDTH = WEEK_WIDTH / 5;
 
-function GanttChart({ project, onUpdateBooking }) {
+function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
   const [draggedBooking, setDraggedBooking] = useState(null);
 
@@ -21,8 +21,8 @@ function GanttChart({ project, onUpdateBooking }) {
   const duration = endDate.diff(startDate, 'weeks') + 1;
 
   const handleUpdate = useCallback((projectId, updatedBooking) => {
-    onUpdateBooking(updatedBooking);
-  }, [onUpdateBooking]);
+    updateBooking(projectId, updatedBooking);
+  }, [updateBooking]);
 
   const handleDragStart = useCallback((booking) => {
     setDraggedBooking(booking);
