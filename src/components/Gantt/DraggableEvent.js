@@ -56,35 +56,37 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     };
 
     const handleMouseMove = (e) => {
-      if (!isResizing) return;
+      if (isResizing) {
+        const rect = element.getBoundingClientRect();
+        const dayWidth = weekWidth / 5;
 
-      const rect = element.getBoundingClientRect();
-      const dayWidth = weekWidth / 5;
-
-      if (resizeDirection === 'left') {
-        const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newStartDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newStartOffset));
-        if (newStartDate.isBefore(bookingEnd)) {
-          onUpdate(project.id, {
-            ...booking,
-            startDate: newStartDate.format('YYYY-MM-DD'),
-          });
-        }
-      } else if (resizeDirection === 'right') {
-        const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newEndDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newEndOffset));
-        if (newEndDate.isAfter(bookingStart)) {
-          onUpdate(project.id, {
-            ...booking,
-            endDate: newEndDate.format('YYYY-MM-DD'),
-          });
+        if (resizeDirection === 'left') {
+          const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
+          const newStartDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newStartOffset));
+          if (newStartDate.isBefore(bookingEnd)) {
+            onUpdate(project.id, {
+              ...booking,
+              startDate: newStartDate.format('YYYY-MM-DD'),
+            });
+          }
+        } else if (resizeDirection === 'right') {
+          const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
+          const newEndDate = ensureWorkingDay(calculateWorkingDayDate(projectStart, startOffset + newEndOffset));
+          if (newEndDate.isAfter(bookingStart)) {
+            onUpdate(project.id, {
+              ...booking,
+              endDate: newEndDate.format('YYYY-MM-DD'),
+            });
+          }
         }
       }
     };
 
     const handleMouseUp = () => {
-      setIsResizing(false);
-      setResizeDirection(null);
+      if (isResizing) {
+        setIsResizing(false);
+        setResizeDirection(null);
+      }
     };
 
     element.addEventListener('dragstart', handleDragStart);
