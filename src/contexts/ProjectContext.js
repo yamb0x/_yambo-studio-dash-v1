@@ -7,7 +7,16 @@ export function useProjects() {
 }
 
 export function ProjectProvider({ children }) {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => {
+    const storedProjects = localStorage.getItem('projects');
+    console.log('Initial projects from localStorage:', storedProjects);
+    return storedProjects ? JSON.parse(storedProjects) : [];
+  });
+
+  useEffect(() => {
+    console.log('Saving projects to localStorage:', projects);
+    localStorage.setItem('projects', JSON.stringify(projects));
+  }, [projects]);
 
   const addProject = useCallback((newProject) => {
     setProjects(prevProjects => [...prevProjects, newProject]);

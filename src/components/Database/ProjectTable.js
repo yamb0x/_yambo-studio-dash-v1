@@ -42,16 +42,6 @@ function ProjectTable() {
     setEditingProject(null);
   };
 
-  const sortedProjects = projects.sort((a, b) => {
-    if (b[orderBy] < a[orderBy]) {
-      return order === 'asc' ? 1 : -1;
-    }
-    if (b[orderBy] > a[orderBy]) {
-      return order === 'asc' ? -1 : 1;
-    }
-    return 0;
-  });
-
   return (
     <>
       <TableContainer>
@@ -75,7 +65,7 @@ function ProjectTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedProjects.map((project) => (
+            {projects.map((project) => (
               <TableRow key={project.id} hover>
                 <TableCell>{project.name}</TableCell>
                 <TableCell>{project.startDate}</TableCell>

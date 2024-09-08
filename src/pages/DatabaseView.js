@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useProjects } from '../contexts/ProjectContext';
 import { Typography, Container, Button, Modal, Box, Paper, Grid } from '@mui/material';
 import ProjectTable from '../components/Database/ProjectTable';
 import ArtistTable from '../components/Database/ArtistTable';
@@ -17,6 +18,12 @@ const modalStyle = {
 };
 
 function DatabaseView() {
+  const { projects } = useProjects();
+
+  useEffect(() => {
+    console.log('Projects in DatabaseView:', projects);
+  }, [projects]);
+
   const [openProjectModal, setOpenProjectModal] = useState(false);
   const [openArtistModal, setOpenArtistModal] = useState(false);
 

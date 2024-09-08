@@ -21,7 +21,7 @@ function ProjectForm({ project = {}, onClose }) {
     if (project.id) {
       updateProject(formData);
     } else {
-      addProject(formData);
+      addProject({ ...formData, id: Date.now() });
     }
     onClose();
   };
