@@ -141,7 +141,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       sx={{
         position: 'absolute',
         left: `${(startOffset / 5) * weekWidth}px`,
-        top: index * 40 + 10,
+        top: 0,  // or remove the 'top' property if it's not needed
         width: `${(duration / 5) * weekWidth}px`,
         height: 'auto',
         minHeight: 30,
@@ -172,7 +172,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({firstWorkingDay.format('DD/MM')} - {lastWorkingDay.format('DD/MM')})
+        {booking.artistName} ({moment(booking.startDate).format('DD/MM')} - {moment(booking.endDate).format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {duration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${(duration * booking.dailyRate).toFixed(2)}
