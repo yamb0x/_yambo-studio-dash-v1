@@ -12,6 +12,14 @@ const CHART_PADDING_TOP = 50;
 const ARTIST_COLUMN_WIDTH = 150;
 const TIMELINE_INDICATOR_WIDTH = 2;
 
+const COLORS = [
+  '#dfdfde',
+  '#a2798f',
+  '#d7c6cf',
+  '#8caba8',
+  '#ebdada',
+];
+
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
   const [draggedBooking, setDraggedBooking] = useState(null);
@@ -38,6 +46,14 @@ function GanttChart({ project }) {
     });
     return groups;
   }, [currentProject.bookings]);
+
+  const artistColors = useMemo(() => {
+    const artists = Object.keys(groupedBookings);
+    return artists.reduce((acc, artist, index) => {
+      acc[artist] = COLORS[index % COLORS.length];
+      return acc;
+    }, {});
+  }, [groupedBookings]);
 
   const handleUpdate = useCallback((projectId, updatedBooking) => {
     updateBooking(projectId, updatedBooking);
@@ -245,6 +261,7 @@ function GanttChart({ project }) {
                   artistColumnWidth={ARTIST_COLUMN_WIDTH}
                   timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
                   projectStartDate={projectStartDate}
+                  color={artistColors[artistName]}
                 />
               ))}
             </Box>

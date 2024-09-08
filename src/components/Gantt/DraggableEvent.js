@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate }) {
+function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color }) {
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const eventRef = useRef(null);
@@ -84,8 +84,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         top: '5px',
         width: `${eventWidth}px`,
         height: `${rowHeight - 10}px`,
-        backgroundColor: 'rgba(0, 123, 255, 0.5)',
-        border: '1px solid #007bff',
+        backgroundColor: color,
+        border: `1px solid ${color}`,
         borderRadius: '4px',
         display: 'flex',
         flexDirection: 'column',
@@ -96,10 +96,10 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         transition: 'none',
       }}
     >
-      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#000' }}>
         {getDateFromPosition(eventLeft).format('DD/MM/YYYY')}
       </Typography>
-      <Typography variant="caption">
+      <Typography variant="caption" sx={{ color: '#000' }}>
         {booking.startDate} - {booking.endDate}
       </Typography>
       <Box
