@@ -1,142 +1,118 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-const RESIZE_HANDLE_WIDTH = 10;
-
 function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate }) {
   const [isResizing, setIsResizing] = useState(false);
-  const [resizeDirection, setResizeDirection] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const eventRef = useRef(null);
+  const [eventWidth, setEventWidth] = useState(0);
+  const [eventLeft, setEventLeft] = useState(0);
 
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
 
-  // Adjust the startOffset calculation
-  const startOffset = bookingStart.diff(startDate, 'days') - 1;
-  const duration = bookingEnd.diff(bookingStart, 'days') + 1;
+  useEffect(() => {
+    const startOffset = bookingStart.diff(startDate, 'days');
+    const duration = bookingEnd.diff(bookingStart, 'days') + 1;
+    setEventLeft(artistColumnWidth + (startOffset * dayWidth));
+    setEventWidth(duration * dayWidth);
+  }, [booking, startDate, artistColumnWidth, dayWidth]);
 
-  const getLeftPosition = () => {
-    const workingDaysOffset = Math.floor(startOffset / 7) * 2; // Account for weekends
-    return (startOffset - workingDaysOffset) * dayWidth;
+  const handleMouseDown = (e) => {
+    if (e.target.classList.contains('resize-handle')) {
+      setIsResizing(true);
+    } else {
+      setIsDragging(true);
+      onDragStart(booking);
+    }
   };
 
-  const getWidth = () => {
-    const workingDaysDuration = Math.ceil(duration / 7) * 5; // Ensure we cover full weeks
-    return workingDaysDuration * dayWidth;
+  const handleMouseMove = (e) => {
+    if (!isResizing && !isDragging) return;
+
+    const rect = eventRef.current.parentElement.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left - artistColumnWidth;
+    
+    if (isResizing) {
+      const newWidth = Math.max(dayWidth, offsetX - eventLeft + artistColumnWidth);
+      setEventWidth(newWidth);
+    } else if (isDragging) {
+      const newLeft = Math.max(artistColumnWidth, offsetX);
+      setEventLeft(newLeft);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isResizing || isDragging) {
+      const newStartDate = moment(startDate).add(Math.round((eventLeft - artistColumnWidth) / dayWidth), 'days');
+      const newEndDate = moment(newStartDate).add(Math.round(eventWidth / dayWidth) - 1, 'days');
+
+      onUpdate(project.id, {
+        ...booking,
+        startDate: newStartDate.format('YYYY-MM-DD'),
+        endDate: newEndDate.format('YYYY-MM-DD')
+      });
+
+      setIsResizing(false);
+      setIsDragging(false);
+    }
   };
 
   useEffect(() => {
-    const element = eventRef.current;
-    if (!element) return;
-
-    const handleDragStart = (e) => {
-      if (isResizing) {
-        e.preventDefault();
-        return;
-      }
-      onDragStart(booking);
-    };
-
-    const handleMouseDown = (e) => {
-      const rect = element.getBoundingClientRect();
-      const isLeftEdge = e.clientX - rect.left < RESIZE_HANDLE_WIDTH;
-      const isRightEdge = rect.right - e.clientX < RESIZE_HANDLE_WIDTH;
-
-      if (isLeftEdge) {
-        setIsResizing(true);
-        setResizeDirection('left');
-      } else if (isRightEdge) {
-        setIsResizing(true);
-        setResizeDirection('right');
-      }
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isResizing) return;
-
-      const rect = element.getBoundingClientRect();
-      if (resizeDirection === 'left') {
-        const newStartOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newStartDate = startDate.clone().add(startOffset + newStartOffset, 'days');
-        if (newStartDate.isBefore(bookingEnd)) {
-          onUpdate(project.id, {
-            ...booking,
-            startDate: newStartDate.format('YYYY-MM-DD'),
-          });
-        }
-      } else if (resizeDirection === 'right') {
-        const newEndOffset = Math.round((e.clientX - rect.left) / dayWidth);
-        const newEndDate = startDate.clone().add(startOffset + newEndOffset, 'days');
-        if (newEndDate.isAfter(bookingStart)) {
-          onUpdate(project.id, {
-            ...booking,
-            endDate: newEndDate.format('YYYY-MM-DD'),
-          });
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      setResizeDirection(null);
-    };
-
-    element.addEventListener('dragstart', handleDragStart);
-    element.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
-      element.removeEventListener('dragstart', handleDragStart);
-      element.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [booking, onDragStart, isResizing, resizeDirection, onUpdate, project.id, startDate, startOffset, dayWidth, bookingStart, bookingEnd]);
+  }, [isResizing, isDragging, eventLeft, eventWidth]);
+
+  const getDateFromPosition = (position) => {
+    const dayOffset = Math.round((position - artistColumnWidth) / dayWidth);
+    return moment(startDate).add(dayOffset, 'days');
+  };
 
   return (
     <Box
       ref={eventRef}
-      draggable={!isResizing}
+      draggable={false}
+      onMouseDown={handleMouseDown}
       sx={{
         position: 'absolute',
-        left: `${artistColumnWidth + (startOffset * dayWidth)}px`,
+        left: `${eventLeft}px`,
         top: '5px',
-        width: `${duration * dayWidth}px`,
+        width: `${eventWidth}px`,
         height: `${rowHeight - 10}px`,
-        backgroundColor: 'primary.main',
-        color: 'white',
+        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+        border: '1px solid #007bff',
+        borderRadius: '4px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
         justifyContent: 'center',
-        cursor: isResizing ? (resizeDirection === 'left' ? 'w-resize' : 'e-resize') : 'move',
-        zIndex: 1000,
-        overflow: 'hidden',
-        padding: '2px 4px',
-        '&::before, &::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          width: `${RESIZE_HANDLE_WIDTH}px`,
-          cursor: 'ew-resize',
-        },
-        '&::before': {
-          left: 0,
-        },
-        '&::after': {
-          right: 0,
-        },
+        alignItems: 'center',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+        transition: 'none',
       }}
     >
-      <Typography variant="body2" noWrap>
-        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
+      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+        {getDateFromPosition(eventLeft).format('DD/MM/YYYY')}
       </Typography>
-      <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
-        Days: {duration} | Rate: ${booking.dailyRate?.toFixed(2) || 'N/A'} | Total: ${(duration * (booking.dailyRate || 0)).toFixed(2)}
+      <Typography variant="caption">
+        {booking.startDate} - {booking.endDate}
       </Typography>
+      <Box
+        className="resize-handle"
+        sx={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '5px',
+          cursor: 'ew-resize',
+        }}
+      />
     </Box>
   );
 }
