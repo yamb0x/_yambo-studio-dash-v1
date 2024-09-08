@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 import DraggableEvent from './DraggableEvent';
@@ -10,6 +10,7 @@ const DAY_WIDTH = WEEK_WIDTH / 5; // Now 5 days per week
 
 function GanttChart({ project }) {
   const { projects, updateBooking } = useProjects();
+  const [draggedBooking, setDraggedBooking] = useState(null);
 
   const currentProject = useMemo(() => {
     return projects.find(p => p.id === project.id) || project;
@@ -23,30 +24,45 @@ function GanttChart({ project }) {
     updateBooking(projectId, updatedBooking);
   }, [updateBooking]);
 
+  const handleDragStart = useCallback((booking) => {
+    setDraggedBooking(booking);
+  }, []);
+
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }, []);
+    if (draggedBooking) {
+      const ganttChartElement = document.getElementById('gantt-chart');
+      const rect = ganttChartElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const newStartOffset = Math.floor(x / DAY_WIDTH) * DAY_WIDTH;
+      
+      const dragPreview = document.getElementById('drag-preview');
+      if (dragPreview) {
+        dragPreview.style.left = `${newStartOffset}px`;
+      }
+    }
+  }, [draggedBooking]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
-    const bookingData = e.dataTransfer.getData('text/plain');
-    if (bookingData) {
-      const booking = JSON.parse(bookingData);
-      const rect = e.currentTarget.getBoundingClientRect();
+    if (draggedBooking) {
+      const ganttChartElement = document.getElementById('gantt-chart');
+      const rect = ganttChartElement.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const newStartOffset = Math.floor(x / DAY_WIDTH);
       const newStartDate = startDate.clone().add(newStartOffset, 'days');
-      const duration = moment(booking.endDate).diff(moment(booking.startDate), 'days');
+      const duration = moment(draggedBooking.endDate).diff(moment(draggedBooking.startDate), 'days');
       const newEndDate = newStartDate.clone().add(duration, 'days');
 
       handleUpdate(currentProject.id, {
-        ...booking,
+        ...draggedBooking,
         startDate: newStartDate.format('YYYY-MM-DD'),
         endDate: newEndDate.format('YYYY-MM-DD'),
       });
+
+      setDraggedBooking(null);
     }
-  }, [currentProject, handleUpdate, startDate]);
+  }, [currentProject.id, draggedBooking, handleUpdate, startDate]);
 
   const renderWeeks = () => {
     const weeks = [];
@@ -103,6 +119,7 @@ function GanttChart({ project }) {
         index={index}
         onUpdate={handleUpdate}
         startDate={startDate}
+        onDragStart={handleDragStart}  // Add this line
       />
     ));
   };
@@ -151,7 +168,7 @@ function GanttChart({ project }) {
   return (
     <Box 
       id="gantt-chart" 
-      sx={{ overflowX: 'auto', overflowY: 'hidden' }}
+      sx={{ overflowX: 'auto', overflowY: 'hidden', position: 'relative' }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -166,6 +183,19 @@ function GanttChart({ project }) {
           {renderDeliveries()}
         </Box>
       </Box>
+      {draggedBooking && (
+        <Box
+          id="drag-preview"
+          sx={{
+            position: 'absolute',
+            height: '30px',
+            backgroundColor: 'rgba(0, 123, 255, 0.5)',
+            border: '2px dashed #007bff',
+            pointerEvents: 'none',
+            zIndex: 1001,
+          }}
+        />
+      )}
     </Box>
   );
 }

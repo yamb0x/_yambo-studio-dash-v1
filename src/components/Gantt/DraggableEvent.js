@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import moment from 'moment';
 
-function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDate }) {
+function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDate, onDragStart }) {
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
   const startOffset = bookingStart.diff(startDate, 'days');
@@ -19,6 +19,19 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     const handleDragStart = (e) => {
       e.dataTransfer.setData('text/plain', JSON.stringify(booking));
       e.dataTransfer.effectAllowed = 'move';
+      
+      // Set the drag image to be invisible
+      const dragImage = document.createElement('div');
+      dragImage.style.opacity = '0';
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 0, 0);
+      
+      onDragStart(booking);
+
+      // Remove the drag image element after dragging
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
     };
 
     element.addEventListener('dragstart', handleDragStart);
@@ -26,7 +39,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     return () => {
       element.removeEventListener('dragstart', handleDragStart);
     };
-  }, [booking]);
+  }, [booking, onDragStart]);
 
   function calculateWorkingDays(start, end) {
     let days = 0;
@@ -39,6 +52,23 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
     }
     return days;
   }
+
+  function getWorkingDateRange(start, end) {
+    let firstWorkingDay = start.clone().startOf('week').add(1, 'day'); // Start from Monday
+    let lastWorkingDay = end.clone().endOf('week').subtract(1, 'day'); // End on Friday
+
+    // Ensure we don't go beyond the actual booking dates
+    if (firstWorkingDay.isBefore(start)) {
+      firstWorkingDay = start.clone();
+    }
+    if (lastWorkingDay.isAfter(end)) {
+      lastWorkingDay = end.clone();
+    }
+
+    return { firstWorkingDay, lastWorkingDay };
+  }
+
+  const { firstWorkingDay, lastWorkingDay } = getWorkingDateRange(bookingStart, bookingEnd);
 
   const totalCost = adjustedDuration * booking.dailyRate;
 
@@ -66,7 +96,7 @@ function DraggableEvent({ booking, project, weekWidth, index, onUpdate, startDat
       }}
     >
       <Typography variant="body2" noWrap>
-        {booking.artistName} ({bookingStart.format('DD/MM')} - {bookingEnd.format('DD/MM')})
+        {booking.artistName} ({firstWorkingDay.format('DD/MM')} - {lastWorkingDay.format('DD/MM')})
       </Typography>
       <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.8 }}>
         Working Days: {adjustedDuration} | Rate: ${booking.dailyRate.toFixed(2)} | Total: ${totalCost.toFixed(2)}
