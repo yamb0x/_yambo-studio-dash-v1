@@ -155,7 +155,7 @@ function GanttChart({ project }) {
         height: `${(Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP}px`,
         position: 'relative'
       }}>
-        {/* Timeline Indicator */}
+        {/* Blue Timeline Indicator (Project Start) */}
         <Box
           sx={{
             position: 'absolute',
@@ -164,6 +164,18 @@ function GanttChart({ project }) {
             bottom: 0,
             width: `${TIMELINE_INDICATOR_WIDTH}px`,
             backgroundColor: 'blue',
+            zIndex: 3,
+          }}
+        />
+        {/* Green Debug Indicator (Gantt Start) */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: `${ARTIST_COLUMN_WIDTH}px`,
+            top: 0,
+            bottom: 0,
+            width: '1px',
+            backgroundColor: 'green',
             zIndex: 3,
           }}
         />

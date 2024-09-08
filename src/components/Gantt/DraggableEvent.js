@@ -4,7 +4,7 @@ import moment from 'moment';
 
 const RESIZE_HANDLE_WIDTH = 10;
 
-function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth }) {
+function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate }) {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState(null);
   const eventRef = useRef(null);
@@ -100,9 +100,9 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       draggable={!isResizing}
       sx={{
         position: 'absolute',
-        left: `${getLeftPosition()}px`,
+        left: `${artistColumnWidth + (startOffset * dayWidth)}px`,
         top: '5px',
-        width: `${getWidth()}px`,
+        width: `${duration * dayWidth}px`,
         height: `${rowHeight - 10}px`,
         backgroundColor: 'primary.main',
         color: 'white',
