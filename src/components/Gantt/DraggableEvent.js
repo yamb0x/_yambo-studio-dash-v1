@@ -2,6 +2,26 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Link, IconButton } from '@mui/material';
 import moment from 'moment';
 import CloseIcon from '@mui/icons-material/Close';
+import { COLORS } from '../../constants';
+
+// Function to calculate the inverse color
+const getInverseColor = (hexColor) => {
+  // Remove the # if it's there
+  hexColor = hexColor.replace('#', '');
+  
+  // Convert to RGB
+  let r = parseInt(hexColor.substr(0, 2), 16);
+  let g = parseInt(hexColor.substr(2, 2), 16);
+  let b = parseInt(hexColor.substr(4, 2), 16);
+  
+  // Calculate the inverse
+  r = 255 - r;
+  g = 255 - g;
+  b = 255 - b;
+  
+  // Convert back to hex
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+};
 
 function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName, onDelete }) {
   const [isResizing, setIsResizing] = useState(false);
@@ -15,6 +35,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
   const numberOfDays = bookingEnd.diff(bookingStart, 'days') + 1;
   const dailyRate = booking.dailyRate || 0;
   const totalCost = dailyRate * numberOfDays;
+
+  const inverseColor = getInverseColor(color);
 
   useEffect(() => {
     const startOffset = bookingStart.diff(startDate, 'days');
@@ -127,10 +149,10 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
           top: 0,
           right: 0,
           padding: '2px',
-          color: 'rgba(0, 0, 0, 0.5)',
+          color: inverseColor,
           backgroundColor: 'transparent', // Remove white background
           '&:hover': {
-            color: 'rgba(0, 0, 0, 0.8)',
+            color: inverseColor,
             backgroundColor: 'transparent', // Keep transparent on hover
           },
           '& .MuiSvgIcon-root': {
@@ -147,18 +169,18 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         onClick={handleArtistClick}
         sx={{
           textDecoration: 'underline',
-          color: '#000',
+          color: inverseColor,
           fontWeight: 'bold',
           fontSize: '0.8rem',
           whiteSpace: 'nowrap',
           '&:hover': {
-            color: '#0056b3',
+            color: inverseColor,
           },
         }}
       >
         {artistName}
       </Link>
-      <Typography variant="caption" sx={{ color: '#000', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+      <Typography variant="caption" sx={{ color: inverseColor, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
         {`$${dailyRate} x ${numberOfDays} = $${totalCost}`}
       </Typography>
       <Box
