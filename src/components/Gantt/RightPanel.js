@@ -1,9 +1,18 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { COLORS } from '../../constants';
+import moment from 'moment-timezone';
+
+const countryToTimezone = {
+  'US': 'America/New_York',
+  'GB': 'Europe/London',
+  'FR': 'Europe/Paris',
+  // Add more countries and their representative timezones as needed
+};
 
 function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, onUpdateRevenue, artistColors = {} }) {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
@@ -113,6 +122,35 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const renderColorfulLegendText = (value, entry) => {
     return <span style={{ color: entry.color, fontWeight: 'bold' }}>{value}</span>;
   };
+
+  const groupedBookings = useMemo(() => {
+    const grouped = {};
+    project.bookings.forEach(booking => {
+      if (!grouped[booking.artistName]) {
+        grouped[booking.artistName] = {
+          bookings: [],
+          totalCost: 0,
+          skills: new Set(),
+          country: booking.artistCountry,
+        };
+      }
+      grouped[booking.artistName].bookings.push(booking);
+      const days = calculateBookingDays(booking);
+      grouped[booking.artistName].totalCost += (booking.dailyRate || 0) * days;
+      if (booking.skills) {
+        booking.skills.split(',').forEach(skill => grouped[booking.artistName].skills.add(skill.trim()));
+      }
+    });
+    return grouped;
+  }, [project.bookings, calculateBookingDays]);
+
+  const getArtistLocalTime = useCallback((country) => {
+    const timezone = countryToTimezone[country];
+    if (!timezone) return null;
+    return moment().tz(timezone);
+  }, []);
+
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   if (!project) {
     return <Typography>No project selected</Typography>;
@@ -243,20 +281,40 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       <Box sx={{ flex: 1, ml: 2 }}>
         <Typography variant="h6" gutterBottom>Artists Booked</Typography>
         <List>
-          {project.bookings && project.bookings.map((booking) => {
-            const days = calculateBookingDays(booking);
-            const totalCost = days * (booking.dailyRate || 0);
-            const currentTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Jerusalem' });
+          {Object.entries(groupedBookings).map(([artistName, data]) => {
+            const artistLocalTime = getArtistLocalTime(data.country);
             return (
-              <ListItem key={booking.id}>
+              <ListItem key={artistName}>
                 <ListItemText
-                  primary={booking.artistName}
-                  secondary={`
-                    Daily Rate: $${(booking.dailyRate || 0).toFixed(2)}
-                    Total Days: ${days}
-                    Skills: ${booking.skills || 'N/A'}
-                    Current Time in Israel: ${currentTime}
-                  `}
+                  primary={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body1" fontWeight="bold">{artistName}</Typography>
+                      <Typography variant="body2">${data.totalCost.toFixed(2)}</Typography>
+                    </Box>
+                  }
+                  secondary={
+                    <React.Fragment>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 0.5 }}>
+                        {Array.from(data.skills).map((skill, index) => (
+                          <Chip key={index} label={skill} size="small" />
+                        ))}
+                      </Box>
+                      {artistLocalTime && (
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                          <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          <strong>{artistLocalTime.format('HH:mm')}</strong> (Artist's Local Time)
+                        </Typography>
+                      )}
+                      {data.bookings.map((booking, index) => {
+                        const days = calculateBookingDays(booking);
+                        return (
+                          <Typography key={index} variant="body2">
+                            {booking.startDate} - {booking.endDate} ({days} days)
+                          </Typography>
+                        );
+                      })}
+                    </React.Fragment>
+                  }
                 />
               </ListItem>
             );
