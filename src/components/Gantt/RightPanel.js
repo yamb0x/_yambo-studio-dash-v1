@@ -196,7 +196,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                       value={revenuePercentage}
                       onChange={handleRevenuePercentageChange}
                       aria-labelledby="revenue-percentage-slider"
-                      valueLabelDisplay="auto"
+                      valueLabelDisplay="off"  // This line removes the tooltip
                       step={5}
                       marks={marks}
                       min={5}
