@@ -1,9 +1,8 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
 
@@ -28,11 +27,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [openDialog, setOpenDialog] = useState(false);
   const [deliveryName, setDeliveryName] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
-
-  useEffect(() => {
-    localStorage.setItem('totalBudget', totalBudget.toString());
-    localStorage.setItem('revenue', revenue.toString());
-  }, [totalBudget, revenue]);
 
   const calculateBookingDays = useCallback((booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
@@ -67,37 +61,11 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       .sort(([, a], [, b]) => b.totalCost - a.totalCost);
   }, [groupedBookings]);
 
-  const budgetSpent = useMemo(() => {
-    if (!project?.bookings) return 0;
-    return project.bookings.reduce((total, booking) => {
-      const days = calculateBookingDays(booking);
-      return total + (booking.dailyRate || 0) * days;
-    }, 0);
-  }, [project, calculateBookingDays]);
-
-  const remainingBudget = Math.max(totalBudget - budgetSpent, 0);
-
-  const budgetChartData = useMemo(() => [
-    { name: 'Budget Spent', value: budgetSpent },
-    { name: 'Remaining Budget', value: remainingBudget },
-    { name: 'Revenue', value: revenue },
-  ], [budgetSpent, remainingBudget, revenue]);
-
-  const artistCostsChartData = useMemo(() => {
-    if (!project?.bookings) return [];
-    return project.bookings.reduce((acc, booking) => {
-      const artist = booking.artistName;
-      const days = calculateBookingDays(booking);
-      const cost = days * (booking.dailyRate || 0);
-      const existingArtist = acc.find(item => item.name === artist);
-      if (existingArtist) {
-        existingArtist.value += cost;
-      } else {
-        acc.push({ name: artist, value: cost });
-      }
-      return acc;
-    }, []);
-  }, [project?.bookings, calculateBookingDays]);
+  const getArtistLocalTime = useCallback((country) => {
+    const timezone = countryToTimezone[country];
+    if (!timezone) return null;
+    return moment().tz(timezone);
+  }, []);
 
   const handleBudgetEdit = () => setIsEditingBudget(true);
   const handleRevenueEdit = () => setIsEditingRevenue(true);
@@ -133,34 +101,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     setDeliveryDate('');
   };
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box sx={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc' }}>
-          <Typography>{`${payload[0].name}: $${payload[0].value.toFixed(2)}`}</Typography>
-          <Typography>{`${(payload[0].percent * 100).toFixed(2)}%`}</Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
-
-  const renderColorfulLegendText = (value, entry) => {
-    return <span style={{ color: entry.color, fontWeight: 'bold' }}>{value}</span>;
-  };
-
-  const getArtistLocalTime = useCallback((country) => {
-    const timezone = countryToTimezone[country];
-    if (!timezone) return null;
-    return moment().tz(timezone);
-  }, []);
-
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  if (!project) {
-    return <Typography>No project selected</Typography>;
-  }
-
   return (
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
       {/* Project Data */}
@@ -187,9 +127,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             </>
           )}
         </Box>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          Budget Spent: ${budgetSpent}
-        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Typography variant="body1" sx={{ mr: 1 }}>Revenue: $</Typography>
           {isEditingRevenue ? (
@@ -215,69 +152,19 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
 
       <Divider orientation="vertical" flexItem />
 
-      {/* Pie Charts */}
-      <Box sx={{ flex: 1, mx: 2 }}>
-        <Typography variant="h6" gutterBottom>Budget Overview</Typography>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={budgetChartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-            >
-              {budgetChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend formatter={renderColorfulLegendText} />
-          </PieChart>
-        </ResponsiveContainer>
-        <Typography variant="h6" gutterBottom>Artist Costs</Typography>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={artistCostsChartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-            >
-              {artistCostsChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={artistColors[entry.name] || COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend formatter={renderColorfulLegendText} />
-          </PieChart>
-        </ResponsiveContainer>
-      </Box>
-
-      <Divider orientation="vertical" flexItem />
-
-      {/* Deliverables */}
-      <Box sx={{ flex: 1, mx: 2 }}>
-        <Typography variant="h6" gutterBottom>Deliverables</Typography>
-        <Button variant="contained" onClick={() => setOpenDialog(true)}>Add Delivery</Button>
-        <List>
-          {project.deliveries && project.deliveries.map((delivery) => (
-            <ListItem key={delivery.id}>
-              <ListItemText primary={delivery.name} secondary={delivery.date} />
-              <IconButton onClick={() => onEditDelivery(delivery)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton onClick={() => onDeleteDelivery(delivery.id)}>
-                <DeleteIcon />
-              </IconButton>
-            </ListItem>
-          ))}
-        </List>
+      {/* New section with updated title */}
+      <Box sx={{ flex: 2, mx: 2 }}>
+        <Typography 
+          variant="body2" 
+          gutterBottom 
+          sx={{ 
+            color: 'text.secondary',
+            fontSize: '0.875rem'  // This is equivalent to 14px if your base font size is 16px
+          }}
+        >
+           
+        </Typography>
+        {/* This area is now empty for future feature discussions */}
       </Box>
 
       <Divider orientation="vertical" flexItem />
