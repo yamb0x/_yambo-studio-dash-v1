@@ -206,7 +206,7 @@ function GanttView() {
       {/* Bottom Panel (former Right Panel) */}
       {selectedProject && (
         <Box sx={{ 
-          height: '30%', // Adjust this value to change the height of the bottom panel
+          height: '-250px', // Changed from '30%' to '250px'
           borderTop: '1px solid #e0e0e0',
           overflowY: 'auto',
           display: 'flex',
