@@ -129,7 +129,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
       {/* Project Data */}
       <Box sx={{ flex: 1, mr: 2 }}>
-        <Typography variant="h6" gutterBottom>Project Data</Typography>
+        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 400 }}>Project Data</Typography>
         <List>
           <ListItem>
             <ListItemText
@@ -247,7 +247,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
 
       {/* Artists Booked */}
       <Box sx={{ flex: 1, ml: 2 }}>
-        <Typography variant="h6" gutterBottom>Artists Booked</Typography>
+        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 400 }}>Artists Booked</Typography>
         <List>
           {sortedArtists.map(([artistName, data]) => {
             const artistLocalTime = getArtistLocalTime(data.country);
