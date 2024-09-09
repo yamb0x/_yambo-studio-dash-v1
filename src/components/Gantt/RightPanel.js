@@ -17,11 +17,13 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
+    console.log('Initial revenue from localStorage:', savedRevenue);
     return savedRevenue ? parseFloat(savedRevenue) : (project.revenue || 0);
   });
 
   const [revenuePercentage, setRevenuePercentage] = useState(() => {
     const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
+    console.log('Initial percentage from localStorage:', savedPercentage);
     return savedPercentage ? parseFloat(savedPercentage) : 20; // Default to 20%
   });
 
@@ -85,7 +87,8 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     const newValue = parseFloat(e.target.value);
     if (!isNaN(newValue) && newValue >= 0) {
       setRevenue(newValue);
-      localStorage.setItem(`project_${project.id}_revenue`, newValue);
+      localStorage.setItem(`project_${project.id}_revenue`, newValue.toString());
+      console.log('Saving revenue to localStorage:', newValue);
       onUpdateRevenue(project.id, newValue);
     }
   };
@@ -96,10 +99,14 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
 
   const handleRevenuePercentageChange = (event, newValue) => {
     setRevenuePercentage(newValue);
-    localStorage.setItem(`project_${project.id}_revenue_percentage`, newValue);
+    localStorage.setItem(`project_${project.id}_revenue_percentage`, newValue.toString());
+    console.log('Saving percentage to localStorage:', newValue);
+    
     const newRevenue = Math.round(totalArtistsCosts * (newValue / 100));
     setRevenue(newRevenue);
-    localStorage.setItem(`project_${project.id}_revenue`, newRevenue);
+    localStorage.setItem(`project_${project.id}_revenue`, newRevenue.toString());
+    console.log('Saving calculated revenue to localStorage:', newRevenue);
+    
     onUpdateRevenue(project.id, newRevenue);
   };
 
@@ -111,8 +118,17 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   };
 
   useEffect(() => {
-    setRevenue(project.revenue || 0);
-  }, [project.revenue]);
+    const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
+    const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
+    console.log('Effect: Saved revenue:', savedRevenue, 'Saved percentage:', savedPercentage);
+    
+    if (savedRevenue) {
+      setRevenue(parseFloat(savedRevenue));
+    }
+    if (savedPercentage) {
+      setRevenuePercentage(parseFloat(savedPercentage));
+    }
+  }, [project.id]);
 
   const marks = [
     { value: 5, label: '5%' },
@@ -191,7 +207,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                   <Typography variant="body2">
                     Expected project revenue ({revenuePercentage.toFixed(1)}% of artist costs)
                   </Typography>
-                  <Box sx={{ mt: 6, position: 'relative' }}>
+                  <Box sx={{ mt: 3, position: 'relative' }}>
                     <Slider
                       value={revenuePercentage}
                       onChange={handleRevenuePercentageChange}
