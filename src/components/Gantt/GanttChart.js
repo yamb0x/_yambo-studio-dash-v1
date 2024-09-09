@@ -127,7 +127,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
             top: 0,
             bottom: 0,
             width: '1px !important',
-            backgroundColor: i % WORKING_DAYS_PER_WEEK === WORKING_DAYS_PER_WEEK - 1 ? '#ccc' : '#eee',
+            backgroundColor: i % WORKING_DAYS_PER_WEEK === WORKING_DAYS_PER_WEEK - 1 ? '#ccc' : '#ccc',
             height: '100% !important',
             zIndex: 1,
           }}
