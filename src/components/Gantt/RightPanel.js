@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Slider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -14,19 +14,16 @@ const countryToTimezone = {
 };
 
 function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, onUpdateRevenue, artistColors = {} }) {
-  const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
-  const [totalBudget, setTotalBudget] = useState(() => {
-    const saved = localStorage.getItem('totalBudget');
-    return saved !== null ? parseInt(saved, 10) : (project?.budget || 0);
-  });
   const [revenue, setRevenue] = useState(() => {
-    const saved = localStorage.getItem('revenue');
-    return saved !== null ? parseInt(saved, 10) : (project?.revenue || 0);
+    const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
+    return savedRevenue ? parseFloat(savedRevenue) : (project.revenue || 0);
   });
-  const [openDialog, setOpenDialog] = useState(false);
-  const [deliveryName, setDeliveryName] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
+
+  const [revenuePercentage, setRevenuePercentage] = useState(() => {
+    const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
+    return savedPercentage ? parseFloat(savedPercentage) : 20; // Default to 20%
+  });
 
   const calculateBookingDays = useCallback((booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
@@ -34,6 +31,21 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     const end = new Date(booking.endDate);
     return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
   }, []);
+
+  const totalArtistsCosts = useMemo(() => {
+    return project.bookings.reduce((total, booking) => {
+      const days = calculateBookingDays(booking);
+      return total + (booking.dailyRate || 0) * days;
+    }, 0);
+  }, [project.bookings, calculateBookingDays]);
+
+  const totalCosts = useMemo(() => {
+    return totalArtistsCosts + revenue;
+  }, [totalArtistsCosts, revenue]);
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [deliveryName, setDeliveryName] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
 
   const groupedBookings = useMemo(() => {
     const grouped = {};
@@ -67,31 +79,28 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     return moment().tz(timezone);
   }, []);
 
-  const handleBudgetEdit = () => setIsEditingBudget(true);
   const handleRevenueEdit = () => setIsEditingRevenue(true);
 
-  const handleBudgetChange = (e) => {
-    const newValue = parseInt(e.target.value, 10);
-    if (!isNaN(newValue) && newValue >= 0) {
-      setTotalBudget(newValue);
-    }
-  };
-
   const handleRevenueChange = (e) => {
-    const newValue = parseInt(e.target.value, 10);
+    const newValue = parseFloat(e.target.value);
     if (!isNaN(newValue) && newValue >= 0) {
       setRevenue(newValue);
+      localStorage.setItem(`project_${project.id}_revenue`, newValue);
+      onUpdateRevenue(project.id, newValue);
     }
-  };
-
-  const handleBudgetBlur = () => {
-    onUpdateBudget(project.id, totalBudget);
-    setIsEditingBudget(false);
   };
 
   const handleRevenueBlur = () => {
-    onUpdateRevenue(project.id, revenue);
     setIsEditingRevenue(false);
+  };
+
+  const handleRevenuePercentageChange = (event, newValue) => {
+    setRevenuePercentage(newValue);
+    localStorage.setItem(`project_${project.id}_revenue_percentage`, newValue);
+    const newRevenue = Math.round(totalArtistsCosts * (newValue / 100));
+    setRevenue(newRevenue);
+    localStorage.setItem(`project_${project.id}_revenue`, newRevenue);
+    onUpdateRevenue(project.id, newRevenue);
   };
 
   const handleAddDelivery = () => {
@@ -101,70 +110,137 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     setDeliveryDate('');
   };
 
+  useEffect(() => {
+    setRevenue(project.revenue || 0);
+  }, [project.revenue]);
+
+  const marks = [
+    { value: 5, label: '5%' },
+    { value: 10, label: '10%' },
+    { value: 15, label: '15%' },
+    { value: 20, label: '20%' },
+    { value: 25, label: '25%' },
+    { value: 30, label: '30%' },
+    { value: 35, label: '35%' },
+    { value: 40, label: '40%' },
+  ];
+
   return (
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
       {/* Project Data */}
       <Box sx={{ flex: 1, mr: 2 }}>
         <Typography variant="h6" gutterBottom>Project Data</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Typography variant="body1" sx={{ mr: 1 }}>Total Budget: $</Typography>
-          {isEditingBudget ? (
-            <TextField
-              value={totalBudget}
-              onChange={handleBudgetChange}
-              onBlur={handleBudgetBlur}
-              size="small"
-              sx={{ width: '150px' }}
-              type="number"
-              inputProps={{ min: 0, step: 1 }}
+        <List>
+          <ListItem>
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" fontWeight="bold">Project Budget</Typography>
+                  <Typography variant="body2">${project.budget}</Typography>
+                </Box>
+              }
+              secondary={
+                <Typography variant="body2">
+                  Total project budget from database
+                </Typography>
+              }
             />
-          ) : (
-            <>
-              <Typography variant="body1" sx={{ mr: 1 }}>{totalBudget}</Typography>
-              <IconButton size="small" onClick={handleBudgetEdit}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Typography variant="body1" sx={{ mr: 1 }}>Revenue: $</Typography>
-          {isEditingRevenue ? (
-            <TextField
-              value={revenue}
-              onChange={handleRevenueChange}
-              onBlur={handleRevenueBlur}
-              size="small"
-              sx={{ width: '150px' }}
-              type="number"
-              inputProps={{ min: 0, step: 1 }}
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" fontWeight="bold">Total Costs</Typography>
+                  <Typography variant="body2">${totalCosts.toFixed(2)}</Typography>
+                </Box>
+              }
+              secondary={
+                <Typography variant="body2">
+                  Total amount spent on artists booking + Revenue
+                </Typography>
+              }
             />
-          ) : (
-            <>
-              <Typography variant="body1" sx={{ mr: 1 }}>{revenue}</Typography>
-              <IconButton size="small" onClick={handleRevenueEdit}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </>
-          )}
-        </Box>
-      </Box>
-
-      <Divider orientation="vertical" flexItem />
-
-      {/* New section with updated title */}
-      <Box sx={{ flex: 2, mx: 2 }}>
-        <Typography 
-          variant="body2" 
-          gutterBottom 
-          sx={{ 
-            color: 'text.secondary',
-            fontSize: '0.875rem'  // This is equivalent to 14px if your base font size is 16px
-          }}
-        >
-           
-        </Typography>
-        {/* This area is now empty for future feature discussions */}
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body1" fontWeight="bold">Revenue</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton size="small" onClick={handleRevenueEdit} sx={{ mr: 1 }}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    {isEditingRevenue ? (
+                      <TextField
+                        value={revenue}
+                        onChange={handleRevenueChange}
+                        onBlur={handleRevenueBlur}
+                        size="small"
+                        sx={{ width: '100px' }}
+                        type="number"
+                        inputProps={{ min: 0, step: 1 }}
+                      />
+                    ) : (
+                      <Typography variant="body2">${revenue}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              }
+              secondary={
+                <Box>
+                  <Typography variant="body2">
+                    Expected project revenue ({revenuePercentage.toFixed(1)}% of artist costs)
+                  </Typography>
+                  <Box sx={{ mt: 6, position: 'relative' }}>
+                    <Slider
+                      value={revenuePercentage}
+                      onChange={handleRevenuePercentageChange}
+                      aria-labelledby="revenue-percentage-slider"
+                      valueLabelDisplay="auto"
+                      step={5}
+                      marks={marks}
+                      min={5}
+                      max={40}
+                      sx={{
+                        color: 'primary.main',
+                        height: 1,
+                        padding: '1px 0 !important',
+                        '& .MuiSlider-thumb': {
+                          height: 0,
+                          width: 1,
+                          '&:hover, &.Mui-focusVisible': {
+                            boxShadow: 'none',
+                          },
+                          '&.Mui-active': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '& .MuiSlider-rail': {
+                          height: 1,
+                          opacity: 0.3,
+                        },
+                        '& .MuiSlider-track': {
+                          height: 0,
+                        },
+                        '& .MuiSlider-mark': {
+                          backgroundColor: 'primary.main',
+                          height: 3,
+                          width: 3,
+                          borderRadius: '00%',
+                          marginTop: -2.5,
+                        },
+                        '& .MuiSlider-markLabel': {
+                          fontSize: '0.65rem',
+                          marginTop: -2,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+              }
+            />
+          </ListItem>
+        </List>
       </Box>
 
       <Divider orientation="vertical" flexItem />

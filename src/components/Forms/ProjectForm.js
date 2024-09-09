@@ -8,6 +8,7 @@ function ProjectForm({ project = {}, onClose }) {
     name: '',
     startDate: '',
     endDate: '',
+    budget: '',  // Add budget field
     ...project
   });
 
@@ -54,6 +55,18 @@ function ProjectForm({ project = {}, onClose }) {
         value={formData.endDate}
         onChange={handleChange}
         InputLabelProps={{ shrink: true }}
+        required
+      />
+      <TextField
+        fullWidth
+        label="Budget ($)"
+        name="budget"
+        type="number"
+        value={formData.budget}
+        onChange={handleChange}
+        InputProps={{
+          startAdornment: '$',
+        }}
         required
       />
       <Button type="submit" variant="contained" color="primary">
