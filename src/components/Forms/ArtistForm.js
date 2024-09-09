@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, MenuItem, Rating, Typography, Checkbox, FormControlLabel } from '@mui/material';
+import { TextField, Button, Box, InputAdornment, MenuItem, Rating, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText } from '@mui/material';
 import { useArtists } from '../../contexts/ArtistContext';
 
 // Complete list of countries
@@ -252,6 +252,20 @@ const countries = [
   {code: 'ZW', name: 'Zimbabwe'}
 ].sort();
 
+const skillOptions = [
+  'Animation',
+  'Look Development',
+  'Rigging',
+  'Creative Direction',
+  'Production',
+  'Simulations',
+  'CAD',
+  'Houdini',
+  'Color Grading',
+  'Compositing',
+  '2D Animation'
+];
+
 function ArtistForm({ artist = {}, onClose }) {
   const { addArtist, updateArtist } = useArtists();
   const [formData, setFormData] = useState({
@@ -259,9 +273,11 @@ function ArtistForm({ artist = {}, onClose }) {
     rating: 0,
     dailyRate: '',
     country: '',
-    skills: '',
+    skills: [],
     email: '',
     website: '',
+    behanceLink: '',
+    instagramLink: '',
     favorite: false,
     ...artist
   });
@@ -269,6 +285,16 @@ function ArtistForm({ artist = {}, onClose }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSkillChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setFormData(prevData => ({
+      ...prevData,
+      skills: typeof value === 'string' ? value.split(',') : value,
+    }));
   };
 
   const handleRatingChange = (event, newValue) => {
@@ -295,12 +321,23 @@ function ArtistForm({ artist = {}, onClose }) {
         onChange={handleChange}
         required
       />
-      <Box>
-        <Typography component="legend">Rating</Typography>
-        <Rating
-          name="rating"
-          value={formData.rating}
-          onChange={handleRatingChange}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography component="legend">Rating</Typography>
+          <Rating
+            name="rating"
+            value={formData.rating}
+            onChange={handleRatingChange}
+          />
+        </Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={formData.favorite}
+              onChange={(e) => setFormData(prevData => ({ ...prevData, favorite: e.target.checked }))}
+            />
+          }
+          label="Favorite"
         />
       </Box>
       <TextField
@@ -330,15 +367,26 @@ function ArtistForm({ artist = {}, onClose }) {
           </MenuItem>
         ))}
       </TextField>
-      <TextField
+      <Select
+        multiple
         fullWidth
-        label="Skills"
-        name="skills"
         value={formData.skills}
-        onChange={handleChange}
-        multiline
-        rows={3}
-      />
+        onChange={handleSkillChange}
+        renderValue={(selected) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {selected.map((value) => (
+              <Chip key={value} label={value} />
+            ))}
+          </Box>
+        )}
+      >
+        {skillOptions.map((skill) => (
+          <MenuItem key={skill} value={skill}>
+            <Checkbox checked={formData.skills.indexOf(skill) > -1} />
+            <ListItemText primary={skill} />
+          </MenuItem>
+        ))}
+      </Select>
       <TextField
         fullWidth
         label="Email"
@@ -354,14 +402,19 @@ function ArtistForm({ artist = {}, onClose }) {
         value={formData.website}
         onChange={handleChange}
       />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={formData.favorite}
-            onChange={(e) => setFormData(prevData => ({ ...prevData, favorite: e.target.checked }))}
-          />
-        }
-        label="Favorite"
+      <TextField
+        fullWidth
+        label="Behance Link"
+        name="behanceLink"
+        value={formData.behanceLink}
+        onChange={handleChange}
+      />
+      <TextField
+        fullWidth
+        label="Instagram Link"
+        name="instagramLink"
+        value={formData.instagramLink}
+        onChange={handleChange}
       />
       <Button type="submit" variant="contained" color="primary">
         {artist.id ? 'Update Artist' : 'Add Artist'}

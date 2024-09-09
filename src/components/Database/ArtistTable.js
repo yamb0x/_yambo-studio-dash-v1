@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, Rating, TableSortLabel, Modal, Box
+  IconButton, Rating, TableSortLabel, Modal, Box, Link, Chip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useArtists } from '../../contexts/ArtistContext';
 import ArtistForm from '../Forms/ArtistForm';
 
@@ -73,6 +74,9 @@ function ArtistTable() {
               <TableCell>Skills</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Website</TableCell>
+              <TableCell>Behance</TableCell>
+              <TableCell>Instagram</TableCell>
+              <TableCell>Favorite</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -85,9 +89,36 @@ function ArtistTable() {
                 </TableCell>
                 <TableCell>${artist.dailyRate}</TableCell>
                 <TableCell>{artist.country}</TableCell>
-                <TableCell>{artist.skills}</TableCell>
+                <TableCell>
+                  {artist.skills.map((skill) => (
+                    <Chip key={skill} label={skill} size="small" style={{ margin: '2px' }} />
+                  ))}
+                </TableCell>
                 <TableCell>{artist.email}</TableCell>
-                <TableCell>{artist.website}</TableCell>
+                <TableCell>
+                  {artist.website && (
+                    <Link href={artist.website} target="_blank" rel="noopener noreferrer">
+                      Website
+                    </Link>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {artist.behanceLink && (
+                    <Link href={artist.behanceLink} target="_blank" rel="noopener noreferrer">
+                      Behance
+                    </Link>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {artist.instagramLink && (
+                    <Link href={artist.instagramLink} target="_blank" rel="noopener noreferrer">
+                      Instagram
+                    </Link>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {artist.favorite && <FavoriteIcon color="error" />}
+                </TableCell>
                 <TableCell align="right">
                   <IconButton size="small" onClick={() => handleEdit(artist)}>
                     <EditIcon fontSize="small" />
