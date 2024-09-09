@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -12,9 +12,11 @@ import { useArtists } from '../contexts/ArtistContext';
 import { COLORS } from '../constants';
 import moment from 'moment';  // Add this line
 
-const SIDE_PANEL_WIDTH = 200;
-
 function GanttView() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const SIDE_PANEL_WIDTH = isMobile ? '100%' : '200px';
+
   const { 
     projects, 
     addBooking, 
@@ -174,12 +176,13 @@ function GanttView() {
       <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
         <ProjectList selectedProject={selectedProject} onSelectProject={handleSelectProject} />
       </Box>
-      <Box sx={{ display: 'flex', height: '100%' }}>
+      <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
         <Box sx={{ 
-          width: `${SIDE_PANEL_WIDTH}px`,  // Use pixel value here
-          flexShrink: 0,  // Prevent the box from shrinking
+          width: SIDE_PANEL_WIDTH,
+          flexShrink: 0,
           overflowY: 'auto',
-          borderRight: '1px solid #e0e0e0',
+          borderRight: isMobile ? 'none' : '1px solid #e0e0e0',
+          borderBottom: isMobile ? '1px solid #e0e0e0' : 'none',
           padding: 2,
         }}>
           <ArtistList
@@ -188,7 +191,7 @@ function GanttView() {
           />
         </Box>
 
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 'calc(100% - 200px)' }}>
           <PanelGroup direction="vertical">
             <Panel>
               <Box ref={drop} sx={{ height: '100%', p: 2, overflowX: 'auto', overflowY: 'auto' }}>
