@@ -161,7 +161,13 @@ function GanttView() {
       </Box>
       <Box sx={{ display: 'flex', height: '100%' }}> {/* Update this line */}
         {/* Left Panel */}
-        <Box sx={{ width: SIDE_PANEL_WIDTH, borderRight: '1px solid #e0e0e0', overflowY: 'auto' }}>
+        <Box sx={{ 
+          width: SIDE_PANEL_WIDTH, 
+          overflowY: 'auto',
+          marginRight: 4,
+          borderRight: '1px solid #e0e0e0',
+          paddingRight: 3,
+        }}>
           <ArtistList
             artists={artists}
             onArtistDrop={handleArtistDrop}
@@ -170,7 +176,7 @@ function GanttView() {
 
         {/* Center Panel (Gantt Chart) */}
         <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'auto' }}>
-          <Typography variant="h6" gutterBottom>Gantt Chart</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
           {selectedProject ? (
             <GanttChart key={selectedProject.id} project={selectedProject} />
           ) : (
@@ -196,7 +202,7 @@ function GanttView() {
             onDeleteDelivery={handleDeleteDelivery}
             onUpdateBudget={handleUpdateBudget}
             onUpdateRevenue={handleUpdateRevenue}
-            artistColors={artistColors}
+            artistColors={artistColors} 
           />
         </Box>
       )}

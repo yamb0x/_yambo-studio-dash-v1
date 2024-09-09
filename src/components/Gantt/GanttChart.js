@@ -231,18 +231,6 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
                 zIndex: 2,
               }}
             >
-              <Typography 
-                sx={{ 
-                  position: 'sticky', 
-                  left: 0, 
-                  width: ARTIST_COLUMN_WIDTH,
-                  paddingLeft: '10px',
-                  backgroundColor: 'white',
-                  zIndex: 1
-                }}
-              >
-                {artistName}
-              </Typography>
               {bookings.map((booking) => (
                 <DraggableEvent
                   key={booking.id}
