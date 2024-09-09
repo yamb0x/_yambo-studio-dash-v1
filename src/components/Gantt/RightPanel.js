@@ -41,6 +41,32 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
   }, []);
 
+  const groupedBookings = useMemo(() => {
+    const grouped = {};
+    project.bookings.forEach(booking => {
+      if (!grouped[booking.artistName]) {
+        grouped[booking.artistName] = {
+          bookings: [],
+          totalCost: 0,
+          skills: new Set(),
+          country: booking.artistCountry,
+        };
+      }
+      grouped[booking.artistName].bookings.push(booking);
+      const days = calculateBookingDays(booking);
+      grouped[booking.artistName].totalCost += (booking.dailyRate || 0) * days;
+      if (booking.skills) {
+        booking.skills.split(',').forEach(skill => grouped[booking.artistName].skills.add(skill.trim()));
+      }
+    });
+    return grouped;
+  }, [project.bookings, calculateBookingDays]);
+
+  const sortedArtists = useMemo(() => {
+    return Object.entries(groupedBookings)
+      .sort(([, a], [, b]) => b.totalCost - a.totalCost);
+  }, [groupedBookings]);
+
   const budgetSpent = useMemo(() => {
     if (!project?.bookings) return 0;
     return project.bookings.reduce((total, booking) => {
@@ -122,27 +148,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const renderColorfulLegendText = (value, entry) => {
     return <span style={{ color: entry.color, fontWeight: 'bold' }}>{value}</span>;
   };
-
-  const groupedBookings = useMemo(() => {
-    const grouped = {};
-    project.bookings.forEach(booking => {
-      if (!grouped[booking.artistName]) {
-        grouped[booking.artistName] = {
-          bookings: [],
-          totalCost: 0,
-          skills: new Set(),
-          country: booking.artistCountry,
-        };
-      }
-      grouped[booking.artistName].bookings.push(booking);
-      const days = calculateBookingDays(booking);
-      grouped[booking.artistName].totalCost += (booking.dailyRate || 0) * days;
-      if (booking.skills) {
-        booking.skills.split(',').forEach(skill => grouped[booking.artistName].skills.add(skill.trim()));
-      }
-    });
-    return grouped;
-  }, [project.bookings, calculateBookingDays]);
 
   const getArtistLocalTime = useCallback((country) => {
     const timezone = countryToTimezone[country];
@@ -281,7 +286,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       <Box sx={{ flex: 1, ml: 2 }}>
         <Typography variant="h6" gutterBottom>Artists Booked</Typography>
         <List>
-          {Object.entries(groupedBookings).map(([artistName, data]) => {
+          {sortedArtists.map(([artistName, data]) => {
             const artistLocalTime = getArtistLocalTime(data.country);
             return (
               <ListItem key={artistName}>
