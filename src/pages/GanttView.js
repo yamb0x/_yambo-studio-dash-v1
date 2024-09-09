@@ -1,18 +1,18 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Box, Typography, Paper, Divider, List, ListItem, ListItemText, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Typography } from '@mui/material';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import ProjectList from '../components/Gantt/ProjectList';
 import GanttChart from '../components/Gantt/GanttChart';
 import ArtistList from '../components/Gantt/ArtistList';
-import { useProjects } from '../contexts/ProjectContext';
-import moment from 'moment';
-import { useArtists } from '../contexts/ArtistContext';
 import RightPanel from '../components/Gantt/RightPanel';
-import { COLORS } from '../constants'; // Make sure you have this file with color constants
+import { useProjects } from '../contexts/ProjectContext';
+import { useArtists } from '../contexts/ArtistContext';
+import { COLORS } from '../constants';
+import moment from 'moment';  // Add this line
 
-const SIDE_PANEL_WIDTH = 300; // Set this to your desired width
+const SIDE_PANEL_WIDTH = 200;
 
 function GanttView() {
   const { 
@@ -174,14 +174,13 @@ function GanttView() {
       <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
         <ProjectList selectedProject={selectedProject} onSelectProject={handleSelectProject} />
       </Box>
-      <Box sx={{ display: 'flex', height: '100%' }}> {/* Update this line */}
-        {/* Left Panel */}
+      <Box sx={{ display: 'flex', height: '100%' }}>
         <Box sx={{ 
-          width: SIDE_PANEL_WIDTH, 
+          width: `${SIDE_PANEL_WIDTH}px`,  // Use pixel value here
+          flexShrink: 0,  // Prevent the box from shrinking
           overflowY: 'auto',
-          marginRight: 4,
           borderRight: '1px solid #e0e0e0',
-          paddingRight: 3,
+          padding: 2,
         }}>
           <ArtistList
             artists={artists}
@@ -189,39 +188,42 @@ function GanttView() {
           />
         </Box>
 
-        {/* Center Panel (Gantt Chart) */}
-        <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'auto' }}>
-          <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
-          {selectedProject && (
-            <GanttChart 
-              key={selectedProject.id} 
-              project={selectedProject}
-              onUpdateBooking={handleUpdateBooking}
-              onDeleteBooking={handleRemoveBooking}
-            />
-          )}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <PanelGroup direction="vertical">
+            <Panel>
+              <Box ref={drop} sx={{ height: '100%', p: 2, overflowX: 'auto', overflowY: 'auto' }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
+                {selectedProject && (
+                  <GanttChart 
+                    key={selectedProject.id} 
+                    project={selectedProject}
+                    onUpdateBooking={handleUpdateBooking}
+                    onDeleteBooking={handleRemoveBooking}
+                  />
+                )}
+              </Box>
+            </Panel>
+            {selectedProject && (
+              <>
+                <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
+                <Panel defaultSize={30} minSize={10}>
+                  <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                    <RightPanel 
+                      project={selectedProject} 
+                      onAddDelivery={handleAddDelivery}
+                      onEditDelivery={handleEditDelivery}
+                      onDeleteDelivery={handleDeleteDelivery}
+                      onUpdateBudget={handleUpdateBudget}
+                      onUpdateRevenue={handleUpdateRevenue}
+                      artistColors={artistColors} 
+                    />
+                  </Box>
+                </Panel>
+              </>
+            )}
+          </PanelGroup>
         </Box>
       </Box>
-
-      {/* Bottom Panel (former Right Panel) */}
-      {selectedProject && (
-        <Box sx={{ 
-          height: '-250px', // Changed from '30%' to '250px'
-          borderTop: '1px solid #e0e0e0',
-          overflowY: 'auto',
-          display: 'flex',
-        }}>
-          <RightPanel 
-            project={selectedProject} 
-            onAddDelivery={handleAddDelivery}
-            onEditDelivery={handleEditDelivery}
-            onDeleteDelivery={handleDeleteDelivery}
-            onUpdateBudget={handleUpdateBudget}
-            onUpdateRevenue={handleUpdateRevenue}
-            artistColors={artistColors} 
-          />
-        </Box>
-      )}
     </Box>
   );
 }
