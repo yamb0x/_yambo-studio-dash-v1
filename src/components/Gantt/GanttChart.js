@@ -160,7 +160,10 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
         overflowY: 'visible',
         position: 'relative',
         height: 'auto',
-        minHeight: '100%'
+        minHeight: '100%',
+        '& #drag-preview': {
+          display: 'none !important',
+        },
       }}
     >
       <Box sx={{ 
