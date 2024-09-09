@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, Link } from '@mui/material';
+import { Box, Typography, Link, IconButton } from '@mui/material';
 import moment from 'moment';
+import CloseIcon from '@mui/icons-material/Close';
 
-function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName }) {
+function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName, onDelete }) {
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const eventRef = useRef(null);
@@ -87,12 +88,18 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
     return `https://${url}`;
   };
 
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete(booking.id);
+  };
+
   return (
     <Box
       ref={eventRef}
       draggable={false}
       onMouseDown={handleMouseDown}
       sx={{
+        position: 'relative', // Ensure this is set for absolute positioning of the delete button
         position: 'absolute',
         left: `${eventLeft}px`,
         top: '5px',
@@ -112,6 +119,27 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         overflow: 'hidden',
       }}
     >
+      <IconButton
+        size="small"
+        onClick={handleDelete}
+        sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          padding: '2px',
+          color: 'rgba(0, 0, 0, 0.5)',
+          backgroundColor: 'transparent', // Remove white background
+          '&:hover': {
+            color: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'transparent', // Keep transparent on hover
+          },
+          '& .MuiSvgIcon-root': {
+            fontSize: '0.75rem', // Make the icon 50% smaller (default is 1.5rem)
+          },
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
       <Link
         href={formatUrl(booking.artistWebsite)}
         target="_blank"

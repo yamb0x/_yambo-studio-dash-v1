@@ -44,8 +44,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
   }, [currentProject.bookings]);
 
   const artistColors = useMemo(() => {
-    const artists = Object.keys(groupedBookings);
-    return artists.reduce((acc, artist, index) => {
+    return Object.keys(groupedBookings).reduce((acc, artist, index) => {
       acc[artist] = COLORS[index % COLORS.length];
       return acc;
     }, {});
@@ -58,6 +57,10 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
   const handleDragStart = useCallback((booking) => {
     setDraggedBooking(booking);
   }, []);
+
+  const handleDeleteBooking = useCallback((bookingId) => {
+    onDeleteBooking(project.id, bookingId);
+  }, [onDeleteBooking, project.id]);
 
   const renderWeekHeaders = () => {
     const weekHeaders = [];
@@ -216,12 +219,12 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
           marginLeft: `-${indicatorOffset}px`, // Shift content to align with green indicator
         }}>
           {renderDays()}
-          {Object.entries(groupedBookings).map(([artistName, bookings], artistIndex) => (
+          {Object.entries(groupedBookings).map(([artistName, bookings], index) => (
             <Box 
               key={artistName} 
               sx={{ 
                 position: 'absolute', 
-                top: `${artistIndex * ROW_HEIGHT}px`, 
+                top: `${index * ROW_HEIGHT}px`, 
                 left: 0, 
                 right: 0, 
                 height: `${ROW_HEIGHT}px`, 
@@ -247,6 +250,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
                   projectStartDate={projectStartDate}
                   color={artistColors[artistName]}
                   artistName={artistName}
+                  onDelete={handleDeleteBooking}
                 />
               ))}
             </Box>

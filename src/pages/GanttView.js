@@ -19,6 +19,7 @@ function GanttView() {
     projects, 
     addBooking, 
     removeBooking, 
+    updateBooking, // Add this line
     addDelivery, 
     editDelivery, 
     deleteDelivery,
@@ -38,10 +39,10 @@ function GanttView() {
     forceUpdate({});
   }, [addBooking]);
 
-  const handleRemoveBooking = useCallback((bookingId) => {
+  const handleRemoveBooking = useCallback((projectId, bookingId) => {
     if (selectedProject) {
       console.log("Removing booking:", bookingId);
-      removeBooking(selectedProject.id, bookingId);
+      removeBooking(projectId, bookingId);
       setSelectedProject(prevProject => ({
         ...prevProject,
         bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
@@ -91,6 +92,20 @@ function GanttView() {
       setSelectedProject(updatedProject);
     }
   }, [selectedProject]);
+
+  const handleUpdateBooking = useCallback((projectId, updatedBooking) => {
+    if (selectedProject && selectedProject.id === projectId) {
+      // Assuming you have an updateBooking function in your useProjects hook
+      updateBooking(projectId, updatedBooking);
+      setSelectedProject(prevProject => ({
+        ...prevProject,
+        bookings: prevProject.bookings.map(booking =>
+          booking.id === updatedBooking.id ? updatedBooking : booking
+        )
+      }));
+      forceUpdate({});
+    }
+  }, [selectedProject, updateBooking]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
@@ -177,12 +192,13 @@ function GanttView() {
         {/* Center Panel (Gantt Chart) */}
         <Box ref={drop} sx={{ flex: 1, p: 2, overflowX: 'auto', overflowY: 'auto' }}>
           <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
-          {selectedProject ? (
-            <GanttChart key={selectedProject.id} project={selectedProject} />
-          ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <Typography>Please select a project</Typography>
-            </Box>
+          {selectedProject && (
+            <GanttChart 
+              key={selectedProject.id} 
+              project={selectedProject}
+              onUpdateBooking={handleUpdateBooking}
+              onDeleteBooking={handleRemoveBooking}
+            />
           )}
         </Box>
       </Box>
