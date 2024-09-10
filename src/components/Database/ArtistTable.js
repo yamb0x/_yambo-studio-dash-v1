@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, Rating, TableSortLabel, Modal, Box, Link, Chip
+  IconButton, Rating, TableSortLabel, Modal, Box, Link, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,6 +26,8 @@ function ArtistTable() {
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
   const [editingArtist, setEditingArtist] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [artistToDelete, setArtistToDelete] = useState(null);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -41,6 +43,24 @@ function ArtistTable() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setEditingArtist(null);
+  };
+
+  const handleDeleteClick = (artist) => {
+    setArtistToDelete(artist);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (artistToDelete) {
+      deleteArtist(artistToDelete.id);
+    }
+    setOpenDeleteDialog(false);
+    setArtistToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+    setArtistToDelete(null);
   };
 
   const sortedArtists = artists.sort((a, b) => {
@@ -123,7 +143,7 @@ function ArtistTable() {
                   <IconButton size="small" onClick={() => handleEdit(artist)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => deleteArtist(artist.id)}>
+                  <IconButton size="small" onClick={() => handleDeleteClick(artist)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -138,6 +158,26 @@ function ArtistTable() {
           <ArtistForm artist={editingArtist} onClose={handleCloseModal} />
         </Box>
       </Modal>
+
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete the artist "{artistToDelete?.name}"? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, TableSortLabel, Modal, Box
+  IconButton, TableSortLabel, Modal, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -25,6 +25,8 @@ function ProjectTable() {
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -40,6 +42,24 @@ function ProjectTable() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setEditingProject(null);
+  };
+
+  const handleDeleteClick = (project) => {
+    setProjectToDelete(project);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (projectToDelete) {
+      deleteProject(projectToDelete.id);
+    }
+    setOpenDeleteDialog(false);
+    setProjectToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+    setProjectToDelete(null);
   };
 
   return (
@@ -76,7 +96,7 @@ function ProjectTable() {
                   <IconButton size="small" onClick={() => handleEdit(project)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => deleteProject(project.id)}>
+                  <IconButton size="small" onClick={() => handleDeleteClick(project)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -91,6 +111,26 @@ function ProjectTable() {
           <ProjectForm project={editingProject} onClose={handleCloseModal} />
         </Box>
       </Modal>
+
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete the project "{projectToDelete?.name}"? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
