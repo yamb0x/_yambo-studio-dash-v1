@@ -212,7 +212,7 @@ function GanttView() {
                 <Panel defaultSize={30} minSize={10}>
                   <Box sx={{ height: '100%', overflowY: 'auto' }}>
                     <RightPanel 
-                      project={selectedProject} 
+                      project={selectedProject} // Make sure this is defined
                       onAddDelivery={handleAddDelivery}
                       onEditDelivery={handleEditDelivery}
                       onDeleteDelivery={handleDeleteDelivery}

@@ -35,11 +35,14 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   }, []);
 
   const totalArtistsCosts = useMemo(() => {
+    if (!project || !project.bookings || !Array.isArray(project.bookings)) {
+      return 0;
+    }
     return project.bookings.reduce((total, booking) => {
       const days = calculateBookingDays(booking);
       return total + (booking.dailyRate || 0) * days;
     }, 0);
-  }, [project.bookings, calculateBookingDays]);
+  }, [project, calculateBookingDays]);
 
   const totalCosts = useMemo(() => {
     return totalArtistsCosts + revenue;
@@ -50,6 +53,9 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [deliveryDate, setDeliveryDate] = useState('');
 
   const groupedBookings = useMemo(() => {
+    if (!project || !project.bookings || !Array.isArray(project.bookings)) {
+      return {};
+    }
     const grouped = {};
     project.bookings.forEach(booking => {
       if (!grouped[booking.artistName]) {
@@ -68,7 +74,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       }
     });
     return grouped;
-  }, [project.bookings, calculateBookingDays]);
+  }, [project, calculateBookingDays]);
 
   const sortedArtists = useMemo(() => {
     return Object.entries(groupedBookings)
@@ -152,7 +158,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body1" fontWeight="bold">Project Budget</Typography>
-                  <Typography variant="body2">${project.budget}</Typography>
+                  <Typography variant="body2">${project?.budget || 0}</Typography>
                 </Box>
               }
               secondary={
