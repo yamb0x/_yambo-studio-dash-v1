@@ -31,6 +31,13 @@ function GanttView() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
 
+  // Add this useEffect for auto-selecting the first project
+  useEffect(() => {
+    if (projects.length > 0 && !selectedProject) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects, selectedProject]);
+
   useEffect(() => {
     console.log("Selected Project:", selectedProject);
     console.log("Bookings:", selectedProject?.bookings);
