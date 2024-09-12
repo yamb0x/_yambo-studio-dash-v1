@@ -10,9 +10,6 @@ function Header() {
           Yambo Studio Dashboard
         </Typography>
         <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button color="inherit" component={RouterLink} to="/">
-            Dashboard
-          </Button>
           <Button color="inherit" component={RouterLink} to="/gantt">
             Gantt View
           </Button>
