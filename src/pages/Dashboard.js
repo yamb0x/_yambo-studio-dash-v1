@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Link as RouterLink } from 'react-router-dom';
+import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, parseISO, subMonths, isAfter, isBefore } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
 
 // Create a custom theme to override default styles
 const theme = createTheme({
@@ -136,8 +136,8 @@ function Dashboard() {
 
     const filterDate = {
       'past3Months': subMonths(currentDate, 3),
-      'pastYear': subMonths(currentDate, 12),
-      'lastYear': subMonths(currentDate, 12),
+      'pastYear': subYears(currentDate, 1),
+      'lastYear': subYears(currentDate, 1),
     };
 
     // Calculate artist bookings
@@ -210,7 +210,7 @@ function Dashboard() {
           <Typography variant="h6" gutterBottom>Navigation</Typography>
           <List>
             {['Overview', 'Projects', 'Artists', 'Reports'].map((text, index) => (
-              <ListItem button key={text} component={RouterLink} to={index === 0 ? '/' : `/${text.toLowerCase()}`}>
+              <ListItem button key={text}>
                 <ListItemText primary={text} />
               </ListItem>
             ))}
@@ -222,6 +222,25 @@ function Dashboard() {
           {/* Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h4">Dashboard</Typography>
+            {/* Commented out search and user icon */}
+            {/*
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <TextField
+                placeholder="Search..."
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mr: 2 }}
+              />
+              <Avatar><PersonIcon /></Avatar>
+            </Box>
+            */}
           </Box>
 
           {/* Overview cards */}
