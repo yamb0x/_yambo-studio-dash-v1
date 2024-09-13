@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
@@ -205,18 +205,6 @@ function Dashboard() {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', height: '100vh' }}>
-        {/* Sidebar */}
-        <Box sx={{ width: 240, borderRight: '1px solid #e0e0e0', p: 2 }}>
-          <Typography variant="h6" gutterBottom>Navigation</Typography>
-          <List>
-            {['Overview', 'Projects', 'Artists', 'Reports'].map((text, index) => (
-              <ListItem button key={text}>
-                <ListItemText primary={text} />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-
         {/* Main content */}
         <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
           {/* Header */}
@@ -380,7 +368,7 @@ function Dashboard() {
                       '& textarea': { 
                         flexGrow: 1 
                       } 
-                    },
+                   },
                     '& .MuiOutlinedInput-notchedOutline': {
                       borderColor: '#e0e0e0',
                     },
