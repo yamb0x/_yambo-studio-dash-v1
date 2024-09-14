@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, MenuItem, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText } from '@mui/material';
+import { TextField, Button, Box, InputAdornment, MenuItem, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText, Autocomplete, ListSubheader, Grid } from '@mui/material';
 import { useArtists } from '../../contexts/ArtistContext';
 
 // Complete list of countries
@@ -254,7 +254,7 @@ const countries = [
 
 const skillOptions = [
   'Animation',
-  'Look Development',
+  'Look Dev',
   'Rigging',
   'Creative Direction',
   'Production',
@@ -263,7 +263,9 @@ const skillOptions = [
   'Houdini',
   'Color Grading',
   'Compositing',
-  '2D Animation'
+  '2D Animation',
+  'Modeling',
+  'Sound Design'
 ];
 
 function ArtistForm({ artist = {}, onClose }) {
@@ -354,26 +356,61 @@ function ArtistForm({ artist = {}, onClose }) {
           </MenuItem>
         ))}
       </TextField>
-      <Select
-        multiple
+      <Autocomplete
         fullWidth
+        multiple
+        options={skillOptions}
+        disableCloseOnSelect
         value={formData.skills}
-        onChange={handleSkillChange}
-        renderValue={(selected) => (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {selected.map((value) => (
-              <Chip key={value} label={value} />
-            ))}
-          </Box>
+        onChange={(event, newValue) => {
+          setFormData(prevData => ({
+            ...prevData,
+            skills: newValue
+          }));
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            variant="outlined"
+            label="Skills"
+            placeholder="Choose artist skills"
+            fullWidth
+          />
         )}
-      >
-        {skillOptions.map((skill) => (
-          <MenuItem key={skill} value={skill}>
-            <Checkbox checked={formData.skills.indexOf(skill) > -1} />
-            <ListItemText primary={skill} />
-          </MenuItem>
+        renderOption={(props, option, { selected }) => (
+          <Grid item xs={6} {...props} style={{ padding: '2px 8px' }}>
+            <Box display="flex" alignItems="center">
+              <Checkbox
+                style={{ padding: '0 4px 0 0' }}
+                checked={selected}
+              />
+              <Typography variant="body2" style={{ fontSize: '0.875rem' }}>
+                {option}
+              </Typography>
+            </Box>
+          </Grid>
+        )}
+        renderTags={(value, getTagProps) =>
+          value.map((option, index) => (
+            <Chip 
+              variant="outlined" 
+              label={option} 
+              {...getTagProps({ index })} 
+              size="small"
+            />
+          ))
+        }
+        ListboxProps={{
+          style: { 
+            maxHeight: 280, // Increased from 200 to 280
+            overflow: 'auto'
+          }
+        }}
+        ListboxComponent={React.forwardRef((props, ref) => (
+          <Grid container ref={ref} {...props} />
         ))}
-      </Select>
+        sx={{ width: '100%' }}
+      />
       <TextField
         fullWidth
         label="Email"
@@ -403,9 +440,11 @@ function ArtistForm({ artist = {}, onClose }) {
         value={formData.instagramLink}
         onChange={handleChange}
       />
-      <Button type="submit" variant="contained" color="primary">
-        {artist.id ? 'Update Artist' : 'Add Artist'}
-      </Button>
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button type="submit" variant="contained" color="primary">
+          {artist.id ? 'Update Artist' : 'Add Artist'}
+        </Button>
+      </Box>
     </Box>
   );
 }

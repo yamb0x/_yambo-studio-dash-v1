@@ -9,6 +9,22 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useArtists } from '../../contexts/ArtistContext';
 import ArtistForm from '../Forms/ArtistForm';
 
+const skillOptions = [
+  'Animation',
+  'Look Dev',
+  'Rigging',
+  'Creative Direction',
+  'Production',
+  'Simulations',
+  'CAD',
+  'Houdini',
+  'Color Grading',
+  'Compositing',
+  '2D Animation',
+  'Modeling',
+  'Sound Design'
+];
+
 const modalStyle = {
   position: 'absolute',
   top: '50%',
