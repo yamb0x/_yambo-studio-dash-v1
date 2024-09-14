@@ -105,13 +105,32 @@ const ArtistTime = ({ country }) => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
+      
+      // Map country to time zone
+      const countryToTimeZone = {
+        'Germany': 'Europe/Berlin',
+        'United States': 'America/New_York',
+        'Japan': 'Asia/Tokyo',
+        'United Kingdom': 'Europe/London',
+        'France': 'Europe/Paris',
+        'Australia': 'Australia/Sydney',
+        'Canada': 'America/Toronto',
+        'China': 'Asia/Shanghai',
+        'India': 'Asia/Kolkata',
+        'Brazil': 'America/Sao_Paulo',
+        // Add more mappings as needed
+      };
+
+      const timeZone = countryToTimeZone[country] || 'UTC';
+
       const options = {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: getTimeZone(country)
+        timeZone: timeZone
       };
+
       const formatter = new Intl.DateTimeFormat('en-US', options);
       setTime(formatter.format(now));
     };
@@ -130,23 +149,6 @@ const ArtistTime = ({ country }) => {
   );
 };
 
-const getTimeZone = (country) => {
-  const timeZones = {
-    'Germany': 'Europe/Berlin',
-    'USA': 'America/New_York',
-    'Japan': 'Asia/Tokyo',
-    'UK': 'Europe/London',
-    'France': 'Europe/Paris',
-    'Australia': 'Australia/Sydney',
-    'Canada': 'America/Toronto',
-    'China': 'Asia/Shanghai',
-    'India': 'Asia/Kolkata',
-    'Brazil': 'America/Sao_Paulo',
-    // Add more countries and their corresponding time zones as needed
-  };
-  return timeZones[country] || 'UTC';
-};
-
 function Dashboard() {
   const { projects } = useProjects();
   const { artists } = useArtists();
@@ -156,6 +158,7 @@ function Dashboard() {
   const [mostBookedArtists, setMostBookedArtists] = useState([]);
   const [notes, setNotes] = useState('');
   const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
+  const [userLocalTime, setUserLocalTime] = useState('');
 
   const currentDate = new Date();
   const lastQuarterStart = subMonths(currentDate, 3);
@@ -295,6 +298,15 @@ function Dashboard() {
 
     setCurrentlyBookedArtists(currentlyBooked);
 
+    const updateUserTime = () => {
+      const now = new Date();
+      setUserLocalTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+    };
+
+    updateUserTime();
+    const timer = setInterval(updateUserTime, 1000);
+
+    return () => clearInterval(timer);
   }, [projects, artists, bookingPeriod]);
 
   const handleTabChange = (event, newValue) => {
@@ -342,27 +354,31 @@ function Dashboard() {
     return imageUrls;
   };
 
-  const renderArtistListItem = useCallback((artist, showBookings = false) => (
-    <ListItem key={artist.id}>
-      <ListItemAvatar>
-        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-          {artist.name.charAt(0)}
-        </Avatar>
-      </ListItemAvatar>
-      <ListItemText 
-        primary={artist.name} 
-        secondary={showBookings ? `${artist.bookings} bookings` : null} 
-      />
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mx: 2 }}>
-        <ArtistTime country={artist.Country} />
-      </Box>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '150px' }}>
-        {artist.Skills?.map((skill, index) => (
-          <Chip key={index} label={skill} size="small" sx={{ margin: '2px' }} />
-        ))}
-      </Box>
-    </ListItem>
-  ), []);
+  const renderArtistListItem = useCallback((artist, showBookings = false) => {
+    console.log('Artist object:', artist); // Add this line for debugging
+    return (
+      <ListItem key={artist.id}>
+        <ListItemAvatar>
+          <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
+            {artist.name.charAt(0)}
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText 
+          primary={artist.name} 
+          secondary={showBookings ? `${artist.bookings} bookings` : null} 
+        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mx: 2 }}>
+          <ArtistTime country={artist.country} />
+          <Typography variant="body2">Country: {artist.country}</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '150px' }}>
+          {artist.Skills?.map((skill, index) => (
+            <Chip key={index} label={skill} size="small" sx={{ margin: '2px' }} />
+          ))}
+        </Box>
+      </ListItem>
+    );
+  }, []);
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
