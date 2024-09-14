@@ -166,7 +166,7 @@ function GanttView() {
         const endDate = startDate.clone().add(6, 'days');
 
         const artist = artists.find(a => a.id === item.id);
-        const dailyRate = parseFloat(artist ? artist.dailyRate : 0);
+        const dailyRate = artist ? parseFloat(artist.dailyRate) || 0 : 0;
 
         const newBooking = {
           id: Date.now(),
@@ -175,7 +175,7 @@ function GanttView() {
           artistName: item.name,
           startDate: startDate.format('YYYY-MM-DD'),
           endDate: endDate.format('YYYY-MM-DD'),
-          dailyRate: dailyRate,  // This should now be a number
+          dailyRate: dailyRate,
         };
 
         handleAddBooking(newBooking);
