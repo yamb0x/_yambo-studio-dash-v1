@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, Chip } from '@mui/material';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, endOfMonth } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { styled, keyframes } from '@mui/material/styles';
 
 const paperStyle = {
   border: '1px solid #e0e0e0',
@@ -21,17 +20,6 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculat
   const toggleExpand = useCallback(() => {
     setExpanded(prev => !prev);
   }, []);
-
-  const formatProfitLoss = (value) => {
-    const absValue = Math.abs(value);
-    if (value >= 0) {
-      return `Profit: $${absValue.toLocaleString()}`;
-    } else {
-      return `Loss: $${absValue.toLocaleString()}`;
-    }
-  };
-
-  const profit = calculateProfit(project);
 
   return (
     <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -70,11 +58,8 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculat
           <Box sx={{ mt: 2, opacity: expanded ? 1 : 0, transition: 'opacity 0.3s' }}>
             <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
             <Typography variant="body2">Total Costs: ${calculateTotalCosts(project).toLocaleString()}</Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: profit < 0 ? 'error.main' : 'inherit' }}
-            >
-              {formatProfitLoss(profit)}
+            <Typography variant="body2">
+              Profit: ${calculateProfit(project).toLocaleString()}
             </Typography>
           </Box>
         </Collapse>
@@ -82,72 +67,6 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculat
     </Card>
   );
 }
-
-const blinkAnimation = keyframes`
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
-`;
-
-const BlinkingDot = styled('span')(({ theme }) => ({
-  height: '8px',
-  width: '8px',
-  backgroundColor: theme.palette.success.main,
-  borderRadius: '50%',
-  display: 'inline-block',
-  marginRight: '8px',
-  animation: `${blinkAnimation} 2s ease-in-out infinite`
-}));
-
-const ArtistTime = ({ country }) => {
-  const [time, setTime] = useState('');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      
-      // Map country to time zone
-      const countryToTimeZone = {
-        'Germany': 'Europe/Berlin',
-        'United States': 'America/New_York',
-        'Japan': 'Asia/Tokyo',
-        'United Kingdom': 'Europe/London',
-        'France': 'Europe/Paris',
-        'Australia': 'Australia/Sydney',
-        'Canada': 'America/Toronto',
-        'China': 'Asia/Shanghai',
-        'India': 'Asia/Kolkata',
-        'Brazil': 'America/Sao_Paulo',
-        // Add more mappings as needed
-      };
-
-      const timeZone = countryToTimeZone[country] || 'UTC';
-
-      const options = {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: timeZone
-      };
-
-      const formatter = new Intl.DateTimeFormat('en-US', options);
-      setTime(formatter.format(now));
-    };
-
-    updateTime();
-    const timer = setInterval(updateTime, 1000);
-
-    return () => clearInterval(timer);
-  }, [country]);
-
-  return (
-    <Box>
-      <Typography variant="body2">{country}: </Typography>
-      <Typography variant="body2">{time}</Typography>
-    </Box>
-  );
-};
 
 function Dashboard() {
   const { projects } = useProjects();
@@ -157,7 +76,6 @@ function Dashboard() {
   const [artistBookings, setArtistBookings] = useState([]);
   const [mostBookedArtists, setMostBookedArtists] = useState([]);
   const [notes, setNotes] = useState('');
-  const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
 
   const currentDate = new Date();
   const lastQuarterStart = subMonths(currentDate, 3);
@@ -264,39 +182,6 @@ function Dashboard() {
     if (savedNotes) {
       setNotes(savedNotes);
     }
-
-    // Calculate currently booked artists
-    const endOfCurrentMonth = endOfMonth(currentDate);
-
-    const currentlyBooked = artists.map(artist => {
-      const bookings = projects
-        .filter(project => project.bookings && Array.isArray(project.bookings))
-        .flatMap(project => 
-          project.bookings.filter(booking => 
-            booking.artistId === artist.id &&
-            isWithinInterval(currentDate, { start: parseISO(booking.startDate), end: parseISO(booking.endDate) })
-          )
-        );
-
-      const futureBookingsThisMonth = projects
-        .filter(project => project.bookings && Array.isArray(project.bookings))
-        .flatMap(project => 
-          project.bookings.filter(booking => 
-            booking.artistId === artist.id &&
-            isAfter(parseISO(booking.startDate), currentDate) &&
-            isBefore(parseISO(booking.startDate), endOfCurrentMonth)
-          )
-        ).length;
-
-      return {
-        ...artist,
-        isCurrentlyBooked: bookings.length > 0,
-        futureBookingsThisMonth
-      };
-    }).filter(artist => artist.isCurrentlyBooked);
-
-    setCurrentlyBookedArtists(currentlyBooked);
-
   }, [projects, artists, bookingPeriod]);
 
   const handleTabChange = (event, newValue) => {
@@ -343,32 +228,6 @@ function Dashboard() {
     
     return imageUrls;
   };
-
-  const renderArtistListItem = useCallback((artist, showBookings = false) => {
-    console.log('Artist object:', artist); // Add this line for debugging
-    return (
-      <ListItem key={artist.id}>
-        <ListItemAvatar>
-          <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-            {artist.name.charAt(0)}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText 
-          primary={artist.name} 
-          secondary={showBookings ? `${artist.bookings} bookings` : null} 
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mx: 2 }}>
-          <ArtistTime country={artist.country} />
-          <Typography variant="body2">Country: {artist.country}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '150px' }}>
-          {artist.Skills?.map((skill, index) => (
-            <Chip key={index} label={skill} size="small" sx={{ margin: '2px' }} />
-          ))}
-        </Box>
-      </ListItem>
-    );
-  }, []);
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -469,55 +328,10 @@ function Dashboard() {
           </Box>
         </Paper>
 
-        {/* Currently Booked Artists and Most Booked Artists */}
+        {/* Most booked artists and Notes */}
         <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ 
-              ...paperStyle, 
-              p: 2, 
-              height: '300px',
-              display: 'flex', 
-              flexDirection: 'column', 
-              mb: 3, 
-              borderRadius: '16px',
-              overflow: 'hidden'
-            }}>
-              <Typography variant="h6" gutterBottom>
-                Currently Booked Artists
-              </Typography>
-              <List sx={{ flexGrow: 1, overflow: 'auto' }}>
-                {currentlyBookedArtists.map((artist) => (
-                  <ListItem key={artist.id}>
-                    <ListItemAvatar>
-                      <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-                        {artist.name.charAt(0)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={artist.name} 
-                      secondary={
-                        <React.Fragment>
-                          <BlinkingDot />
-                          Booked today
-                          {artist.futureBookingsThisMonth > 0 && 
-                            ` and for ${artist.futureBookingsThisMonth} more time${artist.futureBookingsThisMonth > 1 ? 's' : ''} this month`
-                          }
-                        </React.Fragment>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-            <Paper sx={{ 
-              ...paperStyle, 
-              p: 2, 
-              height: '300px',
-              display: 'flex', 
-              flexDirection: 'column', 
-              borderRadius: '16px',
-              overflow: 'hidden'
-            }}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
                   Most Booked Artists
@@ -544,10 +358,20 @@ function Dashboard() {
                   </Select>
                 </FormControl>
               </Box>
-              <List sx={{ flexGrow: 1, overflow: 'auto' }}>
+              <List>
                 {mostBookedArtists.map((artist, index) => (
                   <React.Fragment key={artist.id}>
-                    {renderArtistListItem(artist, true)}
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
+                          {artist.name.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={artist.name} 
+                        secondary={`${artist.bookings} bookings`} 
+                      />
+                    </ListItem>
                     {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" />}
                   </React.Fragment>
                 ))}

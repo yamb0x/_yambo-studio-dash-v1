@@ -40,7 +40,6 @@ const theme = createTheme({
       fontWeight: 300,
     },
     h6: {
-      textTransform: 'uppercase',
       fontFamily: '"Basis Grotesque Light", sans-serif',
       fontWeight: 300,
     },
@@ -76,23 +75,6 @@ const theme = createTheme({
           font-display: swap;
         }
       `,
-    },
-    MuiPaper: {
-      defaultProps: {
-        elevation: 1,
-      },
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
     },
   },
 });

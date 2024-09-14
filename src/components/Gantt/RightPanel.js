@@ -7,9 +7,9 @@ import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
 
 const countryToTimezone = {
-  'United States': 'America/New_York',
-  'United Kingdom': 'Europe/London',
-  'France': 'Europe/Paris',
+  'US': 'America/New_York',
+  'GB': 'Europe/London',
+  'FR': 'Europe/Paris',
   // Add more countries and their representative timezones as needed
 };
 
@@ -82,9 +82,9 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   }, [groupedBookings]);
 
   const getArtistLocalTime = useCallback((country) => {
-    const timeZone = countryToTimezone[country];
-    if (!timeZone) return null;
-    return moment().tz(timeZone);
+    const timezone = countryToTimezone[country];
+    if (!timezone) return null;
+    return moment().tz(timezone);
   }, []);
 
   const handleRevenueEdit = () => setIsEditingRevenue(true);
@@ -292,7 +292,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                       {artistLocalTime && (
                         <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
                           <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          {artistLocalTime.format('HH:mm')} ({data.country} Local Time)
+                          {artistLocalTime.format('HH:mm')} (Artist's Local Time)
                         </Typography>
                       )}
                       {data.bookings.map((booking, index) => {
