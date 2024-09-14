@@ -336,39 +336,8 @@ function Dashboard() {
 
   const getArtistImage = (artistName) => {
     const imageName = artistName.toLowerCase().replace(/\s+/g, '');
-    const extensions = ['png', 'jpg', 'jpeg'];
-    
-    // Create an array of possible image URLs
-    const imageUrls = extensions.map(ext => `/assets/artists/${imageName}.${ext}`);
-    
-    return imageUrls;
+    return `/assets/artists/${imageName}.png`;
   };
-
-  const renderArtistListItem = useCallback((artist, showBookings = false) => {
-    console.log('Artist object:', artist); // Add this line for debugging
-    return (
-      <ListItem key={artist.id}>
-        <ListItemAvatar>
-          <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-            {artist.name.charAt(0)}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText 
-          primary={artist.name} 
-          secondary={showBookings ? `${artist.bookings} bookings` : null} 
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mx: 2 }}>
-          <ArtistTime country={artist.country} />
-          <Typography variant="body2">Country: {artist.country}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '150px' }}>
-          {artist.Skills?.map((skill, index) => (
-            <Chip key={index} label={skill} size="small" sx={{ margin: '2px' }} />
-          ))}
-        </Box>
-      </ListItem>
-    );
-  }, []);
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -414,169 +383,177 @@ function Dashboard() {
           </Grid>
         </Grid>
 
-        {/* Projects section */}
-        <Paper sx={{ ...paperStyle, mb: 3, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Projects
-          </Typography>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
-            sx={{ 
-              borderBottom: '1px solid #e0e0e0',
-              '& .MuiTabs-indicator': {
-                backgroundColor: '#000000',
-              },
-            }}
-          >
-            <Tab label="Active Projects" sx={{ color: '#000000' }} />
-            <Tab label="Completed Projects" sx={{ color: '#000000' }} />
-            <Tab label="Upcoming Projects" sx={{ color: '#000000' }} />
-          </Tabs>
-          <Box sx={{ p: 2 }}>
-            <Grid container spacing={2}>
-              {tabValue === 0 && activeProjects.map((project, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <ProjectCard 
-                    project={project}
-                    calculateProgress={calculateProgress}
-                    calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
-                  />
-                </Grid>
-              ))}
-              {tabValue === 1 && completedProjects.map((project, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <ProjectCard 
-                    project={project}
-                    calculateProgress={calculateProgress}
-                    calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
-                  />
-                </Grid>
-              ))}
-              {tabValue === 2 && upcomingProjects.map((project, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <ProjectCard 
-                    project={project}
-                    calculateProgress={calculateProgress}
-                    calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Paper>
+          {/* Projects section */}
+          <Paper sx={{ mb: 3 }}>
+            <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: '1px solid #e0e0e0' }}>
+              <Tab label="Active Projects" />
+              <Tab label="Completed Projects" />
+              <Tab label="Upcoming Projects" />
+            </Tabs>
+            <Box sx={{ p: 2 }}>
+              <Grid container spacing={2}>
+                {tabValue === 0 && activeProjects.map((project, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card>
+                      <CardContent>
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        </Link>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={calculateProgress(project)} 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">
+                          Progress: {Math.round(calculateProgress(project))}%
+                        </Typography>
+                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+                        <Typography variant="body2">
+                          Profit: ${calculateProfit(project).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                {tabValue === 1 && completedProjects.map((project, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card>
+                      <CardContent>
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        </Link>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={calculateProgress(project)} 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">
+                          Progress: {Math.round(calculateProgress(project))}%
+                        </Typography>
+                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+                        <Typography variant="body2">
+                          Profit: ${calculateProfit(project).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                {tabValue === 2 && upcomingProjects.map((project, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card>
+                      <CardContent>
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        </Link>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={calculateProgress(project)} 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">
+                          Progress: {Math.round(calculateProgress(project))}%
+                        </Typography>
+                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+                        <Typography variant="body2">
+                          Profit: ${calculateProfit(project).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Paper>
 
-        {/* Currently Booked Artists and Most Booked Artists */}
-        <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ 
-              ...paperStyle, 
-              p: 2, 
-              height: '300px',
-              display: 'flex', 
-              flexDirection: 'column', 
-              mb: 3, 
-              borderRadius: '16px',
-              overflow: 'hidden'
-            }}>
-              <Typography variant="h6" gutterBottom>
-                Currently Booked Artists
-              </Typography>
-              <List sx={{ flexGrow: 1, overflow: 'auto' }}>
-                {currentlyBookedArtists.map((artist) => (
-                  <ListItem key={artist.id}>
-                    <ListItemAvatar>
-                      <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-                        {artist.name.charAt(0)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={artist.name} 
-                      secondary={
-                        <React.Fragment>
-                          <BlinkingDot />
-                          Booked today
-                          {artist.futureBookingsThisMonth > 0 && 
-                            ` and for ${artist.futureBookingsThisMonth} more time${artist.futureBookingsThisMonth > 1 ? 's' : ''} this month`
-                          }
-                        </React.Fragment>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-            <Paper sx={{ 
-              ...paperStyle, 
-              p: 2, 
-              height: '300px',
-              display: 'flex', 
-              flexDirection: 'column', 
-              borderRadius: '16px',
-              overflow: 'hidden'
-            }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Most Booked Artists
-                </Typography>
-                <FormControl variant="outlined" size="small">
-                  <Select
-                    value={bookingPeriod}
-                    onChange={handleBookingPeriodChange}
-                    displayEmpty
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderRadius: 0,
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#000000',
-                      },
-                      minWidth: 120,
-                    }}
-                  >
-                    <MenuItem value="all">All Time</MenuItem>
-                    <MenuItem value="past3Months">Past 3 Months</MenuItem>
-                    <MenuItem value="pastYear">Past Year</MenuItem>
-                    <MenuItem value="lastYear">Last Year</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              <List sx={{ flexGrow: 1, overflow: 'auto' }}>
-                {mostBookedArtists.map((artist, index) => (
-                  <React.Fragment key={artist.id}>
-                    {renderArtistListItem(artist, true)}
-                    {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
-              <Typography variant="h6" gutterBottom>
-                Notes
-              </Typography>
-              <TextField
-                multiline
-                rows={4}
-                value={notes}
-                onChange={handleNotesChange}
-                fullWidth
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#000000',
+          {/* Most booked artists and Notes */}
+          <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">Most Booked Artists</Typography>
+                  <FormControl variant="outlined" size="small">
+                    <InputLabel>Period</InputLabel>
+                    <Select
+                      value={bookingPeriod}
+                      onChange={handleBookingPeriodChange}
+                      label="Period"
+                    >
+                      <MenuItem value="all">All Time</MenuItem>
+                      <MenuItem value="past3Months">Past 3 Months</MenuItem>
+                      <MenuItem value="pastYear">Past Year</MenuItem>
+                      <MenuItem value="lastYear">Last Year</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+                <List>
+                  {mostBookedArtists.map((artist, index) => (
+                    <React.Fragment key={artist.id}>
+                      <ListItem>
+                        <ListItemAvatar>
+                          <Avatar
+                            src={getArtistImage(artist.name)}
+                            alt={artist.name}
+                            imgProps={{
+                              onError: (e) => {
+                                e.target.onerror = null;
+                                e.target.src = ""; // Clear the src to show the fallback
+                              }
+                            }}
+                          >
+                            {artist.name.charAt(0)}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText 
+                          primary={artist.name} 
+                          secondary={`${artist.bookings} project${artist.bookings !== 1 ? 's' : ''}`}
+                        />
+                      </ListItem>
+                      {index < mostBookedArtists.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>Notes</Typography>
+                <TextField
+                  multiline
+                  fullWidth
+                  value={notes}
+                  onChange={handleNotesChange}
+                  variant="outlined"
+                  sx={{ 
+                    flexGrow: 1, 
+                    '& .MuiInputBase-root': { 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      '& textarea': { 
+                        flexGrow: 1 
+                      } 
                     },
-                  },
-                }}
-              />
-            </Paper>
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#e0e0e0',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#757575',
+                    },
+                  }}
+                />
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
       </Box>
     </Box>
   );
