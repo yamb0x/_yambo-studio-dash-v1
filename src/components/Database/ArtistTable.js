@@ -6,8 +6,10 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useArtists } from '../../contexts/ArtistContext';
 import ArtistForm from '../Forms/ArtistForm';
+import BookingEmailPopup from './BookingEmailPopup';
 
 const skillOptions = [
   'Animation',
@@ -44,6 +46,8 @@ function ArtistTable() {
   const [editingArtist, setEditingArtist] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [artistToDelete, setArtistToDelete] = useState(null);
+  const [openBookingPopup, setOpenBookingPopup] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -77,6 +81,11 @@ function ArtistTable() {
   const handleCancelDelete = () => {
     setOpenDeleteDialog(false);
     setArtistToDelete(null);
+  };
+
+  const handleCopyEmail = (artist) => {
+    setSelectedArtist(artist);
+    setOpenBookingPopup(true);
   };
 
   const sortedArtists = React.useMemo(() => {
@@ -127,7 +136,14 @@ function ArtistTable() {
                   <Chip key={skill} label={skill} size="small" style={{ margin: '2px' }} />
                 ))}
               </TableCell>
-              <TableCell width="15%">{artist.email}</TableCell>
+              <TableCell width="15%">
+                <Box display="flex" alignItems="center">
+                  <IconButton size="small" onClick={() => handleCopyEmail(artist)} style={{ marginRight: '4px' }}>
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                  {artist.email}
+                </Box>
+              </TableCell>
               <TableCell width="7%">
                 {artist.website && (
                   <Link 
@@ -166,7 +182,7 @@ function ArtistTable() {
                   <FavoriteIcon 
                     sx={{ 
                       color: 'black',
-                      fontSize: '1rem' // Adjust this value to make the icon smaller or larger
+                      fontSize: '1rem'
                     }} 
                   />
                 )}
@@ -211,6 +227,12 @@ function ArtistTable() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <BookingEmailPopup
+        open={openBookingPopup}
+        onClose={() => setOpenBookingPopup(false)}
+        artistName={selectedArtist?.name || ''}
+      />
     </>
   );
 }
