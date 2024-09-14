@@ -5,6 +5,7 @@ import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material'
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 // Create a custom theme to override default styles
 const theme = createTheme({
@@ -202,6 +203,15 @@ function Dashboard() {
     localStorage.setItem('dashboardNotes', newNotes);
   };
 
+  const activeProjects = projects.filter(project => 
+    isAfter(currentDate, parseISO(project.startDate)) && 
+    isAfter(parseISO(project.endDate), currentDate)
+  );
+
+  const completedProjects = projects.filter(project => 
+    isAfter(currentDate, parseISO(project.endDate))
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -279,16 +289,17 @@ function Dashboard() {
             </Tabs>
             <Box sx={{ p: 2 }}>
               <Grid container spacing={2}>
-                {(tabValue === 0 ? projects.filter(project => 
-                  isAfter(currentDate, parseISO(project.startDate)) && 
-                  isAfter(parseISO(project.endDate), currentDate)
-                ) : projects.filter(project => 
-                  isAfter(currentDate, parseISO(project.endDate))
-                )).map((project, index) => (
+                {(tabValue === 0 ? activeProjects : completedProjects).map((project, index) => (
                   <Grid item xs={12} sm={6} md={4} key={index}>
                     <Card>
                       <CardContent>
-                        <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        {tabValue === 1 ? (
+                          <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                          </Link>
+                        ) : (
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        )}
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
                         </Typography>

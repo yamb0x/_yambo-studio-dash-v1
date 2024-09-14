@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -13,6 +14,8 @@ import { COLORS } from '../constants';
 import moment from 'moment';
 
 function GanttView() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const SIDE_PANEL_WIDTH = isMobile ? '100%' : '200px';
@@ -27,9 +30,17 @@ function GanttView() {
     deleteDelivery,
     updateProjectBudget 
   } = useProjects();
+
+  console.log('All projects:', projects);
+  console.log('Project IDs:', projects.map(p => p.id));
+
   const { artists } = useArtists();
   const [selectedProject, setSelectedProject] = useState(null);
+  const [forcedProject, setForcedProject] = useState(null);
   const [, forceUpdate] = useState();
+
+  console.log('projectId from URL:', projectId);
+  console.log('All projects:', projects);
 
   const activeProjects = useMemo(() => {
     const currentDate = new Date();
@@ -46,93 +57,104 @@ function GanttView() {
     });
   }, [projects]);
 
+  console.log('Active projects:', activeProjects);
+
   useEffect(() => {
-    if (activeProjects.length > 0 && !selectedProject) {
-      setSelectedProject(activeProjects[0]);
+    if (projectId) {
+      const project = projects.find(p => p.id.toString() === projectId.toString());
+      console.log('Searching for project with ID:', projectId);
+      console.log('Found project:', project);
+      if (project) {
+        setForcedProject(project);
+        setSelectedProject(null);  // Clear the selected project when forcing a project
+      } else {
+        console.log('Project not found, navigating to first active project');
+        if (activeProjects.length > 0) {
+          navigate(`/gantt/${activeProjects[0].id}`);
+        } else {
+          navigate('/gantt');
+        }
+      }
+    } else {
+      setForcedProject(null);
+      if (activeProjects.length > 0 && !selectedProject) {
+        setSelectedProject(activeProjects[0]);
+      }
     }
-  }, [activeProjects, selectedProject]);
+  }, [projectId, projects, activeProjects, selectedProject, navigate]);
 
   const handleSelectProject = useCallback((project) => {
     setSelectedProject(project);
-  }, []);
+    setForcedProject(null);
+    navigate(`/gantt/${project.id}`);
+  }, [navigate]);
+
+  const displayedProject = forcedProject || selectedProject || (projectId ? projects.find(p => p.id.toString() === projectId.toString()) : null);
+
+  console.log('Forced project:', forcedProject);
+  console.log('Selected project:', selectedProject);
+  console.log('Displayed project:', displayedProject);
 
   const handleAddBooking = useCallback((newBooking) => {
-    addBooking(newBooking);
-    forceUpdate({});
-  }, [addBooking]);
-
-  const handleRemoveBooking = useCallback((projectId, bookingId) => {
-    if (selectedProject) {
-      console.log("Removing booking:", bookingId);
-      removeBooking(projectId, bookingId);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        bookings: prevProject.bookings.filter(booking => booking.id !== bookingId)
-      }));
+    if (displayedProject) {
+      addBooking(displayedProject.id, newBooking);
       forceUpdate({});
     }
-  }, [removeBooking, selectedProject]);
+  }, [displayedProject, addBooking]);
+
+  const handleUpdateBooking = useCallback((updatedBooking) => {
+    if (displayedProject) {
+      updateBooking(displayedProject.id, updatedBooking);
+      forceUpdate({});
+    }
+  }, [displayedProject, updateBooking]);
+
+  const handleDeleteBooking = useCallback((bookingId) => {
+    if (displayedProject) {
+      removeBooking(displayedProject.id, bookingId);
+      forceUpdate({});
+    }
+  }, [displayedProject, removeBooking]);
+
+  const handleAddDelivery = useCallback((newDelivery) => {
+    if (displayedProject) {
+      addDelivery(displayedProject.id, newDelivery);
+      forceUpdate({});
+    }
+  }, [displayedProject, addDelivery]);
 
   const handleEditDelivery = useCallback((updatedDelivery) => {
-    if (selectedProject) {
-      editDelivery(selectedProject.id, updatedDelivery);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        deliveries: prevProject.deliveries.map(delivery =>
-          delivery.id === updatedDelivery.id ? updatedDelivery : delivery
-        )
-      }));
-    }
-  }, [selectedProject, editDelivery]);
-
-  const handleDeleteDelivery = useCallback((deliveryId) => {
-    if (selectedProject) {
-      deleteDelivery(selectedProject.id, deliveryId);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        deliveries: prevProject.deliveries.filter(delivery => delivery.id !== deliveryId)
-      }));
-    }
-  }, [selectedProject, deleteDelivery]);
-
-  const handleUpdateBudget = useCallback((newBudget) => {
-    if (selectedProject) {
-      const updatedProject = { ...selectedProject, budget: newBudget };
-      // Update the project in your state or send to backend
-      // For example:
-      // updateProject(updatedProject);
-      setSelectedProject(updatedProject);
-    }
-  }, [selectedProject]);
-
-  const handleUpdateRevenue = useCallback((newRevenue) => {
-    if (selectedProject) {
-      const updatedProject = { ...selectedProject, revenue: newRevenue };
-      // Update the project in your state or send to backend
-      // For example:
-      // updateProject(updatedProject);
-      setSelectedProject(updatedProject);
-    }
-  }, [selectedProject]);
-
-  const handleUpdateBooking = useCallback((projectId, updatedBooking) => {
-    if (selectedProject && selectedProject.id === projectId) {
-      // Assuming you have an updateBooking function in your useProjects hook
-      updateBooking(projectId, updatedBooking);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        bookings: prevProject.bookings.map(booking =>
-          booking.id === updatedBooking.id ? updatedBooking : booking
-        )
-      }));
+    if (displayedProject) {
+      editDelivery(displayedProject.id, updatedDelivery);
       forceUpdate({});
     }
-  }, [selectedProject, updateBooking]);
+  }, [displayedProject, editDelivery]);
+
+  const handleDeleteDelivery = useCallback((deliveryId) => {
+    if (displayedProject) {
+      deleteDelivery(displayedProject.id, deliveryId);
+      forceUpdate({});
+    }
+  }, [displayedProject, deleteDelivery]);
+
+  const handleUpdateBudget = useCallback((newBudget) => {
+    if (displayedProject) {
+      updateProjectBudget(displayedProject.id, newBudget);
+      forceUpdate({});
+    }
+  }, [displayedProject, updateProjectBudget]);
+
+  const handleUpdateRevenue = useCallback((newRevenue) => {
+    if (displayedProject) {
+      // Implement the logic to update the project's revenue
+      forceUpdate({});
+    }
+  }, [displayedProject]);
 
   const [, drop] = useDrop({
     accept: 'ARTIST',
     drop: (item, monitor) => {
-      if (selectedProject) {
+      if (displayedProject) {
         const dropPosition = monitor.getClientOffset();
         const ganttChartElement = document.getElementById('gantt-chart');
         const ganttRect = ganttChartElement.getBoundingClientRect();
@@ -140,7 +162,7 @@ function GanttView() {
         
         const weekWidth = 200; // Make sure this matches the WEEK_WIDTH in GanttChart
         const droppedWeek = Math.floor(dropX / weekWidth);
-        const startDate = moment(selectedProject.startDate).add(droppedWeek, 'weeks');
+        const startDate = moment(displayedProject.startDate).add(droppedWeek, 'weeks');
         const endDate = startDate.clone().add(6, 'days');
 
         const artist = artists.find(a => a.id === item.id);
@@ -148,7 +170,7 @@ function GanttView() {
 
         const newBooking = {
           id: Date.now(),
-          projectId: selectedProject.id,
+          projectId: displayedProject.id,
           artistId: item.id,
           artistName: item.name,
           startDate: startDate.format('YYYY-MM-DD'),
@@ -161,36 +183,34 @@ function GanttView() {
     },
   });
 
-  const handleAddDelivery = useCallback((newDelivery) => {
-    if (selectedProject) {
-      addDelivery(selectedProject.id, newDelivery);
-      setSelectedProject(prevProject => ({
-        ...prevProject,
-        deliveries: [...(prevProject.deliveries || []), newDelivery]
-      }));
-    }
-  }, [selectedProject, addDelivery]);
-
   const artistColors = useMemo(() => {
-    if (!selectedProject || !selectedProject.bookings) {
+    if (!displayedProject || !displayedProject.bookings) {
       return {};
     }
-    const artists = Array.from(new Set(selectedProject.bookings.map(b => b.artistName)));
+    const artists = Array.from(new Set(displayedProject.bookings.map(b => b.artistName)));
     return artists.reduce((acc, artist, index) => {
       acc[artist] = COLORS[index % COLORS.length];
       return acc;
     }, {});
-  }, [selectedProject]);
+  }, [displayedProject]);
 
   const handleArtistDrop = useCallback((artist) => {
     // Implement the logic for handling artist drop
     console.log('Artist dropped:', artist);
   }, []);
 
+  if (!displayedProject) {
+    return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
-        <ProjectList projects={activeProjects} selectedProject={selectedProject} onSelectProject={handleSelectProject} />
+        <ProjectList 
+          projects={activeProjects} 
+          selectedProject={selectedProject} 
+          onSelectProject={handleSelectProject} 
+        />
       </Box>
       <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
         <Box sx={{ 
@@ -212,34 +232,28 @@ function GanttView() {
             <Panel>
               <Box ref={drop} sx={{ height: '100%', p: 2, overflowX: 'auto', overflowY: 'auto' }}>
                 <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
-                {selectedProject && (
-                  <GanttChart 
-                    key={selectedProject.id} 
-                    project={selectedProject}
-                    onUpdateBooking={handleUpdateBooking}
-                    onDeleteBooking={handleRemoveBooking}
-                  />
-                )}
+                <GanttChart 
+                  key={displayedProject.id} 
+                  project={displayedProject}
+                  onUpdateBooking={handleUpdateBooking}
+                  onDeleteBooking={handleDeleteBooking}
+                />
               </Box>
             </Panel>
-            {selectedProject && (
-              <>
-                <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
-                <Panel defaultSize={30} minSize={10}>
-                  <Box sx={{ height: '100%', overflowY: 'auto' }}>
-                    <RightPanel 
-                      project={selectedProject} // Make sure this is defined
-                      onAddDelivery={handleAddDelivery}
-                      onEditDelivery={handleEditDelivery}
-                      onDeleteDelivery={handleDeleteDelivery}
-                      onUpdateBudget={handleUpdateBudget}
-                      onUpdateRevenue={handleUpdateRevenue}
-                      artistColors={artistColors} 
-                    />
-                  </Box>
-                </Panel>
-              </>
-            )}
+            <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
+            <Panel defaultSize={30} minSize={10}>
+              <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                <RightPanel 
+                  project={displayedProject}
+                  onAddDelivery={handleAddDelivery}
+                  onEditDelivery={handleEditDelivery}
+                  onDeleteDelivery={handleDeleteDelivery}
+                  onUpdateBudget={handleUpdateBudget}
+                  onUpdateRevenue={handleUpdateRevenue}
+                  artistColors={artistColors} 
+                />
+              </Box>
+            </Panel>
           </PanelGroup>
         </Box>
       </Box>
@@ -247,10 +261,4 @@ function GanttView() {
   );
 }
 
-export default function WrappedGanttView() {
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <GanttView />
-    </DndProvider>
-  );
-}
+export default GanttView;

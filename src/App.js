@@ -27,6 +27,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/gantt" element={<GanttView />} />
+                    <Route path="/gantt/:projectId" element={<GanttView />} />
                     <Route path="/database" element={<DatabaseView />} />
                   </Routes>
                 </Container>
