@@ -40,6 +40,7 @@ const theme = createTheme({
       fontWeight: 300,
     },
     h6: {
+      textTransform: 'uppercase',
       fontFamily: '"Basis Grotesque Light", sans-serif',
       fontWeight: 300,
     },
