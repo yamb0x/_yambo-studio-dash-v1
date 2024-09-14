@@ -212,6 +212,15 @@ function Dashboard() {
     isAfter(currentDate, parseISO(project.endDate))
   );
 
+  const upcomingProjects = projects.filter(project => 
+    isAfter(parseISO(project.startDate), currentDate)
+  );
+
+  const getArtistImage = (artistName) => {
+    const imageName = artistName.toLowerCase().replace(/\s+/g, '');
+    return `/assets/artists/${imageName}.png`;
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -286,20 +295,69 @@ function Dashboard() {
             <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: '1px solid #e0e0e0' }}>
               <Tab label="Active Projects" />
               <Tab label="Completed Projects" />
+              <Tab label="Upcoming Projects" />
             </Tabs>
             <Box sx={{ p: 2 }}>
               <Grid container spacing={2}>
-                {(tabValue === 0 ? activeProjects : completedProjects).map((project, index) => (
+                {tabValue === 0 && activeProjects.map((project, index) => (
                   <Grid item xs={12} sm={6} md={4} key={index}>
                     <Card>
                       <CardContent>
-                        {tabValue === 1 ? (
-                          <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <Typography variant="h6" gutterBottom>{project.name}</Typography>
-                          </Link>
-                        ) : (
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <Typography variant="h6" gutterBottom>{project.name}</Typography>
-                        )}
+                        </Link>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={calculateProgress(project)} 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">
+                          Progress: {Math.round(calculateProgress(project))}%
+                        </Typography>
+                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+                        <Typography variant="body2">
+                          Profit: ${calculateProfit(project).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                {tabValue === 1 && completedProjects.map((project, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card>
+                      <CardContent>
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        </Link>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={calculateProgress(project)} 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">
+                          Progress: {Math.round(calculateProgress(project))}%
+                        </Typography>
+                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+                        <Typography variant="body2">
+                          Profit: ${calculateProfit(project).toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                {tabValue === 2 && upcomingProjects.map((project, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card>
+                      <CardContent>
+                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+                        </Link>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
                         </Typography>
@@ -348,7 +406,18 @@ function Dashboard() {
                     <React.Fragment key={artist.id}>
                       <ListItem>
                         <ListItemAvatar>
-                          <Avatar>{artist.name.charAt(0)}</Avatar>
+                          <Avatar
+                            src={getArtistImage(artist.name)}
+                            alt={artist.name}
+                            imgProps={{
+                              onError: (e) => {
+                                e.target.onerror = null;
+                                e.target.src = ""; // Clear the src to show the fallback
+                              }
+                            }}
+                          >
+                            {artist.name.charAt(0)}
+                          </Avatar>
                         </ListItemAvatar>
                         <ListItemText 
                           primary={artist.name} 
