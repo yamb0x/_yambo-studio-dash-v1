@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, MenuItem, Rating, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText } from '@mui/material';
+import { TextField, Button, Box, InputAdornment, MenuItem, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText } from '@mui/material';
 import { useArtists } from '../../contexts/ArtistContext';
 
 // Complete list of countries
@@ -270,7 +270,6 @@ function ArtistForm({ artist = {}, onClose }) {
   const { addArtist, updateArtist } = useArtists();
   const [formData, setFormData] = useState({
     name: '',
-    rating: 0,
     dailyRate: '',
     country: '',
     skills: [],
@@ -297,10 +296,6 @@ function ArtistForm({ artist = {}, onClose }) {
     }));
   };
 
-  const handleRatingChange = (event, newValue) => {
-    setFormData(prevData => ({ ...prevData, rating: newValue }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (artist.id) {
@@ -322,14 +317,6 @@ function ArtistForm({ artist = {}, onClose }) {
         required
       />
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography component="legend">Rating</Typography>
-          <Rating
-            name="rating"
-            value={formData.rating}
-            onChange={handleRatingChange}
-          />
-        </Box>
         <FormControlLabel
           control={
             <Checkbox

@@ -87,12 +87,12 @@ function ProjectTable() {
           <TableBody>
             {projects.map((project) => (
               <TableRow key={project.id} hover>
-                <TableCell>{project.name}</TableCell>
-                <TableCell>{project.startDate}</TableCell>
-                <TableCell>{project.endDate}</TableCell>
-                <TableCell>${project.budget}</TableCell>
-                <TableCell>{project.status}</TableCell>
-                <TableCell align="right" sx={{ width: '100px' }}>
+                <TableCell width="22%">{project.name}</TableCell>
+                <TableCell width="9%">{project.startDate}</TableCell>
+                <TableCell width="13%">{project.endDate}</TableCell>
+                <TableCell width="15%">${project.budget}</TableCell>
+                <TableCell width="14%">{project.status}</TableCell>
+                <TableCell width="20%" align="right">
                   <IconButton size="small" onClick={() => handleEdit(project)}>
                     <EditIcon fontSize="small" />
                   </IconButton>

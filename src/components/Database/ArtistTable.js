@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, Rating, TableSortLabel, Modal, Box, Link, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
+  IconButton, TableSortLabel, Modal, Box, Link, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -63,95 +63,112 @@ function ArtistTable() {
     setArtistToDelete(null);
   };
 
-  const sortedArtists = artists.sort((a, b) => {
-    if (b[orderBy] < a[orderBy]) {
-      return order === 'asc' ? 1 : -1;
-    }
-    if (b[orderBy] > a[orderBy]) {
-      return order === 'asc' ? -1 : 1;
-    }
-    return 0;
-  });
+  const sortedArtists = React.useMemo(() => {
+    return [...artists].sort((a, b) => {
+      if (b[orderBy] < a[orderBy]) {
+        return order === 'asc' ? 1 : -1;
+      }
+      if (b[orderBy] > a[orderBy]) {
+        return order === 'asc' ? -1 : 1;
+      }
+      return 0;
+    });
+  }, [artists, order, orderBy]);
 
   return (
     <>
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={() => handleRequestSort('name')}
-                >
-                  Name
-                </TableSortLabel>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell width="15%">
+              <TableSortLabel
+                active={orderBy === 'name'}
+                direction={orderBy === 'name' ? order : 'asc'}
+                onClick={() => handleRequestSort('name')}
+              >
+                Name
+              </TableSortLabel>
+            </TableCell>
+            <TableCell width="10%">Daily Rate</TableCell>
+            <TableCell width="10%">Country</TableCell>
+            <TableCell width="20%">Skills</TableCell>
+            <TableCell width="15%">Email</TableCell>
+            <TableCell width="7%">Website</TableCell>
+            <TableCell width="7%">Behance</TableCell>
+            <TableCell width="7%">Instagram</TableCell>
+            <TableCell width="5%">Favorite</TableCell>
+            <TableCell width="5%" align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sortedArtists.map((artist) => (
+            <TableRow key={artist.id} hover>
+              <TableCell width="15%">{artist.name}</TableCell>
+              <TableCell width="10%">${artist.dailyRate}</TableCell>
+              <TableCell width="10%">{artist.country}</TableCell>
+              <TableCell width="20%">
+                {artist.skills.map((skill) => (
+                  <Chip key={skill} label={skill} size="small" style={{ margin: '2px' }} />
+                ))}
               </TableCell>
-              <TableCell>Rating</TableCell>
-              <TableCell>Daily Rate</TableCell>
-              <TableCell>Country</TableCell>
-              <TableCell>Skills</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Website</TableCell>
-              <TableCell>Behance</TableCell>
-              <TableCell>Instagram</TableCell>
-              <TableCell>Favorite</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sortedArtists.map((artist) => (
-              <TableRow key={artist.id} hover>
-                <TableCell>{artist.name}</TableCell>
-                <TableCell>
-                  <Rating value={artist.rating} readOnly size="small" />
-                </TableCell>
-                <TableCell>${artist.dailyRate}</TableCell>
-                <TableCell>{artist.country}</TableCell>
-                <TableCell>
-                  {artist.skills.map((skill) => (
-                    <Chip key={skill} label={skill} size="small" style={{ margin: '2px' }} />
-                  ))}
-                </TableCell>
-                <TableCell>{artist.email}</TableCell>
-                <TableCell>
-                  {artist.website && (
-                    <Link href={artist.website} target="_blank" rel="noopener noreferrer">
-                      Website
-                    </Link>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {artist.behanceLink && (
-                    <Link href={artist.behanceLink} target="_blank" rel="noopener noreferrer">
-                      Behance
-                    </Link>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {artist.instagramLink && (
-                    <Link href={artist.instagramLink} target="_blank" rel="noopener noreferrer">
-                      Instagram
-                    </Link>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {artist.favorite && <FavoriteIcon color="error" />}
-                </TableCell>
-                <TableCell align="right">
+              <TableCell width="15%">{artist.email}</TableCell>
+              <TableCell width="7%">
+                {artist.website && (
+                  <Link 
+                    href={artist.website.startsWith('http') ? artist.website : `https://${artist.website}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    Website
+                  </Link>
+                )}
+              </TableCell>
+              <TableCell width="7%">
+                {artist.behanceLink && (
+                  <Link 
+                    href={artist.behanceLink.startsWith('http') ? artist.behanceLink : `https://www.behance.net/${artist.behanceLink}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    Behance
+                  </Link>
+                )}
+              </TableCell>
+              <TableCell width="7%">
+                {artist.instagramLink && (
+                  <Link 
+                    href={artist.instagramLink.startsWith('http') ? artist.instagramLink : `https://www.instagram.com/${artist.instagramLink}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    Instagram
+                  </Link>
+                )}
+              </TableCell>
+              <TableCell width="5%">
+                {artist.favorite && (
+                  <FavoriteIcon 
+                    sx={{ 
+                      color: 'black',
+                      fontSize: '1rem' // Adjust this value to make the icon smaller or larger
+                    }} 
+                  />
+                )}
+              </TableCell>
+              <TableCell width="5%" align="right">
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <IconButton size="small" onClick={() => handleEdit(artist)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
                   <IconButton size="small" onClick={() => handleDeleteClick(artist)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box sx={modalStyle}>
