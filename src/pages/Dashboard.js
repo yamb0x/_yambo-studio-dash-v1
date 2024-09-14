@@ -1,68 +1,72 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
 import { Link } from 'react-router-dom';
 
-// Create a custom theme to override default styles
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#757575', // Use a gray color instead of blue
-    },
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          boxShadow: 'none',
-          border: '1px solid #e0e0e0',
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: 'none',
-          border: '1px solid #e0e0e0',
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiLinearProgress: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-  },
-});
+const paperStyle = {
+  border: '1px solid #e0e0e0',
+  boxShadow: 'none',
+  borderRadius: '4px'
+};
+
+function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculateProfit }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggleExpand = useCallback(() => {
+    setExpanded(prev => !prev);
+  }, []);
+
+  return (
+    <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Typography variant="h6" gutterBottom>{project.name}</Typography>
+        </Link>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
+        </Typography>
+        <LinearProgress 
+          variant="determinate" 
+          value={calculateProgress(project)} 
+          sx={{ 
+            mb: 1, 
+            backgroundColor: '#e0e0e0',
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: '#000000',
+            },
+          }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+          <Typography variant="body2">
+            Progress: {Math.round(calculateProgress(project))}%
+          </Typography>
+          <IconButton 
+            onClick={toggleExpand} 
+            size="small" 
+            sx={{ p: 0 }}
+          >
+            {expanded ? <RemoveIcon /> : <AddIcon />}
+            <Typography variant="body2" sx={{ ml: 0.5 }}>Details</Typography>
+          </IconButton>
+        </Box>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <Box sx={{ mt: 2, opacity: expanded ? 1 : 0, transition: 'opacity 0.3s' }}>
+            <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
+            <Typography variant="body2">Total Costs: ${calculateTotalCosts(project).toLocaleString()}</Typography>
+            <Typography variant="body2">
+              Profit: ${calculateProfit(project).toLocaleString()}
+            </Typography>
+          </Box>
+        </Collapse>
+      </CardContent>
+    </Card>
+  );
+}
 
 function Dashboard() {
   const { projects } = useProjects();
@@ -72,7 +76,6 @@ function Dashboard() {
   const [artistBookings, setArtistBookings] = useState([]);
   const [mostBookedArtists, setMostBookedArtists] = useState([]);
   const [notes, setNotes] = useState('');
-  const notesRef = useRef(null);
 
   const currentDate = new Date();
   const lastQuarterStart = subMonths(currentDate, 3);
@@ -218,254 +221,188 @@ function Dashboard() {
 
   const getArtistImage = (artistName) => {
     const imageName = artistName.toLowerCase().replace(/\s+/g, '');
-    return `/assets/artists/${imageName}.png`;
+    const extensions = ['png', 'jpg', 'jpeg'];
+    
+    // Create an array of possible image URLs
+    const imageUrls = extensions.map(ext => `/assets/artists/${imageName}.${ext}`);
+    
+    return imageUrls;
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', height: '100vh' }}>
-        {/* Main content */}
-        <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4">Dashboard</Typography>
-            {/* Commented out search and user icon */}
-            {/*
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <TextField
-                placeholder="Search..."
-                variant="outlined"
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mr: 2 }}
-              />
-              <Avatar><PersonIcon /></Avatar>
-            </Box>
-            */}
+    <Box sx={{ display: 'flex', height: '100vh' }}>
+      {/* Main content */}
+      <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
+        {/* Overview cards */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ ...paperStyle, p: 2 }}>
+              <Typography variant="h6" gutterBottom>Total Projects</Typography>
+              <Typography variant="h4">{projectStats.total}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                +{projectStats.newLastQuarter} from last quarter
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ ...paperStyle, p: 2 }}>
+              <Typography variant="h6" gutterBottom>In Progress</Typography>
+              <Typography variant="h4">{projectStats.inProgress}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                +{projectStats.newLastQuarter} from last quarter
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ ...paperStyle, p: 2 }}>
+              <Typography variant="h6" gutterBottom>Completed</Typography>
+              <Typography variant="h4">{projectStats.completed}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                +{projectStats.newLastQuarter} from last quarter
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ ...paperStyle, p: 2 }}>
+              <Typography variant="h6" gutterBottom>Total Artists</Typography>
+              <Typography variant="h4">{artistStats.total}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                +{artistStats.newLastQuarter} added in the last quarter
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Projects section */}
+        <Paper sx={{ ...paperStyle, mb: 3, p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Projects
+          </Typography>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            sx={{ 
+              borderBottom: '1px solid #e0e0e0',
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#000000',
+              },
+            }}
+          >
+            <Tab label="Active Projects" sx={{ color: '#000000' }} />
+            <Tab label="Completed Projects" sx={{ color: '#000000' }} />
+            <Tab label="Upcoming Projects" sx={{ color: '#000000' }} />
+          </Tabs>
+          <Box sx={{ p: 2 }}>
+            <Grid container spacing={2}>
+              {tabValue === 0 && activeProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <ProjectCard 
+                    project={project}
+                    calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
+                    calculateProfit={calculateProfit}
+                  />
+                </Grid>
+              ))}
+              {tabValue === 1 && completedProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <ProjectCard 
+                    project={project}
+                    calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
+                    calculateProfit={calculateProfit}
+                  />
+                </Grid>
+              ))}
+              {tabValue === 2 && upcomingProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <ProjectCard 
+                    project={project}
+                    calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
+                    calculateProfit={calculateProfit}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           </Box>
+        </Paper>
 
-          {/* Overview cards */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Total Projects</Typography>
-                <Typography variant="h4">{projectStats.total}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  +{projectStats.newLastQuarter} from last quarter
+        {/* Most booked artists and Notes */}
+        <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">
+                  Most Booked Artists
                 </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>In Progress</Typography>
-                <Typography variant="h4">{projectStats.inProgress}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  +{projectStats.newLastQuarter} from last quarter
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Completed</Typography>
-                <Typography variant="h4">{projectStats.completed}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  +{projectStats.newLastQuarter} from last quarter
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Total Artists</Typography>
-                <Typography variant="h4">{artistStats.total}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  +{artistStats.newLastQuarter} added in the last quarter
-                </Typography>
-              </Paper>
-            </Grid>
+                <FormControl variant="outlined" size="small">
+                  <Select
+                    value={bookingPeriod}
+                    onChange={handleBookingPeriodChange}
+                    displayEmpty
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderRadius: 0,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#000000',
+                      },
+                      minWidth: 120,
+                    }}
+                  >
+                    <MenuItem value="all">All Time</MenuItem>
+                    <MenuItem value="past3Months">Past 3 Months</MenuItem>
+                    <MenuItem value="pastYear">Past Year</MenuItem>
+                    <MenuItem value="lastYear">Last Year</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <List>
+                {mostBookedArtists.map((artist, index) => (
+                  <React.Fragment key={artist.id}>
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
+                          {artist.name.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={artist.name} 
+                        secondary={`${artist.bookings} bookings`} 
+                      />
+                    </ListItem>
+                    {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
           </Grid>
-
-          {/* Projects section */}
-          <Paper sx={{ mb: 3 }}>
-            <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: '1px solid #e0e0e0' }}>
-              <Tab label="Active Projects" />
-              <Tab label="Completed Projects" />
-              <Tab label="Upcoming Projects" />
-            </Tabs>
-            <Box sx={{ p: 2 }}>
-              <Grid container spacing={2}>
-                {tabValue === 0 && activeProjects.map((project, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card>
-                      <CardContent>
-                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
-                        </Link>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
-                        </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={calculateProgress(project)} 
-                          sx={{ mb: 1 }}
-                        />
-                        <Typography variant="body2">
-                          Progress: {Math.round(calculateProgress(project))}%
-                        </Typography>
-                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
-                        <Typography variant="body2">
-                          Profit: ${calculateProfit(project).toLocaleString()}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-                {tabValue === 1 && completedProjects.map((project, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card>
-                      <CardContent>
-                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
-                        </Link>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
-                        </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={calculateProgress(project)} 
-                          sx={{ mb: 1 }}
-                        />
-                        <Typography variant="body2">
-                          Progress: {Math.round(calculateProgress(project))}%
-                        </Typography>
-                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
-                        <Typography variant="body2">
-                          Profit: ${calculateProfit(project).toLocaleString()}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-                {tabValue === 2 && upcomingProjects.map((project, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card>
-                      <CardContent>
-                        <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <Typography variant="h6" gutterBottom>{project.name}</Typography>
-                        </Link>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          {format(parseISO(project.startDate), 'MMM d, yyyy')} - {format(parseISO(project.endDate), 'MMM d, yyyy')}
-                        </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={calculateProgress(project)} 
-                          sx={{ mb: 1 }}
-                        />
-                        <Typography variant="body2">
-                          Progress: {Math.round(calculateProgress(project))}%
-                        </Typography>
-                        <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
-                        <Typography variant="body2">
-                          Profit: ${calculateProfit(project).toLocaleString()}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          </Paper>
-
-          {/* Most booked artists and Notes */}
-          <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">Most Booked Artists</Typography>
-                  <FormControl variant="outlined" size="small">
-                    <InputLabel>Period</InputLabel>
-                    <Select
-                      value={bookingPeriod}
-                      onChange={handleBookingPeriodChange}
-                      label="Period"
-                    >
-                      <MenuItem value="all">All Time</MenuItem>
-                      <MenuItem value="past3Months">Past 3 Months</MenuItem>
-                      <MenuItem value="pastYear">Past Year</MenuItem>
-                      <MenuItem value="lastYear">Last Year</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                <List>
-                  {mostBookedArtists.map((artist, index) => (
-                    <React.Fragment key={artist.id}>
-                      <ListItem>
-                        <ListItemAvatar>
-                          <Avatar
-                            src={getArtistImage(artist.name)}
-                            alt={artist.name}
-                            imgProps={{
-                              onError: (e) => {
-                                e.target.onerror = null;
-                                e.target.src = ""; // Clear the src to show the fallback
-                              }
-                            }}
-                          >
-                            {artist.name.charAt(0)}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText 
-                          primary={artist.name} 
-                          secondary={`${artist.bookings} project${artist.bookings !== 1 ? 's' : ''}`}
-                        />
-                      </ListItem>
-                      {index < mostBookedArtists.length - 1 && <Divider />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" gutterBottom>Notes</Typography>
-                <TextField
-                  multiline
-                  fullWidth
-                  value={notes}
-                  onChange={handleNotesChange}
-                  variant="outlined"
-                  sx={{ 
-                    flexGrow: 1, 
-                    '& .MuiInputBase-root': { 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      '& textarea': { 
-                        flexGrow: 1 
-                      } 
-                   },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#e0e0e0',
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
+              <Typography variant="h6" gutterBottom>
+                Notes
+              </Typography>
+              <TextField
+                multiline
+                rows={4}
+                value={notes}
+                onChange={handleNotesChange}
+                fullWidth
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#000000',
                     },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#757575',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#757575',
-                    },
-                  }}
-                />
-              </Paper>
-            </Grid>
+                  },
+                }}
+              />
+            </Paper>
           </Grid>
-        </Box>
+        </Grid>
       </Box>
-    </ThemeProvider>
+    </Box>
   );
 }
 

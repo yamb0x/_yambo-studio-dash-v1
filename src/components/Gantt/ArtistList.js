@@ -2,6 +2,20 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { List, ListItem, ListItemText, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
 import { useDrag } from 'react-dnd';
 import { useArtists } from '../../contexts/ArtistContext';
+import { styled } from '@mui/material/styles';
+
+// Styled components to ensure Basis Grotesque font is applied
+const StyledBox = styled(Box)({
+  // Remove fontFamily property
+});
+
+const StyledListItem = styled(ListItem)({
+  // Remove fontFamily property
+});
+
+const StyledSelect = styled(Select)({
+  // Remove fontFamily property
+});
 
 // Keep the existing DraggableArtistItem component unchanged
 function DraggableArtistItem({ artist }) {
@@ -40,7 +54,7 @@ function DraggableArtistItem({ artist }) {
   }, []);
 
   return (
-    <ListItem
+    <StyledListItem
       ref={drag}
       button
       onMouseEnter={handleMouseEnter}
@@ -56,7 +70,7 @@ function DraggableArtistItem({ artist }) {
       }}
     >
       <ListItemText primary={artist.name} />
-    </ListItem>
+    </StyledListItem>
   );
 }
 
@@ -90,10 +104,10 @@ function ArtistList() {
   ];
 
   return (
-    <Box>
+    <StyledBox>
       <FormControl fullWidth margin="normal">
         <InputLabel id="sort-select-label">Filter Artists</InputLabel>
-        <Select
+        <StyledSelect
           labelId="sort-select-label"
           id="sort-select"
           value={sortOption}
@@ -108,14 +122,14 @@ function ArtistList() {
           <MenuItem value="under500">Under $500</MenuItem>
           <MenuItem value="under400">Under $400</MenuItem>
           <MenuItem value="under300">Under $300</MenuItem>
-        </Select>
+        </StyledSelect>
       </FormControl>
       <List>
         {sortedAndFilteredArtists().map((artist) => (
           <DraggableArtistItem key={artist.id} artist={artist} />
         ))}
       </List>
-    </Box>
+    </StyledBox>
   );
 }
 
