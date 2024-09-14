@@ -31,7 +31,7 @@ function DatabaseView() {
     <Container maxWidth="xl" disableGutters>
       <Box sx={{ px: 3, py: 2 }}>
         <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-          Database
+           
         </Typography>
       </Box>
       
@@ -39,7 +39,17 @@ function DatabaseView() {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
-              <Typography variant="h5">Projects</Typography>
+              <Typography 
+                variant="h6"
+                sx={{
+                  fontSize: '1.25rem',
+                  letterSpacing: '0.0075em',
+                  color: '#757575',
+                  fontWeight: 500,
+                }}
+              >
+                Projects
+              </Typography>
               <Button 
                 onClick={() => setOpenProjectModal(true)} 
                 variant="outlined" 
@@ -55,7 +65,17 @@ function DatabaseView() {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
-              <Typography variant="h5">Artists</Typography>
+              <Typography 
+                variant="h6"
+                sx={{
+                  fontSize: '1.25rem',
+                  letterSpacing: '0.0075em',
+                  color: '#757575',
+                  fontWeight: 500,
+                }}
+              >
+                Artists
+              </Typography>
               <Button 
                 onClick={() => setOpenArtistModal(true)} 
                 variant="outlined" 
