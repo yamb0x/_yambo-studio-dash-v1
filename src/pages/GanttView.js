@@ -10,7 +10,7 @@ import RightPanel from '../components/Gantt/RightPanel';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { COLORS } from '../constants';
-import moment from 'moment';  // Add this line
+import moment from 'moment';
 
 function GanttView() {
   const theme = useTheme();
@@ -18,30 +18,43 @@ function GanttView() {
   const SIDE_PANEL_WIDTH = isMobile ? '100%' : '200px';
 
   const { 
-    projects, 
+    projects,
     addBooking, 
     removeBooking, 
-    updateBooking, // Add this line
+    updateBooking,
     addDelivery, 
     editDelivery, 
     deleteDelivery,
     updateProjectBudget 
   } = useProjects();
-  const { artists } = useArtists();  // Add this line
+  const { artists } = useArtists();
   const [selectedProject, setSelectedProject] = useState(null);
   const [, forceUpdate] = useState();
 
-  // Add this useEffect for auto-selecting the first project
-  useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0]);
-    }
-  }, [projects, selectedProject]);
+  const activeProjects = useMemo(() => {
+    const currentDate = new Date();
+    const oneMonthFromNow = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate());
+
+    return projects.filter(project => {
+      const startDate = new Date(project.startDate);
+      const endDate = new Date(project.endDate);
+
+      return (
+        (startDate <= currentDate && endDate >= currentDate) || // Current projects
+        (startDate > currentDate && startDate <= oneMonthFromNow) // Projects starting within a month
+      );
+    });
+  }, [projects]);
 
   useEffect(() => {
-    console.log("Selected Project:", selectedProject);
-    console.log("Bookings:", selectedProject?.bookings);
-  }, [selectedProject]);
+    if (activeProjects.length > 0 && !selectedProject) {
+      setSelectedProject(activeProjects[0]);
+    }
+  }, [activeProjects, selectedProject]);
+
+  const handleSelectProject = useCallback((project) => {
+    setSelectedProject(project);
+  }, []);
 
   const handleAddBooking = useCallback((newBooking) => {
     addBooking(newBooking);
@@ -169,10 +182,6 @@ function GanttView() {
     }, {});
   }, [selectedProject]);
 
-  const handleSelectProject = useCallback((project) => {
-    setSelectedProject(project);
-  }, []);
-
   const handleArtistDrop = useCallback((artist) => {
     // Implement the logic for handling artist drop
     console.log('Artist dropped:', artist);
@@ -181,7 +190,7 @@ function GanttView() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
       <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
-        <ProjectList selectedProject={selectedProject} onSelectProject={handleSelectProject} />
+        <ProjectList projects={activeProjects} selectedProject={selectedProject} onSelectProject={handleSelectProject} />
       </Box>
       <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
         <Box sx={{ 

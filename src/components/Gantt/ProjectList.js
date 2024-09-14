@@ -3,6 +3,7 @@ import { Box, Button } from '@mui/material';
 import { useProjects } from '../../contexts/ProjectContext';
 
 function ProjectList({ 
+  projects,
   selectedProject, 
   onSelectProject, 
   barHeight = 50, 
@@ -10,17 +11,15 @@ function ProjectList({
   highlightBackgroundColor = 'black',
   highlightTextColor = 'white'
 }) {
-  const { projects } = useProjects();
-
   return (
     <Box sx={{ 
       position: 'relative',
       width: '100%', 
-      height: `${barHeight + 18}px`, // Increased height to include the additional 18px
-      marginBottom: '-9px', // This will overlap the top border with the content above
-      marginTop: '-9px', // This will overlap the bottom border with the content below
-      marginLeft: '-9px', // This will overlap the left border with the content
-      marginRight: '-9px', // This will overlap the right border with the content
+      height: `${barHeight + 18}px`,
+      marginBottom: '-9px',
+      marginTop: '-9px',
+      marginLeft: '-9px',
+      marginRight: '-9px',
     }}>
       {projects.map((project, index) => (
         <Button

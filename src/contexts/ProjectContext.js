@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 const ProjectContext = createContext();
 
@@ -132,20 +133,38 @@ export function ProjectProvider({ children }) {
     localStorage.setItem('projects', JSON.stringify(projects));
   }, [projects]);
 
+  const getActiveProjects = useMemo(() => {
+    const currentDate = new Date();
+    const oneMonthFromNow = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate());
+
+    return projects.filter(project => {
+      const startDate = new Date(project.startDate);
+      const endDate = new Date(project.endDate);
+
+      return (
+        (startDate <= currentDate && endDate >= currentDate) || // Current projects
+        (startDate > currentDate && startDate <= oneMonthFromNow) // Projects starting within a month
+      );
+    });
+  }, [projects]);
+
+  const value = {
+    projects,
+    addProject,
+    updateProject,
+    deleteProject,
+    addBooking,
+    removeBooking,
+    updateBooking,
+    addDelivery,
+    editDelivery,
+    deleteDelivery,
+    updateProjectBudget,
+    getActiveProjects, // Add this new function to the context value
+  };
+
   return (
-    <ProjectContext.Provider value={{ 
-      projects, 
-      updateBooking, 
-      addBooking, 
-      removeBooking, 
-      addProject, 
-      deleteProject,
-      addDelivery,
-      editDelivery,
-      deleteDelivery,
-      updateProjectBudget,
-      updateProject // Add this new function to the context
-    }}>
+    <ProjectContext.Provider value={value}>
       {children}
     </ProjectContext.Provider>
   );
