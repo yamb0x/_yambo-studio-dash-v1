@@ -77,6 +77,23 @@ const theme = createTheme({
         }
       `,
     },
+    MuiPaper: {
+      defaultProps: {
+        elevation: 1,
+      },
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+        },
+      },
+    },
   },
 });
 

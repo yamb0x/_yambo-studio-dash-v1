@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton } from '@mui/material';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, Chip } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -98,6 +98,54 @@ const BlinkingDot = styled('span')(({ theme }) => ({
   marginRight: '8px',
   animation: `${blinkAnimation} 2s ease-in-out infinite`
 }));
+
+const ArtistTime = ({ country }) => {
+  const [time, setTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const options = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: getTimeZone(country)
+      };
+      const formatter = new Intl.DateTimeFormat('en-US', options);
+      setTime(formatter.format(now));
+    };
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+
+    return () => clearInterval(timer);
+  }, [country]);
+
+  return (
+    <Box>
+      <Typography variant="body2">{country}: </Typography>
+      <Typography variant="body2">{time}</Typography>
+    </Box>
+  );
+};
+
+const getTimeZone = (country) => {
+  const timeZones = {
+    'Germany': 'Europe/Berlin',
+    'USA': 'America/New_York',
+    'Japan': 'Asia/Tokyo',
+    'UK': 'Europe/London',
+    'France': 'Europe/Paris',
+    'Australia': 'Australia/Sydney',
+    'Canada': 'America/Toronto',
+    'China': 'Asia/Shanghai',
+    'India': 'Asia/Kolkata',
+    'Brazil': 'America/Sao_Paulo',
+    // Add more countries and their corresponding time zones as needed
+  };
+  return timeZones[country] || 'UTC';
+};
 
 function Dashboard() {
   const { projects } = useProjects();
@@ -294,6 +342,28 @@ function Dashboard() {
     return imageUrls;
   };
 
+  const renderArtistListItem = useCallback((artist, showBookings = false) => (
+    <ListItem key={artist.id}>
+      <ListItemAvatar>
+        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
+          {artist.name.charAt(0)}
+        </Avatar>
+      </ListItemAvatar>
+      <ListItemText 
+        primary={artist.name} 
+        secondary={showBookings ? `${artist.bookings} bookings` : null} 
+      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mx: 2 }}>
+        <ArtistTime country={artist.Country} />
+      </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '150px' }}>
+        {artist.Skills?.map((skill, index) => (
+          <Chip key={index} label={skill} size="small" sx={{ margin: '2px' }} />
+        ))}
+      </Box>
+    </ListItem>
+  ), []);
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Main content */}
@@ -471,17 +541,7 @@ function Dashboard() {
               <List sx={{ flexGrow: 1, overflow: 'auto' }}>
                 {mostBookedArtists.map((artist, index) => (
                   <React.Fragment key={artist.id}>
-                    <ListItem>
-                      <ListItemAvatar>
-                        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-                          {artist.name.charAt(0)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary={artist.name} 
-                        secondary={`${artist.bookings} bookings`} 
-                      />
-                    </ListItem>
+                    {renderArtistListItem(artist, true)}
                     {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" />}
                   </React.Fragment>
                 ))}
