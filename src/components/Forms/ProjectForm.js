@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box } from '@mui/material';
+import { TextField, Button, Box, Select, MenuItem, Chip, InputLabel, FormControl } from '@mui/material';
 import { useProjects } from '../../contexts/ProjectContext';
+
+const projectTypes = ['Commercial', 'Art', 'Studio'];
 
 function ProjectForm({ project = {}, onClose }) {
   const { addProject, updateProject } = useProjects();
@@ -8,13 +10,26 @@ function ProjectForm({ project = {}, onClose }) {
     name: '',
     startDate: '',
     endDate: '',
-    budget: '',  // Add budget field
+    budget: '',
+    projectType: [],
     ...project
   });
+  const [open, setOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleProjectTypeChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setFormData(prevData => ({
+      ...prevData,
+      projectType: typeof value === 'string' ? value.split(',') : value,
+    }));
+    setOpen(false);  // Close the dropdown after selection
   };
 
   const handleSubmit = (e) => {
@@ -69,6 +84,32 @@ function ProjectForm({ project = {}, onClose }) {
         }}
         required
       />
+      <FormControl fullWidth>
+        <InputLabel id="project-type-label">Project Type</InputLabel>
+        <Select
+          labelId="project-type-label"
+          id="project-type"
+          multiple
+          open={open}
+          onClose={() => setOpen(false)}
+          onOpen={() => setOpen(true)}
+          value={formData.projectType}
+          onChange={handleProjectTypeChange}
+          renderValue={(selected) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map((value) => (
+                <Chip key={value} label={value} />
+              ))}
+            </Box>
+          )}
+        >
+          {projectTypes.map((type) => (
+            <MenuItem key={type} value={type}>
+              {type}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <Button type="submit" variant="contained" color="primary">
         {project.id ? 'Update Project' : 'Add Project'}
       </Button>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, TableSortLabel, Modal, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
+  IconButton, TableSortLabel, Modal, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, Chip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -80,16 +80,22 @@ function ProjectTable() {
               <TableCell>Start Date</TableCell>
               <TableCell>End Date</TableCell>
               <TableCell>Budget</TableCell>
+              <TableCell>Project Types</TableCell>
               <TableCell align="right" sx={{ width: '100px' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {projects.map((project) => (
               <TableRow key={project.id} hover>
-                <TableCell width="19%">{project.name}</TableCell>
-                <TableCell width="8%">{project.startDate}</TableCell>
-                <TableCell width="15%">{project.endDate}</TableCell>
-                <TableCell width="20%">${project.budget}</TableCell>
+                <TableCell width="24%">{project.name}</TableCell>
+                <TableCell width="10%">{project.startDate}</TableCell>
+                <TableCell width="20%">{project.endDate}</TableCell>
+                <TableCell width="14%">${project.budget}</TableCell>
+                <TableCell width="20%">
+                  {project.projectType && project.projectType.map((type) => (
+                    <Chip key={type} label={type} size="small" style={{ margin: '2px' }} />
+                  ))}
+                </TableCell>
                 <TableCell width="16%" align="right">
                   <IconButton size="small" onClick={() => handleEdit(project)}>
                     <EditIcon fontSize="small" />

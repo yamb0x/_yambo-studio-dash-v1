@@ -351,7 +351,7 @@ function ArtistForm({ artist = {}, onClose }) {
         required
       >
         {countries.map((option) => (
-          <MenuItem key={option.code} value={option.code}>
+          <MenuItem key={option.code} value={option.name}>
             {option.name}
           </MenuItem>
         ))}
