@@ -42,6 +42,7 @@ const theme = createTheme({
     h6: {
       fontFamily: '"Basis Grotesque Light", sans-serif',
       fontWeight: 300,
+      textTransform: 'uppercase',
     },
     body1: {
       fontFamily: '"Basis Grotesque Regular", sans-serif',

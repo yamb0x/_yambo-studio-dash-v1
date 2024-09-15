@@ -14,12 +14,18 @@ const paperStyle = {
   borderRadius: '4px'
 };
 
-function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculateProfit }) {
+function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpand = useCallback(() => {
     setExpanded(prev => !prev);
   }, []);
+
+  const totalCosts = calculateTotalCosts(project);
+  const additionalExpenses = project.additionalExpenses || 0;
+  const totalExpenses = totalCosts + additionalExpenses;
+  const profit = project.budget - totalExpenses;
+  const isProfitable = profit >= 0;
 
   return (
     <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -57,9 +63,18 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts, calculat
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box sx={{ mt: 2, opacity: expanded ? 1 : 0, transition: 'opacity 0.3s' }}>
             <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
-            <Typography variant="body2">Total Costs: ${calculateTotalCosts(project).toLocaleString()}</Typography>
-            <Typography variant="body2">
-              Profit: ${calculateProfit(project).toLocaleString()}
+            <Typography variant="body2">Total Expenses: ${totalExpenses.toLocaleString()}</Typography>
+            <Typography 
+              variant="body2"
+              sx={{ 
+                fontWeight: 'bold',
+                color: isProfitable ? 'green' : 'red'
+              }}
+            >
+              {isProfitable 
+                ? `Profit: $${profit.toLocaleString()}` 
+                : `Loss: $${Math.abs(profit).toLocaleString()}`
+              }
             </Typography>
           </Box>
         </Collapse>
@@ -127,11 +142,6 @@ function Dashboard() {
       const days = calculateBookingDays(booking);
       return total + (booking.dailyRate || 0) * days;
     }, 0);
-  };
-
-  const calculateProfit = (project) => {
-    const totalCosts = calculateTotalCosts(project);
-    return project.budget - totalCosts;
   };
 
   useEffect(() => {
@@ -300,7 +310,6 @@ function Dashboard() {
                     project={project}
                     calculateProgress={calculateProgress}
                     calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
                   />
                 </Grid>
               ))}
@@ -310,7 +319,6 @@ function Dashboard() {
                     project={project}
                     calculateProgress={calculateProgress}
                     calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
                   />
                 </Grid>
               ))}
@@ -320,7 +328,6 @@ function Dashboard() {
                     project={project}
                     calculateProgress={calculateProgress}
                     calculateTotalCosts={calculateTotalCosts}
-                    calculateProfit={calculateProfit}
                   />
                 </Grid>
               ))}
@@ -379,19 +386,23 @@ function Dashboard() {
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" gutterBottom>
                 Notes
               </Typography>
               <TextField
                 multiline
-                rows={4}
                 value={notes}
                 onChange={handleNotesChange}
                 fullWidth
                 variant="outlined"
                 sx={{
+                  flexGrow: 1,
                   '& .MuiOutlinedInput-root': {
+                    height: '100%',
+                    '& textarea': {
+                      height: '100% !important',
+                    },
                     '&.Mui-focused fieldset': {
                       borderColor: '#000000',
                     },
