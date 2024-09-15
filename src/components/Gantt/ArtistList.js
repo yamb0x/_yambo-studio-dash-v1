@@ -24,7 +24,7 @@ function DraggableArtistItem({ artist }) {
 
   const [{ isDragging }, drag] = useDrag({
     type: 'ARTIST',
-    item: { id: artist.id, name: artist.name, type: 'ARTIST' },
+    item: { ...artist, type: 'ARTIST' }, // Pass the full artist object including dailyRate
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -72,7 +72,7 @@ function DraggableArtistItem({ artist }) {
         },
       }}
     >
-      <ListItemText primary={artist.name} />
+      <ListItemText primary={artist.name} secondary={`$${artist.dailyRate}/day`} />
     </StyledListItem>
   );
 }

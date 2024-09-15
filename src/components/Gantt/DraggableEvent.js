@@ -3,6 +3,7 @@ import { Box, Typography, Link, IconButton } from '@mui/material';
 import moment from 'moment';
 import CloseIcon from '@mui/icons-material/Close';
 import { COLORS } from '../../constants';
+import { useDrag } from 'react-dnd';
 
 // Function to calculate the inverse color
 const getInverseColor = (hexColor) => {
@@ -114,6 +115,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
     e.stopPropagation();
     onDelete(booking.id);
   };
+
+  console.log('DraggableEvent render:', booking); // Keep this log for debugging
 
   return (
     <Box
