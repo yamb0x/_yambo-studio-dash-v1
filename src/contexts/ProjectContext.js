@@ -7,7 +7,7 @@ export function useProjects() {
   return useContext(ProjectContext);
 }
 
-export function ProjectProvider({ children }) {
+export const ProjectProvider = ({ children }) => {
   const [projects, setProjects] = useState(() => {
     const storedProjects = localStorage.getItem('projects');
     console.log('Initial projects from localStorage:', storedProjects);
@@ -23,13 +23,13 @@ export function ProjectProvider({ children }) {
     setProjects(prevProjects => [...prevProjects, newProject]);
   }, []);
 
-  const updateProject = useCallback((updatedProject) => {
+  const updateProject = (projectId, updates) => {
     setProjects(prevProjects => 
       prevProjects.map(project => 
-        project.id === updatedProject.id ? updatedProject : project
+        project.id === projectId ? { ...project, ...updates } : project
       )
     );
-  }, []);
+  };
 
   const updateBooking = (projectId, updatedBooking) => {
     setProjects(prevProjects => {
@@ -145,6 +145,37 @@ export function ProjectProvider({ children }) {
     });
   }, [projects]);
 
+  const calculateTotalCosts = useCallback((project) => {
+    if (!project || !project.bookings || !Array.isArray(project.bookings)) {
+      return 0;
+    }
+    const bookingCosts = project.bookings.reduce((total, booking) => {
+      const days = (new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24) + 1;
+      return total + (booking.dailyRate * days);
+    }, 0);
+    const additionalExpenses = project.revenue || 0; // Using revenue as additional expenses
+    return bookingCosts + additionalExpenses;
+  }, []);
+
+  const updateProjectTotalCosts = useCallback((projectId) => {
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === projectId 
+          ? { ...project, totalCosts: calculateTotalCosts(project) }
+          : project
+      )
+    );
+  }, [calculateTotalCosts]);
+
+  const updateAllProjectsTotalCosts = useCallback(() => {
+    setProjects(prevProjects => 
+      prevProjects.map(project => ({
+        ...project,
+        totalCosts: calculateTotalCosts(project)
+      }))
+    );
+  }, [calculateTotalCosts]);
+
   const value = {
     projects,
     addProject,
@@ -157,7 +188,9 @@ export function ProjectProvider({ children }) {
     editDelivery,
     deleteDelivery,
     updateProjectBudget,
-    getActiveProjects, // Add this new function to the context value
+    getActiveProjects,
+    updateProjectTotalCosts,
+    updateAllProjectsTotalCosts,
   };
 
   return (
@@ -165,4 +198,4 @@ export function ProjectProvider({ children }) {
       {children}
     </ProjectContext.Provider>
   );
-}
+};

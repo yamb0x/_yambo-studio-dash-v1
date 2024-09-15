@@ -27,7 +27,9 @@ function GanttView() {
     addDelivery, 
     editDelivery, 
     deleteDelivery,
-    updateProjectBudget 
+    updateProjectBudget,
+    updateProject, // Add this line to get the updateProject function
+    updateProjectTotalCosts // Add this line to get the updateProjectTotalCosts function
   } = useProjects();
 
   console.log('All projects:', projects);
@@ -187,6 +189,18 @@ function GanttView() {
     }
   }, [displayedProject, handleAddBooking]);
 
+  const [calculatedTotalCosts, setCalculatedTotalCosts] = useState(0);
+
+  const handleTotalCostsCalculated = useCallback((projectId, totalCosts) => {
+    updateProject(projectId, { totalCosts });
+  }, [updateProject]);
+
+  useEffect(() => {
+    if (displayedProject) {
+      updateProjectTotalCosts(displayedProject.id);
+    }
+  }, [displayedProject, updateProjectTotalCosts]);
+
   if (!displayedProject) {
     return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
   }
@@ -242,6 +256,7 @@ function GanttView() {
                     onDeleteDelivery={handleDeleteDelivery}
                     onUpdateBudget={handleUpdateBudget}
                     onUpdateRevenue={handleUpdateRevenue}
+                    onTotalCostsCalculated={handleTotalCostsCalculated}
                     artistColors={artistColors} 
                   />
                 </Box>
