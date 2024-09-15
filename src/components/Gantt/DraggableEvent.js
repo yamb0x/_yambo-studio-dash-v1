@@ -112,7 +112,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
   };
 
   const handleDelete = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent event from bubbling up
+    console.log('Delete button clicked for booking:', booking.id);
     onDelete(booking.id);
   };
 
@@ -124,10 +125,8 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       draggable={false}
       onMouseDown={handleMouseDown}
       sx={{
-        position: 'relative', // Ensure this is set for absolute positioning of the delete button
         position: 'absolute',
         left: `${eventLeft}px`,
-        top: '5px',
         width: `${eventWidth}px`,
         height: `${rowHeight - 10}px`,
         backgroundColor: color,

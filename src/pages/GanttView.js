@@ -112,12 +112,12 @@ function GanttView() {
     }
   }, [displayedProject, updateBooking]);
 
-  const handleDeleteBooking = useCallback((bookingId) => {
-    if (displayedProject) {
-      removeBooking(displayedProject.id, bookingId);
-      forceUpdate({});
-    }
-  }, [displayedProject, removeBooking]);
+  const handleDeleteBooking = useCallback((projectId, bookingId) => {
+    console.log('Deleting booking:', bookingId, 'from project:', projectId);
+    removeBooking(projectId, bookingId);
+    // If you need to force a re-render, you can use the forceUpdate function
+    forceUpdate({});
+  }, [removeBooking]);
 
   const handleAddDelivery = useCallback((newDelivery) => {
     if (displayedProject) {

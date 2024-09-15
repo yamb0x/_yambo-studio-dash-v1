@@ -95,6 +95,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
   }, []);
 
   const handleDeleteBooking = useCallback((bookingId) => {
+    console.log('Deleting booking:', bookingId);
     onDeleteBooking(project.id, bookingId);
   }, [onDeleteBooking, project.id]);
 
@@ -201,14 +202,12 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       <Box 
         id="gantt-chart" 
         sx={{ 
+          width: '100%',
+          height: '100%',
           overflowX: 'auto',
-          overflowY: 'visible',
-          position: 'relative',
-          height: 'auto',
-          minHeight: '100%',
-          '& #drag-preview': {
-            display: 'none !important',
-          },
+          overflowY: 'auto',
+          backgroundColor: 'white', // Change this to white
+          // ... other existing styles ...
         }}
       >
         <Box sx={{ 
@@ -336,10 +335,10 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
         drop(node);
       }} 
       style={{ 
-        position: 'relative', 
-        width: '100%', 
-        height: '100%', 
-        backgroundColor: 'rgba(0, 0, 255, 0.1)' // Temporary blue background
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'white', // Also set this to white
+        // ... other existing styles ...
       }}
     >
       {renderGanttChart}
