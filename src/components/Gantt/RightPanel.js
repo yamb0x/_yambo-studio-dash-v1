@@ -108,7 +108,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     localStorage.setItem(`project_${project.id}_revenue_percentage`, newValue.toString());
     console.log('Saving percentage to localStorage:', newValue);
     
-    const newRevenue = Math.round(totalArtistsCosts * (newValue / 100));
+    const newRevenue = Math.round((project?.budget || 0) * (newValue / 100));
     setRevenue(newRevenue);
     localStorage.setItem(`project_${project.id}_revenue`, newRevenue.toString());
     console.log('Saving calculated revenue to localStorage:', newRevenue);
@@ -292,7 +292,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                       {artistLocalTime && (
                         <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
                           <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          {artistLocalTime.format('HH:mm')} (Artist's Local Time)
+                          {artistLocalTime.format('HH:mm')} ({data.country} Local Time)
                         </Typography>
                       )}
                       {data.bookings.map((booking, index) => {

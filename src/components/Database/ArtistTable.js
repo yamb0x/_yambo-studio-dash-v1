@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  IconButton, TableSortLabel, Modal, Box, Link, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button
+  IconButton, TableSortLabel, Modal, Box, Link, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, Typography
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -38,8 +38,8 @@ const modalStyle = {
   p: 4,
 };
 
-function ArtistTable() {
-  const { artists, deleteArtist } = useArtists();
+function ArtistTable({ artists }) {
+  const { deleteArtist } = useArtists();
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
@@ -88,7 +88,10 @@ function ArtistTable() {
     setOpenBookingPopup(true);
   };
 
-  const sortedArtists = React.useMemo(() => {
+  const sortedArtists = useMemo(() => {
+    if (!artists || artists.length === 0) {
+      return [];
+    }
     return [...artists].sort((a, b) => {
       if (b[orderBy] < a[orderBy]) {
         return order === 'asc' ? 1 : -1;
@@ -99,6 +102,10 @@ function ArtistTable() {
       return 0;
     });
   }, [artists, order, orderBy]);
+
+  if (!artists || artists.length === 0) {
+    return <Typography>No artists available.</Typography>;
+  }
 
   return (
     <>
