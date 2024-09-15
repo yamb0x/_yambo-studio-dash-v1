@@ -151,13 +151,13 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
       {/* Project Data */}
       <Box sx={{ flex: 1, mr: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 400 }}>Project Data</Typography>
+        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 200 }}>Project Data</Typography>
         <List>
           <ListItem>
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Project Budget</Typography>
+                  <Typography variant="body1">Project Budget</Typography>
                   <Typography variant="body2">${project?.budget || 0}</Typography>
                 </Box>
               }
@@ -172,7 +172,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Total Costs</Typography>
+                  <Typography variant="body1">Total Costs</Typography>
                   <Typography variant="body2">${totalCosts.toFixed(2)}</Typography>
                 </Box>
               }
@@ -187,7 +187,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Revenue</Typography>
+                  <Typography variant="body1">Revenue</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton size="small" onClick={handleRevenueEdit} sx={{ mr: 1 }}>
                       <EditIcon fontSize="small" />
@@ -211,7 +211,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
               secondary={
                 <Box>
                   <Typography variant="body2">
-                    Expected project revenue ({revenuePercentage.toFixed(1)}% of artist costs)
+                    Additional project revenue ({revenuePercentage.toFixed(1)}% of total budget)
                   </Typography>
                   <Box sx={{ mt: 3, position: 'relative' }}>
                     <Slider
@@ -278,7 +278,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body1" fontWeight="bold">{artistName}</Typography>
+                      <Typography variant="body1">{artistName}</Typography>
                       <Typography variant="body2">${data.totalCost.toFixed(2)}</Typography>
                     </Box>
                   }
