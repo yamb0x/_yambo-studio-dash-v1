@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, useTheme } from '@mui/material';
 import { useProjects } from '../../contexts/ProjectContext';
 
 function ProjectList({ 
@@ -11,6 +11,9 @@ function ProjectList({
   highlightBackgroundColor = 'black',
   highlightTextColor = 'white'
 }) {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   return (
     <Box sx={{ 
       position: 'relative',
@@ -33,16 +36,16 @@ function ProjectList({
             width: `${100 / projects.length}%`,
             height: '100%',
             borderRadius: 0,
-            borderRight: index < projects.length - 1 ? `1px solid ${borderColor}` : 'none',
-            padding: 0, // Remove default padding
-            color: 'black', // Set default text color to black
+            borderRight: index < projects.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+            padding: 0,
+            color: isDarkMode ? theme.palette.text.primary : theme.palette.text.secondary,
             '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)', // Light hover effect
-              color: 'black', // Ensure text remains black on hover
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+              color: theme.palette.text.primary,
             },
             ...(selectedProject && selectedProject.id === project.id && {
-              backgroundColor: highlightBackgroundColor,
-              color: highlightTextColor,
+              backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+              color: theme.palette.text.primary,
             }),
           }}
         >

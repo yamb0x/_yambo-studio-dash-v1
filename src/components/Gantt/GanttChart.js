@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import moment from 'moment';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 import { COLORS } from '../../constants';
@@ -18,6 +18,8 @@ const TIMELINE_INDICATOR_WIDTH = 2;
 function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop }) {
   const chartRef = useRef(null);
   const [chartWidth, setChartWidth] = useState(0);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   useEffect(() => {
     if (chartRef.current) {
@@ -116,8 +118,8 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
           key={week} 
           sx={{ 
             width: WEEK_WIDTH, 
-            borderRight: '1px solid #ccc', 
-            borderLeft: week === 0 ? '1px solid #ccc' : 'none',
+            borderRight: `1px solid ${theme.palette.divider}`, 
+            borderLeft: week === 0 ? `1px solid ${theme.palette.divider}` : 'none',
             textAlign: 'center', 
             padding: '5px 5px 15px',
             boxSizing: 'border-box',
@@ -143,7 +145,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
                 bottom: 0,
                 width: '1px',
                 height: '5px',
-                backgroundColor: '#ccc'
+                backgroundColor: theme.palette.divider
               }}
             />
           ))}
@@ -151,7 +153,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       );
     }
     return weekHeaders;
-  }, [totalWeeks, chartStartDate]);
+  }, [totalWeeks, chartStartDate, theme.palette.divider]);
 
   const renderDays = useCallback(() => {
     const days = [];
@@ -167,7 +169,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
             top: 0,
             bottom: 0,
             width: '1px !important',
-            backgroundColor: i % WORKING_DAYS_PER_WEEK === WORKING_DAYS_PER_WEEK - 1 ? '#ccc' : '#ccc',
+            backgroundColor: i % WORKING_DAYS_PER_WEEK === WORKING_DAYS_PER_WEEK - 1 ? theme.palette.divider : theme.palette.divider,
             height: '100% !important',
             zIndex: 1,
           }}
@@ -187,7 +189,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       );
     }
     return days;
-  }, [totalWeeks, chartStartDate]);
+  }, [totalWeeks, chartStartDate, theme.palette.divider]);
 
   const getArtistDailyRate = useCallback((artistId) => {
     const artist = artists.find(a => a.id === artistId);
@@ -269,7 +271,8 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
           height: '100%',
           overflowX: 'auto',
           overflowY: 'auto',
-          backgroundColor: 'white', // Change this to white
+          backgroundColor: theme.palette.background.default,
+          color: theme.palette.text.primary,
           // ... other existing styles ...
         }}
       >
@@ -298,11 +301,11 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
               position: 'sticky', 
               top: 0, 
               zIndex: 2, 
-              backgroundColor: 'white',
+              backgroundColor: theme.palette.background.default,
               marginLeft: `-${indicatorOffset}px`, // Shift headers to align with green indicator
             }}
           >
-            <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', position: 'relative' }}>
+            <Box sx={{ display: 'flex', borderBottom: `1px solid ${theme.palette.divider}`, position: 'relative' }}>
               {renderWeekHeaders()}
               {/* Blue Timeline Indicator (Project Start) */}
               <Box
@@ -338,7 +341,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
                   left: 0, 
                   right: 0, 
                   height: `${ROW_HEIGHT}px`, 
-                  borderBottom: '1px solid #eee',
+                  borderBottom: `1px solid ${theme.palette.divider}`,
                   display: 'flex',
                   alignItems: 'center',
                   zIndex: 2,
@@ -390,7 +393,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
         )}
       </Box>
     );
-  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate, renderDeliveries]);
+  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate, renderDeliveries, theme.palette.background.default, theme.palette.text.primary, theme.palette.divider]);
 
   return (
     <div 
@@ -401,7 +404,8 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       style={{ 
         width: '100%',
         height: '100%',
-        backgroundColor: 'white', // Also set this to white
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
         // ... other existing styles ...
       }}
     >

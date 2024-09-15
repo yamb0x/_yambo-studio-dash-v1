@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton } from '@mui/material';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, useTheme } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -16,6 +16,8 @@ const paperStyle = {
 
 function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
   const [expanded, setExpanded] = useState(false);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const toggleExpand = useCallback(() => {
     setExpanded(prev => !prev);
@@ -28,7 +30,7 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
   const isProfitable = profit >= 0;
 
   return (
-    <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <Typography variant="h6" gutterBottom>{project.name}</Typography>
@@ -41,9 +43,9 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
           value={calculateProgress(project)} 
           sx={{ 
             mb: 1, 
-            backgroundColor: '#e0e0e0',
+            backgroundColor: isDarkMode ? theme.palette.grey[800] : '#e0e0e0',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: '#000000',
+              backgroundColor: isDarkMode ? theme.palette.primary.main : '#000000',
             },
           }}
         />
@@ -91,6 +93,8 @@ function Dashboard() {
   const [artistBookings, setArtistBookings] = useState([]);
   const [mostBookedArtists, setMostBookedArtists] = useState([]);
   const [notes, setNotes] = useState('');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const currentDate = new Date();
   const lastQuarterStart = subMonths(currentDate, 3);
@@ -255,14 +259,14 @@ function Dashboard() {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
+    <Box sx={{ display: 'flex', height: '100vh', backgroundColor: isDarkMode ? theme.palette.background.default : 'white' }}>
       {/* Main content */}
       <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
         {/* Overview cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ ...paperStyle, p: 2 }}>
-              <Typography variant="h6" gutterBottom>Total Projects</Typography>
+            <Paper sx={{ ...paperStyle, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
+              <Typography variant="h6" gutterBottom>{projectStats.total}</Typography>
               <Typography variant="h4">{projectStats.total}</Typography>
               <Typography variant="body2" color="text.secondary">
                 +{projectStats.newLastQuarter} from last quarter
@@ -270,7 +274,7 @@ function Dashboard() {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ ...paperStyle, p: 2 }}>
+            <Paper sx={{ ...paperStyle, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
               <Typography variant="h6" gutterBottom>In Progress</Typography>
               <Typography variant="h4">{projectStats.inProgress}</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -279,7 +283,7 @@ function Dashboard() {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ ...paperStyle, p: 2 }}>
+            <Paper sx={{ ...paperStyle, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
               <Typography variant="h6" gutterBottom>Completed</Typography>
               <Typography variant="h4">{projectStats.completed}</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -288,7 +292,7 @@ function Dashboard() {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ ...paperStyle, p: 2 }}>
+            <Paper sx={{ ...paperStyle, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
               <Typography variant="h6" gutterBottom>Total Artists</Typography>
               <Typography variant="h4">{artistStats.total}</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -299,7 +303,7 @@ function Dashboard() {
         </Grid>
 
         {/* Projects section */}
-        <Paper sx={{ ...paperStyle, mb: 3, p: 2 }}>
+        <Paper sx={{ ...paperStyle, mb: 3, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
           <Typography variant="h6" gutterBottom>
             Projects
           </Typography>
@@ -307,15 +311,39 @@ function Dashboard() {
             value={tabValue} 
             onChange={handleTabChange} 
             sx={{ 
-              borderBottom: '1px solid #e0e0e0',
+              borderBottom: `1px solid ${theme.palette.divider}`,
               '& .MuiTabs-indicator': {
-                backgroundColor: '#000000',
+                backgroundColor: isDarkMode ? theme.palette.primary.main : '#000000',
               },
             }}
           >
-            <Tab label="Active Projects" sx={{ color: '#000000' }} />
-            <Tab label="Completed Projects" sx={{ color: '#000000' }} />
-            <Tab label="Upcoming Projects" sx={{ color: '#000000' }} />
+            <Tab 
+              label="Active Projects" 
+              sx={{ 
+                color: theme.palette.text.primary,
+                '&.Mui-selected': {
+                  color: isDarkMode ? theme.palette.primary.main : '#000000',
+                },
+              }} 
+            />
+            <Tab 
+              label="Completed Projects" 
+              sx={{ 
+                color: theme.palette.text.primary,
+                '&.Mui-selected': {
+                  color: isDarkMode ? theme.palette.primary.main : '#000000',
+                },
+              }} 
+            />
+            <Tab 
+              label="Upcoming Projects" 
+              sx={{ 
+                color: theme.palette.text.primary,
+                '&.Mui-selected': {
+                  color: isDarkMode ? theme.palette.primary.main : '#000000',
+                },
+              }} 
+            />
           </Tabs>
           <Box sx={{ p: 2 }}>
             <Grid container spacing={2}>
@@ -353,7 +381,7 @@ function Dashboard() {
         {/* Most booked artists and Notes */}
         <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%' }}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">
                   Most Booked Artists
@@ -368,7 +396,7 @@ function Dashboard() {
                         borderRadius: 0,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#000000',
+                        borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
                       },
                       minWidth: 120,
                     }}
@@ -394,14 +422,14 @@ function Dashboard() {
                         secondary={`${artist.bookings} bookings`} 
                       />
                     </ListItem>
-                    {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" />}
+                    {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" sx={{ borderColor: theme.palette.divider }} />}
                   </React.Fragment>
                 ))}
               </List>
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
               <Typography variant="h6" gutterBottom>
                 Notes
               </Typography>
@@ -419,7 +447,7 @@ function Dashboard() {
                       height: '100% !important',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#000000',
+                      borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
                     },
                   },
                 }}
