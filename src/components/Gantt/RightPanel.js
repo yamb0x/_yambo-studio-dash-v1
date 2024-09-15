@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
+import { getBusinessDaysBetweenDates } from '../../utils/dateUtils';
 
 const countryToTimezone = {
   'US': 'America/New_York',
@@ -17,13 +18,11 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
-    console.log('Initial revenue from localStorage:', savedRevenue);
     return savedRevenue ? parseFloat(savedRevenue) : (project.revenue || 0);
   });
 
   const [revenuePercentage, setRevenuePercentage] = useState(() => {
     const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
-    console.log('Initial percentage from localStorage:', savedPercentage);
     return savedPercentage ? parseFloat(savedPercentage) : 20; // Default to 20%
   });
 
@@ -94,7 +93,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     if (!isNaN(newValue) && newValue >= 0) {
       setRevenue(newValue);
       localStorage.setItem(`project_${project.id}_revenue`, newValue.toString());
-      console.log('Saving revenue to localStorage:', newValue);
       onUpdateRevenue(project.id, newValue);
     }
   };
@@ -106,12 +104,10 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const handleRevenuePercentageChange = (event, newValue) => {
     setRevenuePercentage(newValue);
     localStorage.setItem(`project_${project.id}_revenue_percentage`, newValue.toString());
-    console.log('Saving percentage to localStorage:', newValue);
     
-    const newRevenue = Math.round(totalArtistsCosts * (newValue / 100));
+    const newRevenue = Math.round(project.budget * (newValue / 100));
     setRevenue(newRevenue);
     localStorage.setItem(`project_${project.id}_revenue`, newRevenue.toString());
-    console.log('Saving calculated revenue to localStorage:', newRevenue);
     
     onUpdateRevenue(project.id, newRevenue);
   };
@@ -126,7 +122,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   useEffect(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
     const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
-    console.log('Effect: Saved revenue:', savedRevenue, 'Saved percentage:', savedPercentage);
     
     if (savedRevenue) {
       setRevenue(parseFloat(savedRevenue));
@@ -147,22 +142,45 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     { value: 40, label: '40%' },
   ];
 
+  const getAdjustedDate = (date) => {
+    const projectStart = moment(project.startDate);
+    const daysSinceStart = date.diff(projectStart, 'days');
+    const weeksOnGantt = Math.floor(daysSinceStart / 5);
+    const daysInWeek = daysSinceStart % 5;
+    
+    return projectStart.clone()
+      .add(weeksOnGantt * 7, 'days')
+      .add(daysInWeek, 'days');
+  };
+
+  const renderBooking = (booking) => {
+    const adjustedStartDate = getAdjustedDate(moment(booking.startDate));
+    const adjustedEndDate = getAdjustedDate(moment(booking.endDate));
+    const totalDays = adjustedEndDate.diff(adjustedStartDate, 'days') + 1;
+
+    return (
+      <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.2, fontWeight: 300 }}>
+        {adjustedStartDate.format('MMM D')} - {adjustedEndDate.format('MMM D')} ({totalDays} days)
+      </Typography>
+    );
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
       {/* Project Data */}
       <Box sx={{ flex: 1, mr: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 400 }}>Project Data</Typography>
+        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Data</Typography>
         <List>
           <ListItem>
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Project Budget</Typography>
-                  <Typography variant="body2">${project?.budget || 0}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Project Budget</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 300 }}>${project?.budget || 0}</Typography>
                 </Box>
               }
               secondary={
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
                   Total project budget from database
                 </Typography>
               }
@@ -172,12 +190,12 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Total Costs</Typography>
-                  <Typography variant="body2">${totalCosts.toFixed(2)}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Total Costs</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 300 }}>${totalCosts.toFixed(2)}</Typography>
                 </Box>
               }
               secondary={
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
                   Total amount spent on artists booking + Revenue
                 </Typography>
               }
@@ -187,7 +205,7 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" fontWeight="bold">Revenue</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Additional Expenses</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton size="small" onClick={handleRevenueEdit} sx={{ mr: 1 }}>
                       <EditIcon fontSize="small" />
@@ -203,22 +221,22 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
                         inputProps={{ min: 0, step: 1 }}
                       />
                     ) : (
-                      <Typography variant="body2">${revenue}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 300 }}>${revenue}</Typography>
                     )}
                   </Box>
                 </Box>
               }
               secondary={
                 <Box>
-                  <Typography variant="body2">
-                    Expected project revenue ({revenuePercentage.toFixed(1)}% of artist costs)
+                  <Typography variant="body2" sx={{ fontWeight: 300 }}>
+                    Expected project expenses ({revenuePercentage.toFixed(1)}% of project budget)
                   </Typography>
                   <Box sx={{ mt: 3, position: 'relative' }}>
                     <Slider
                       value={revenuePercentage}
                       onChange={handleRevenuePercentageChange}
                       aria-labelledby="revenue-percentage-slider"
-                      valueLabelDisplay="off"  // This line removes the tooltip
+                      valueLabelDisplay="off"
                       step={5}
                       marks={marks}
                       min={5}
@@ -269,46 +287,30 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
 
       {/* Artists Booked */}
       <Box sx={{ flex: 1, ml: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 400 }}>Artists Booked</Typography>
-        <List>
-          {sortedArtists.map(([artistName, data]) => {
-            const artistLocalTime = getArtistLocalTime(data.country);
-            return (
-              <ListItem key={artistName}>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body1" fontWeight="bold">{artistName}</Typography>
-                      <Typography variant="body2">${data.totalCost.toFixed(2)}</Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <React.Fragment>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 0.5 }}>
-                        {Array.from(data.skills).map((skill, index) => (
-                          <Chip key={index} label={skill} size="small" />
-                        ))}
+        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Artists Booked</Typography>
+        <List sx={{ pt: 0 }}>
+          {sortedArtists.map(([artistName, data], index) => (
+            <ListItem key={artistName} sx={{ py: index === 0 ? '12px' : 0.5, pl: 2 }}>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 400 }}>{artistName}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${data.totalCost.toFixed(2)}</Typography>
+                  </Box>
+                }
+                secondary={
+                  <React.Fragment>
+                    {data.bookings.map((booking, bookingIndex) => (
+                      <Box key={bookingIndex} sx={{ mt: bookingIndex === 0 ? 0.5 : 0.25 }}>
+                        {renderBooking(booking)}
                       </Box>
-                      {artistLocalTime && (
-                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-                          <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          <strong>{artistLocalTime.format('HH:mm')}</strong> ({data.country} Local Time)
-                        </Typography>
-                      )}
-                      {data.bookings.map((booking, index) => {
-                        const days = calculateBookingDays(booking);
-                        return (
-                          <Typography key={index} variant="body2">
-                            {booking.startDate} - {booking.endDate} ({days} days)
-                          </Typography>
-                        );
-                      })}
-                    </React.Fragment>
-                  }
-                />
-              </ListItem>
-            );
-          })}
+                    ))}
+                  </React.Fragment>
+                }
+                secondaryTypographyProps={{ component: 'div' }}
+              />
+            </ListItem>
+          ))}
         </List>
       </Box>
 
