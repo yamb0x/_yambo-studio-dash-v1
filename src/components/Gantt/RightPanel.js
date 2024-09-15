@@ -149,11 +149,13 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
   const renderBooking = (booking) => {
     const adjustedStartDate = getAdjustedDate(moment(booking.startDate));
     const adjustedEndDate = getAdjustedDate(moment(booking.endDate));
-    const totalDays = adjustedEndDate.diff(adjustedStartDate, 'days') + 1;
+    
+    // Use the booking's own duration calculation
+    const duration = booking.duration || calculateBookingDays(booking);
 
     return (
       <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.2, fontWeight: 300 }}>
-        {adjustedStartDate.format('MMM D')} - {adjustedEndDate.format('MMM D')} ({totalDays} days)
+        {adjustedStartDate.format('MMM D')} - {adjustedEndDate.format('MMM D')} ({duration} days)
       </Typography>
     );
   };
