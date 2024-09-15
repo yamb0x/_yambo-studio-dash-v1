@@ -84,6 +84,19 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
+  const removeDelivery = useCallback((projectId, deliveryId) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+              ...project,
+              deliveries: project.deliveries.filter(delivery => delivery.id !== deliveryId)
+            }
+          : project
+      )
+    );
+  }, []);
+
   const editDelivery = useCallback((projectId, updatedDelivery) => {
     setProjects(prevProjects =>
       prevProjects.map(project =>
@@ -158,6 +171,8 @@ export function ProjectProvider({ children }) {
     deleteDelivery,
     updateProjectBudget,
     getActiveProjects, // Add this new function to the context value
+    addDelivery,
+    removeDelivery,
   };
 
   return (

@@ -196,6 +196,69 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
     return rate;
   }, [artists]);
 
+  const getWorkdayPosition = useCallback((date) => {
+    const startDate = moment(chartStartDate);
+    let currentDate = moment(date);
+    let workdays = 0;
+
+    // If the date is a weekend, move it to the previous Friday
+    if (currentDate.day() === 0) { // Sunday
+      currentDate.subtract(2, 'days');
+    } else if (currentDate.day() === 6) { // Saturday
+      currentDate.subtract(1, 'day');
+    }
+
+    while (startDate.isBefore(currentDate, 'day')) {
+      if (startDate.day() !== 0 && startDate.day() !== 6) {
+        workdays++;
+      }
+      startDate.add(1, 'day');
+    }
+
+    return workdays * DAY_WIDTH;
+  }, [chartStartDate, DAY_WIDTH]);
+
+  const renderDeliveries = useCallback(() => {
+    if (!project.deliveries || project.deliveries.length === 0) return null;
+    
+    return project.deliveries.map((delivery) => {
+      const deliveryDate = moment(delivery.date);
+      const left = getWorkdayPosition(deliveryDate) + ARTIST_COLUMN_WIDTH;
+
+      return (
+        <Box
+          key={delivery.id}
+          sx={{
+            position: 'absolute',
+            left: `${left}px`,
+            top: 0,
+            bottom: 0,
+            width: '1px',
+            backgroundColor: 'red',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              position: 'absolute',
+              top: '-20px',
+              left: '2px',
+              transform: 'rotate(-90deg)',
+              transformOrigin: 'left bottom',
+              whiteSpace: 'nowrap',
+              color: 'red',
+              fontWeight: 'bold',
+            }}
+          >
+            {delivery.name}
+          </Typography>
+        </Box>
+      );
+    });
+  }, [project.deliveries, getWorkdayPosition, ARTIST_COLUMN_WIDTH]);
+
   const renderGanttChart = useMemo(() => {
     console.log('Rendering Gantt Chart with bookings:', project.bookings);
     return (
@@ -212,8 +275,8 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       >
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: 'column', 
-          minWidth: ARTIST_COLUMN_WIDTH + TIMELINE_INDICATOR_WIDTH + (WEEK_WIDTH * totalWeeks), 
+          flexDirection: 'column',
+          minWidth: ARTIST_COLUMN_WIDTH + (WEEK_WIDTH * totalWeeks),
           height: `${(Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP}px`,
           position: 'relative'
         }}>
@@ -309,6 +372,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
                 })}
               </Box>
             ))}
+            {renderDeliveries()}
           </Box>
         </Box>
         {draggedBooking && (
@@ -326,7 +390,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
         )}
       </Box>
     );
-  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate]);
+  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate, renderDeliveries]);
 
   return (
     <div 

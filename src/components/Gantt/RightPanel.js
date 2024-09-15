@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Chip, Slider, Button } from '@mui/material';
+import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Chip, Slider, Button, Dialog, DialogTitle, DialogContent, DialogActions, ListItemSecondaryAction } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
+import { useProjects } from '../../contexts/ProjectContext';
 
 const countryToTimezone = {
   'US': 'America/New_York',
@@ -13,6 +15,7 @@ const countryToTimezone = {
 };
 
 function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
+  const { addDelivery, removeDelivery } = useProjects();
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -23,6 +26,9 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
     return savedPercentage ? parseFloat(savedPercentage) : 20; // Default to 20%
   });
+
+  const [openDeliveryDialog, setOpenDeliveryDialog] = useState(false);
+  const [newDelivery, setNewDelivery] = useState({ name: '', date: '' });
 
   const calculateBookingDays = useCallback((booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
@@ -104,6 +110,27 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     localStorage.setItem(`project_${project.id}_revenue`, newRevenue.toString());
     
     onUpdateRevenue(project.id, newRevenue);
+  };
+
+  const handleAddDelivery = () => {
+    setOpenDeliveryDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDeliveryDialog(false);
+    setNewDelivery({ name: '', date: '' });
+  };
+
+  const handleDeliverySubmit = () => {
+    addDelivery(project.id, {
+      id: Date.now().toString(),
+      ...newDelivery
+    });
+    handleCloseDialog();
+  };
+
+  const handleDeleteDelivery = (deliveryId) => {
+    removeDelivery(project.id, deliveryId);
   };
 
   useEffect(() => {
@@ -317,13 +344,25 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
         {/* Project Deliverables */}
         <Box sx={{ flex: 1, mr: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Deliverables</Typography>
+          <Button onClick={handleAddDelivery} variant="outlined">Add Delivery</Button>
           <List>
-            <ListItem>
-              <ListItemText
-                primary="No deliverables added yet"
-                secondary="Add project deliverables here"
-              />
-            </ListItem>
+            {project.deliveries && project.deliveries.map((delivery) => (
+              <ListItem key={delivery.id}>
+                <ListItemText 
+                  primary={delivery.name} 
+                  secondary={delivery.date} 
+                />
+                <ListItemSecondaryAction>
+                  <IconButton 
+                    edge="end" 
+                    aria-label="delete" 
+                    onClick={() => handleDeleteDelivery(delivery.id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
           </List>
         </Box>
 
@@ -345,6 +384,37 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
           </List>
         </Box>
       </Box>
+
+      <Dialog open={openDeliveryDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Add New Delivery</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Delivery Name"
+            fullWidth
+            value={newDelivery.name}
+            onChange={(e) => setNewDelivery({ ...newDelivery, name: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Delivery Date"
+            type="date"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            value={newDelivery.date}
+            onChange={(e) => setNewDelivery({ ...newDelivery, date: e.target.value })}
+            inputProps={{
+              min: project.startDate,
+              max: project.endDate,
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleDeliverySubmit}>Add</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

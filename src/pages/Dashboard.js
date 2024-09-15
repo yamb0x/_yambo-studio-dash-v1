@@ -239,6 +239,21 @@ function Dashboard() {
     return imageUrls;
   };
 
+  const renderProjectDeliveries = (project) => {
+    if (!project.deliveries || project.deliveries.length === 0) {
+      return <Typography>No deliveries scheduled</Typography>;
+    }
+    return (
+      <List>
+        {project.deliveries.map((delivery) => (
+          <ListItem key={delivery.id}>
+            <ListItemText primary={delivery.name} secondary={delivery.date} />
+          </ListItem>
+        ))}
+      </List>
+    );
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Main content */}
