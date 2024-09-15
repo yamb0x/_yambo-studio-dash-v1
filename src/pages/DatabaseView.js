@@ -33,11 +33,19 @@ function DatabaseView() {
 
   return (
     <Container maxWidth={false} disableGutters>
-      <Box sx={{ px: 5, py: 2 }}> {/* Reduced horizontal padding here */}
-        <Grid container spacing={4}>
+      <Box sx={{ p: 3 }}> {/* Adjusted padding here */}
+        <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 2 }}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                border: '1px solid #e0e0e0', 
+                borderRadius: 0,
+                boxShadow: 'none', // Explicitly remove box shadow
+                overflow: 'hidden' // This will prevent any content from spilling out
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 2, borderBottom: '1px solid #e0e0e0' }}>
                 <Typography 
                   variant="h6"
                   sx={{
@@ -57,13 +65,21 @@ function DatabaseView() {
                   Add New Project
                 </Button>
               </Box>
-              <ProjectTable />
+              <ProjectTable projects={projects} />
             </Paper>
           </Grid>
           
           <Grid item xs={12}>
-            <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 2 }}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                border: '1px solid #e0e0e0', 
+                borderRadius: 0,
+                boxShadow: 'none', // Explicitly remove box shadow
+                overflow: 'hidden' // This will prevent any content from spilling out
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 2, borderBottom: '1px solid #e0e0e0' }}>
                 <Typography 
                   variant="h6"
                   sx={{

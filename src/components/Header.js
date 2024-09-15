@@ -4,22 +4,33 @@ import { Link as RouterLink } from 'react-router-dom';
 
 function Header() {
   return (
-    <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid #e0e0e0' }}>
+    <AppBar position="static" color="default" elevation={0}>
       <Toolbar>
-        <Typography variant="h6" color="inherit" noWrap sx={{ width: '300px', flexShrink: 0 }}>
-          Yambo Studio Dashboard
-        </Typography>
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button color="inherit" component={RouterLink} to="/">
-            Dashboard
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/gantt">
-            Gantt View
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/database">
-            Database View
-          </Button>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', marginRight: 'auto' }}>
+          <Typography variant="h6" component="div">
+            YAMBO STUDIO
+          </Typography>
+          <Typography 
+            variant="subtitle2" 
+            component="div" 
+            sx={{ 
+              marginLeft: 2, 
+              color: 'text.secondary',
+              fontSize: '0.8rem'
+            }}
+          >
+            dashboard v1.2.6
+          </Typography>
         </Box>
+        <Button color="inherit" component={RouterLink} to="/">
+          Dashboard
+        </Button>
+        <Button color="inherit" component={RouterLink} to="/gantt">
+          Gantt
+        </Button>
+        <Button color="inherit" component={RouterLink} to="/database">
+          Database
+        </Button>
       </Toolbar>
     </AppBar>
   );

@@ -124,8 +124,24 @@ function ArtistTable({ artists }) {
                 Name
               </TableSortLabel>
             </TableCell>
-            <TableCell width="10%">Daily Rate</TableCell>
-            <TableCell width="10%">Country</TableCell>
+            <TableCell width="10%">
+              <TableSortLabel
+                active={orderBy === 'dailyRate'}
+                direction={orderBy === 'dailyRate' ? order : 'asc'}
+                onClick={() => handleRequestSort('dailyRate')}
+              >
+                Daily Rate
+              </TableSortLabel>
+            </TableCell>
+            <TableCell width="10%">
+              <TableSortLabel
+                active={orderBy === 'country'}
+                direction={orderBy === 'country' ? order : 'asc'}
+                onClick={() => handleRequestSort('country')}
+              >
+                Country
+              </TableSortLabel>
+            </TableCell>
             <TableCell width="20%">Skills</TableCell>
             <TableCell width="15%">Email</TableCell>
             <TableCell width="7%">Website</TableCell>

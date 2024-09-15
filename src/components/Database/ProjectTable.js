@@ -62,41 +62,52 @@ function ProjectTable() {
     setProjectToDelete(null);
   };
 
+  const sortedProjects = React.useMemo(() => {
+    const comparator = (a, b) => {
+      if (b[orderBy] < a[orderBy]) {
+        return order === 'asc' ? 1 : -1;
+      }
+      if (b[orderBy] > a[orderBy]) {
+        return order === 'asc' ? -1 : 1;
+      }
+      return 0;
+    };
+    return [...projects].sort(comparator);
+  }, [projects, order, orderBy]);
+
   return (
     <>
       <TableContainer>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={() => handleRequestSort('name')}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>End Date</TableCell>
-              <TableCell>Budget</TableCell>
-              <TableCell>Project Types</TableCell>
-              <TableCell align="right" sx={{ width: '100px' }}>Actions</TableCell>
+              {['name', 'startDate', 'endDate', 'budget', 'projectType'].map((column) => (
+                <TableCell key={column}>
+                  <TableSortLabel
+                    active={orderBy === column}
+                    direction={orderBy === column ? order : 'asc'}
+                    onClick={() => handleRequestSort(column)}
+                  >
+                    {column.charAt(0).toUpperCase() + column.slice(1)}
+                  </TableSortLabel>
+                </TableCell>
+              ))}
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {projects.map((project) => (
+            {sortedProjects.map((project) => (
               <TableRow key={project.id} hover>
-                <TableCell width="24%">{project.name}</TableCell>
-                <TableCell width="10%">{project.startDate}</TableCell>
-                <TableCell width="20%">{project.endDate}</TableCell>
-                <TableCell width="14%">${project.budget}</TableCell>
-                <TableCell width="20%">
+                <TableCell>{project.name}</TableCell>
+                <TableCell>{project.startDate}</TableCell>
+                <TableCell>{project.endDate}</TableCell>
+                <TableCell>${project.budget}</TableCell>
+                <TableCell>
                   {project.projectType && project.projectType.map((type) => (
                     <Chip key={type} label={type} size="small" style={{ margin: '2px' }} />
                   ))}
                 </TableCell>
-                <TableCell width="16%" align="right">
+                <TableCell align="right">
                   <IconButton size="small" onClick={() => handleEdit(project)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
