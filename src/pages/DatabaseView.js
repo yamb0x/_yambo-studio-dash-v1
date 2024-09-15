@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProjects } from '../contexts/ProjectContext';
+import { useArtists } from '../contexts/ArtistContext';  // Add this line
 import { Typography, Container, Button, Modal, Box, Paper, Grid } from '@mui/material';
 import ProjectTable from '../components/Database/ProjectTable';
 import ArtistTable from '../components/Database/ArtistTable';
@@ -19,6 +20,9 @@ const modalStyle = {
 
 function DatabaseView() {
   const { projects } = useProjects();
+  const { artists } = useArtists();  // Add this line
+
+  console.log('Artists in DatabaseView:', artists);
 
   useEffect(() => {
     console.log('Projects in DatabaseView:', projects);
@@ -79,7 +83,7 @@ function DatabaseView() {
                   Add New Artist
                 </Button>
               </Box>
-              <ArtistTable />
+              <ArtistTable artists={artists} />
             </Paper>
           </Grid>
         </Grid>

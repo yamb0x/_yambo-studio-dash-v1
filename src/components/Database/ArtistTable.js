@@ -40,6 +40,9 @@ const modalStyle = {
 
 function ArtistTable({ artists }) {
   const { deleteArtist } = useArtists();
+  
+  console.log('Artists in ArtistTable:', artists);
+
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
