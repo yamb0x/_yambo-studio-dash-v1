@@ -1,11 +1,9 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Slider } from '@mui/material';
+import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Chip, Slider, Button } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DownloadIcon from '@mui/icons-material/Download';
 import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
-import { getBusinessDaysBetweenDates } from '../../utils/dateUtils';
 
 const countryToTimezone = {
   'US': 'America/New_York',
@@ -14,7 +12,7 @@ const countryToTimezone = {
   // Add more countries and their representative timezones as needed
 };
 
-function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, onUpdateRevenue, artistColors = {} }) {
+function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -46,10 +44,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   const totalCosts = useMemo(() => {
     return totalArtistsCosts + revenue;
   }, [totalArtistsCosts, revenue]);
-
-  const [openDialog, setOpenDialog] = useState(false);
-  const [deliveryName, setDeliveryName] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
 
   const groupedBookings = useMemo(() => {
     if (!project || !project.bookings || !Array.isArray(project.bookings)) {
@@ -112,13 +106,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
     onUpdateRevenue(project.id, newRevenue);
   };
 
-  const handleAddDelivery = () => {
-    onAddDelivery({ name: deliveryName, date: deliveryDate });
-    setOpenDialog(false);
-    setDeliveryName('');
-    setDeliveryDate('');
-  };
-
   useEffect(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
     const savedPercentage = localStorage.getItem(`project_${project.id}_revenue_percentage`);
@@ -130,6 +117,12 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       setRevenuePercentage(parseFloat(savedPercentage));
     }
   }, [project.id]);
+
+  useEffect(() => {
+    if (typeof onTotalCostsCalculated === 'function') {
+      onTotalCostsCalculated(project.id, totalCosts);
+    }
+  }, [project.id, totalCosts, onTotalCostsCalculated]);
 
   const marks = [
     { value: 5, label: '5%' },
@@ -166,181 +159,190 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
-      {/* Project Data */}
-      <Box sx={{ flex: 1, mr: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Data</Typography>
-        <List>
-          <ListItem>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Project Budget</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 300 }}>${project?.budget || 0}</Typography>
-                </Box>
-              }
-              secondary={
-                <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
-                  Total project budget from database
-                </Typography>
-              }
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Total Costs</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 300 }}>${totalCosts.toFixed(2)}</Typography>
-                </Box>
-              }
-              secondary={
-                <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
-                  Total amount spent on artists booking + Revenue
-                </Typography>
-              }
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 400 }}>Additional Expenses</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton size="small" onClick={handleRevenueEdit} sx={{ mr: 1 }}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    {isEditingRevenue ? (
-                      <TextField
-                        value={revenue}
-                        onChange={handleRevenueChange}
-                        onBlur={handleRevenueBlur}
-                        size="small"
-                        sx={{ width: '100px' }}
-                        type="number"
-                        inputProps={{ min: 0, step: 1 }}
-                      />
-                    ) : (
-                      <Typography variant="body2" sx={{ fontWeight: 300 }}>${revenue}</Typography>
-                    )}
-                  </Box>
-                </Box>
-              }
-              secondary={
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 300 }}>
-                    Expected project expenses ({revenuePercentage.toFixed(1)}% of project budget)
-                  </Typography>
-                  <Box sx={{ mt: 3, position: 'relative' }}>
-                    <Slider
-                      value={revenuePercentage}
-                      onChange={handleRevenuePercentageChange}
-                      aria-labelledby="revenue-percentage-slider"
-                      valueLabelDisplay="off"
-                      step={5}
-                      marks={marks}
-                      min={5}
-                      max={40}
-                      sx={{
-                        color: 'primary.main',
-                        height: 1,
-                        padding: '1px 0 !important',
-                        '& .MuiSlider-thumb': {
-                          height: 0,
-                          width: 1,
-                          '&:hover, &.Mui-focusVisible': {
-                            boxShadow: 'none',
-                          },
-                          '&.Mui-active': {
-                            boxShadow: 'none',
-                          },
-                        },
-                        '& .MuiSlider-rail': {
-                          height: 1,
-                          opacity: 0.3,
-                        },
-                        '& .MuiSlider-track': {
-                          height: 0,
-                        },
-                        '& .MuiSlider-mark': {
-                          backgroundColor: 'primary.main',
-                          height: 3,
-                          width: 3,
-                          borderRadius: '00%',
-                          marginTop: -2.5,
-                        },
-                        '& .MuiSlider-markLabel': {
-                          fontSize: '0.65rem',
-                          marginTop: -2,
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-              }
-            />
-          </ListItem>
-        </List>
-      </Box>
-
-      <Divider orientation="vertical" flexItem />
-
-      {/* Artists Booked */}
-      <Box sx={{ flex: 1, ml: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Artists Booked</Typography>
-        <List sx={{ pt: 0 }}>
-          {sortedArtists.map(([artistName, data], index) => (
-            <ListItem key={artistName} sx={{ py: index === 0 ? '12px' : 0.5, pl: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+      <Box sx={{ display: 'flex', flex: 1, mb: 2 }}>
+        {/* Project Data */}
+        <Box sx={{ flex: 1, mr: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Data</Typography>
+          <List>
+            <ListItem>
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body1" sx={{ fontWeight: 400 }}>{artistName}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${data.totalCost.toFixed(2)}</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 400 }}>Project Budget</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${project?.budget || 0}</Typography>
                   </Box>
                 }
                 secondary={
-                  <React.Fragment>
-                    {data.bookings.map((booking, bookingIndex) => (
-                      <Box key={bookingIndex} sx={{ mt: bookingIndex === 0 ? 0.5 : 0.25 }}>
-                        {renderBooking(booking)}
-                      </Box>
-                    ))}
-                  </React.Fragment>
+                  <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
+                    Total project budget from database
+                  </Typography>
                 }
-                secondaryTypographyProps={{ component: 'div' }}
               />
             </ListItem>
-          ))}
-        </List>
+            <ListItem>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 400 }}>Total Costs</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${totalCosts.toFixed(2)}</Typography>
+                  </Box>
+                }
+                secondary={
+                  <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
+                    Total amount spent on artists booking + Revenue
+                  </Typography>
+                }
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 400 }}>Additional Expenses</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <IconButton size="small" onClick={handleRevenueEdit} sx={{ mr: 1 }}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      {isEditingRevenue ? (
+                        <TextField
+                          value={revenue}
+                          onChange={handleRevenueChange}
+                          onBlur={handleRevenueBlur}
+                          size="small"
+                          sx={{ width: '100px' }}
+                          type="number"
+                          inputProps={{ min: 0, step: 1 }}
+                        />
+                      ) : (
+                        <Typography variant="body2" sx={{ fontWeight: 300 }}>${revenue}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                }
+                secondary={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>
+                      Expected project expenses ({revenuePercentage.toFixed(1)}% of project budget)
+                    </Typography>
+                    <Box sx={{ mt: 3, position: 'relative' }}>
+                      <Slider
+                        value={revenuePercentage}
+                        onChange={handleRevenuePercentageChange}
+                        aria-labelledby="revenue-percentage-slider"
+                        valueLabelDisplay="off"
+                        step={5}
+                        marks={marks}
+                        min={5}
+                        max={40}
+                        sx={{
+                          color: 'primary.main',
+                          height: 1,
+                          padding: '1px 0 !important',
+                          '& .MuiSlider-thumb': {
+                            height: 0,
+                            width: 1,
+                            '&:hover, &.Mui-focusVisible': {
+                              boxShadow: 'none',
+                            },
+                            '&.Mui-active': {
+                              boxShadow: 'none',
+                            },
+                          },
+                          '& .MuiSlider-rail': {
+                            height: 1,
+                            opacity: 0.3,
+                          },
+                          '& .MuiSlider-track': {
+                            height: 0,
+                          },
+                          '& .MuiSlider-mark': {
+                            backgroundColor: 'primary.main',
+                            height: 3,
+                            width: 3,
+                            borderRadius: '00%',
+                            marginTop: -2.5,
+                          },
+                          '& .MuiSlider-markLabel': {
+                            fontSize: '0.65rem',
+                            marginTop: -2,
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                }
+              />
+            </ListItem>
+          </List>
+        </Box>
+
+        <Divider orientation="vertical" flexItem />
+
+        {/* Artists Booked */}
+        <Box sx={{ flex: 1, ml: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Artists Booked</Typography>
+          <List sx={{ pt: 0 }}>
+            {sortedArtists.map(([artistName, data], index) => (
+              <ListItem key={artistName} sx={{ py: index === 0 ? '12px' : 0.5, pl: 2 }}>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body1" sx={{ fontWeight: 400 }}>{artistName}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 300 }}>${data.totalCost.toFixed(2)}</Typography>
+                    </Box>
+                  }
+                  secondary={
+                    <React.Fragment>
+                      {data.bookings.map((booking, bookingIndex) => (
+                        <Box key={bookingIndex} sx={{ mt: bookingIndex === 0 ? 0.5 : 0.25 }}>
+                          {renderBooking(booking)}
+                        </Box>
+                      ))}
+                    </React.Fragment>
+                  }
+                  secondaryTypographyProps={{ component: 'div' }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
       </Box>
 
-      {/* Add Delivery Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Add Delivery</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Delivery Name"
-            fullWidth
-            value={deliveryName}
-            onChange={(e) => setDeliveryName(e.target.value)}
-          />
-          <TextField
-            margin="dense"
-            label="Delivery Date"
-            type="date"
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            value={deliveryDate}
-            onChange={(e) => setDeliveryDate(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddDelivery}>Add</Button>
-        </DialogActions>
-      </Dialog>
+      <Divider />
+
+      <Box sx={{ display: 'flex', flex: 1, mt: 2 }}>
+        {/* Project Deliverables */}
+        <Box sx={{ flex: 1, mr: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Deliverables</Typography>
+          <List>
+            <ListItem>
+              <ListItemText
+                primary="No deliverables added yet"
+                secondary="Add project deliverables here"
+              />
+            </ListItem>
+          </List>
+        </Box>
+
+        <Divider orientation="vertical" flexItem />
+
+        {/* Export Data */}
+        <Box sx={{ flex: 1, ml: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Export Data</Typography>
+          <List>
+            <ListItem>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                onClick={() => console.log('Export data functionality to be implemented')}
+              >
+                Export Project Data
+              </Button>
+            </ListItem>
+          </List>
+        </Box>
+      </Box>
     </Box>
   );
 }
