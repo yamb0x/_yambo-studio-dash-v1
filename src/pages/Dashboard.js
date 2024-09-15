@@ -14,14 +14,16 @@ const paperStyle = {
   borderRadius: '4px'
 };
 
-function ProjectCard({ project, calculateProgress }) {
+function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpand = useCallback(() => {
     setExpanded(prev => !prev);
   }, []);
 
-  const totalExpenses = project.totalCosts || 0;
+  const totalCosts = calculateTotalCosts(project);
+  const additionalExpenses = project.additionalExpenses || 0;
+  const totalExpenses = totalCosts + additionalExpenses;
   const profit = project.budget - totalExpenses;
   const isProfitable = profit >= 0;
 
@@ -82,7 +84,7 @@ function ProjectCard({ project, calculateProgress }) {
 }
 
 function Dashboard() {
-  const { projects, updateAllProjectsTotalCosts } = useProjects();
+  const { projects } = useProjects();
   const { artists } = useArtists();
   const [tabValue, setTabValue] = useState(0);
   const [bookingPeriod, setBookingPeriod] = useState('all');
@@ -94,15 +96,6 @@ function Dashboard() {
   const lastQuarterStart = subMonths(currentDate, 3);
 
   const projectStats = useMemo(() => {
-    if (!projects || !Array.isArray(projects)) {
-      return {
-        total: 0,
-        inProgress: 0,
-        completed: 0,
-        newLastQuarter: 0
-      };
-    }
-
     const inProgressProjects = projects.filter(project => 
       isAfter(currentDate, parseISO(project.startDate)) && 
       isAfter(parseISO(project.endDate), currentDate)
@@ -123,13 +116,7 @@ function Dashboard() {
   }, [projects, currentDate, lastQuarterStart]);
 
   const artistStats = useMemo(() => {
-    if (!artists || !Array.isArray(artists)) {
-      return {
-        total: 0,
-        newLastQuarter: 0
-      };
-    }
-
+    // Assuming artists have a 'joinDate' property. Adjust if needed.
     const newArtistsLastQuarter = artists.filter(artist => 
       artist.joinDate && isAfter(parseISO(artist.joinDate), lastQuarterStart)
     );
@@ -140,12 +127,22 @@ function Dashboard() {
     };
   }, [artists, lastQuarterStart]);
 
-  const calculateBookingDays = useCallback((booking) => {
+  const calculateBookingDays = (booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
     const start = new Date(booking.startDate);
     const end = new Date(booking.endDate);
     return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  }, []);
+  };
+
+  const calculateTotalCosts = (project) => {
+    if (!project || !project.bookings || !Array.isArray(project.bookings)) {
+      return 0;
+    }
+    return project.bookings.reduce((total, booking) => {
+      const days = calculateBookingDays(booking);
+      return total + (booking.dailyRate || 0) * days;
+    }, 0);
+  };
 
   useEffect(() => {
     console.log('All projects:', projects);
@@ -157,12 +154,7 @@ function Dashboard() {
       'lastYear': subYears(currentDate, 1),
     };
 
-    if (!projects || !Array.isArray(projects) || !artists || !Array.isArray(artists)) {
-      setArtistBookings([]);
-      setMostBookedArtists([]);
-      return;
-    }
-
+    // Calculate artist bookings
     const bookings = artists.map(artist => {
       const artistProjects = projects.filter(project => {
         const projectStart = parseISO(project.startDate);
@@ -191,9 +183,11 @@ function Dashboard() {
 
     setArtistBookings(bookings);
     
+    // Sort and get top 8 most booked artists
     const topArtists = [...bookings].sort((a, b) => b.bookings - a.bookings).slice(0, 8);
     setMostBookedArtists(topArtists);
 
+    // Load saved notes
     const savedNotes = localStorage.getItem('dashboardNotes');
     if (savedNotes) {
       setNotes(savedNotes);
@@ -222,39 +216,28 @@ function Dashboard() {
     localStorage.setItem('dashboardNotes', newNotes);
   };
 
-  const { activeProjects, completedProjects, upcomingProjects } = useMemo(() => {
-    if (!projects || !Array.isArray(projects)) {
-      return { activeProjects: [], completedProjects: [], upcomingProjects: [] };
-    }
+  const activeProjects = projects.filter(project => 
+    isAfter(currentDate, parseISO(project.startDate)) && 
+    isAfter(parseISO(project.endDate), currentDate)
+  );
 
-    return projects.reduce((acc, project) => {
-      const startDate = new Date(project.startDate);
-      const endDate = new Date(project.endDate);
+  const completedProjects = projects.filter(project => 
+    isAfter(currentDate, parseISO(project.endDate))
+  );
 
-      if (endDate < currentDate) {
-        acc.completedProjects.push(project);
-      } else if (startDate > currentDate) {
-        acc.upcomingProjects.push(project);
-      } else {
-        acc.activeProjects.push(project);
-      }
-
-      return acc;
-    }, { activeProjects: [], completedProjects: [], upcomingProjects: [] });
-  }, [projects, currentDate]);
+  const upcomingProjects = projects.filter(project => 
+    isAfter(parseISO(project.startDate), currentDate)
+  );
 
   const getArtistImage = (artistName) => {
     const imageName = artistName.toLowerCase().replace(/\s+/g, '');
     const extensions = ['png', 'jpg', 'jpeg'];
     
+    // Create an array of possible image URLs
     const imageUrls = extensions.map(ext => `/assets/artists/${imageName}.${ext}`);
     
     return imageUrls;
   };
-
-  useEffect(() => {
-    updateAllProjectsTotalCosts();
-  }, [updateAllProjectsTotalCosts]);
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -321,27 +304,30 @@ function Dashboard() {
           </Tabs>
           <Box sx={{ p: 2 }}>
             <Grid container spacing={2}>
-              {tabValue === 0 && activeProjects.map((project) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id}>
+              {tabValue === 0 && activeProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
                   <ProjectCard 
                     project={project}
                     calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
                   />
                 </Grid>
               ))}
-              {tabValue === 1 && completedProjects.map((project) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id}>
+              {tabValue === 1 && completedProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
                   <ProjectCard 
                     project={project}
                     calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
                   />
                 </Grid>
               ))}
-              {tabValue === 2 && upcomingProjects.map((project) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id}>
+              {tabValue === 2 && upcomingProjects.map((project, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
                   <ProjectCard 
                     project={project}
                     calculateProgress={calculateProgress}
+                    calculateTotalCosts={calculateTotalCosts}
                   />
                 </Grid>
               ))}

@@ -14,7 +14,7 @@ const countryToTimezone = {
   // Add more countries and their representative timezones as needed
 };
 
-function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
+function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, onUpdateBudget, onUpdateRevenue, artistColors = {} }) {
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -164,12 +164,6 @@ function RightPanel({ project, onAddDelivery, onEditDelivery, onDeleteDelivery, 
       </Typography>
     );
   };
-
-  useEffect(() => {
-    if (typeof onTotalCostsCalculated === 'function') {
-      onTotalCostsCalculated(project.id, totalCosts);
-    }
-  }, [project.id, totalCosts, onTotalCostsCalculated]);
 
   return (
     <Box sx={{ display: 'flex', height: '100%', p: 2 }}>
