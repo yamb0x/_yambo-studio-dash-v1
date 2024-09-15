@@ -15,7 +15,7 @@ const countryToTimezone = {
 };
 
 function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
-  const { addDelivery, removeDelivery } = useProjects();
+  const { addDelivery, removeDelivery, updateDelivery } = useProjects();
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -29,6 +29,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
 
   const [openDeliveryDialog, setOpenDeliveryDialog] = useState(false);
   const [newDelivery, setNewDelivery] = useState({ name: '', date: '' });
+  const [editingDelivery, setEditingDelivery] = useState(null);
 
   const calculateBookingDays = useCallback((booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
@@ -113,19 +114,32 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
   };
 
   const handleAddDelivery = () => {
+    setEditingDelivery(null);
+    setNewDelivery({ name: '', date: '' });
+    setOpenDeliveryDialog(true);
+  };
+
+  const handleEditDelivery = (delivery) => {
+    setEditingDelivery(delivery);
+    setNewDelivery({ name: delivery.name, date: delivery.date });
     setOpenDeliveryDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDeliveryDialog(false);
     setNewDelivery({ name: '', date: '' });
+    setEditingDelivery(null);
   };
 
   const handleDeliverySubmit = () => {
-    addDelivery(project.id, {
-      id: Date.now().toString(),
-      ...newDelivery
-    });
+    if (editingDelivery) {
+      updateDelivery(project.id, editingDelivery.id, newDelivery);
+    } else {
+      addDelivery(project.id, {
+        id: Date.now().toString(),
+        ...newDelivery
+      });
+    }
     handleCloseDialog();
   };
 
@@ -340,11 +354,16 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
 
       <Divider />
 
-      <Box sx={{ display: 'flex', flex: 1, mt: 2 }}>
-        {/* Project Deliverables */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
         <Box sx={{ flex: 1, mr: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Project Deliverables</Typography>
-          <Button onClick={handleAddDelivery} variant="outlined">Add Delivery</Button>
+          <Button
+            variant="outlined"
+            onClick={handleAddDelivery}
+            sx={{ ml: 2, mb: 2 }}
+          >
+            Add Delivery
+          </Button>
           <List>
             {project.deliveries && project.deliveries.map((delivery) => (
               <ListItem key={delivery.id}>
@@ -355,10 +374,18 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
                 <ListItemSecondaryAction>
                   <IconButton 
                     edge="end" 
+                    aria-label="edit"
+                    onClick={() => handleEditDelivery(delivery)}
+                    sx={{ mr: 1 }}
+                  >
+                    <EditIcon sx={{ color: 'text.secondary' }} />
+                  </IconButton>
+                  <IconButton 
+                    edge="end" 
                     aria-label="delete" 
                     onClick={() => handleDeleteDelivery(delivery.id)}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon sx={{ color: 'text.secondary' }} />
                   </IconButton>
                 </ListItemSecondaryAction>
               </ListItem>
@@ -366,27 +393,23 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
           </List>
         </Box>
 
-        <Divider orientation="vertical" flexItem />
-
-        {/* Export Data */}
         <Box sx={{ flex: 1, ml: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ pl: 2, fontWeight: 300 }}>Export Data</Typography>
-          <List>
-            <ListItem>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={() => console.log('Export data functionality to be implemented')}
-              >
-                Export Project Data
-              </Button>
-            </ListItem>
-          </List>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => console.log('Export data functionality to be implemented')}
+              sx={{ ml: 2, mb: 2 }}
+            >
+              Export Project Data
+            </Button>
+          </Box>
         </Box>
       </Box>
 
       <Dialog open={openDeliveryDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Add New Delivery</DialogTitle>
+        <DialogTitle>{editingDelivery ? 'Edit Delivery' : 'Add New Delivery'}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -404,15 +427,11 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
             InputLabelProps={{ shrink: true }}
             value={newDelivery.date}
             onChange={(e) => setNewDelivery({ ...newDelivery, date: e.target.value })}
-            inputProps={{
-              min: project.startDate,
-              max: project.endDate,
-            }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleDeliverySubmit}>Add</Button>
+          <Button onClick={handleDeliverySubmit}>{editingDelivery ? 'Update' : 'Add'}</Button>
         </DialogActions>
       </Dialog>
     </Box>

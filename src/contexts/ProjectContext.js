@@ -97,14 +97,16 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
-  const editDelivery = useCallback((projectId, updatedDelivery) => {
+  const updateDelivery = useCallback((projectId, deliveryId, updatedDelivery) => {
     setProjects(prevProjects =>
       prevProjects.map(project =>
         project.id === projectId
           ? {
               ...project,
               deliveries: project.deliveries.map(delivery =>
-                delivery.id === updatedDelivery.id ? updatedDelivery : delivery
+                delivery.id === deliveryId
+                  ? { ...delivery, ...updatedDelivery }
+                  : delivery
               )
             }
           : project
@@ -167,7 +169,7 @@ export function ProjectProvider({ children }) {
     removeBooking,
     updateBooking,
     addDelivery,
-    editDelivery,
+    updateDelivery,
     deleteDelivery,
     updateProjectBudget,
     getActiveProjects, // Add this new function to the context value
