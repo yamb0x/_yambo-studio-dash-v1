@@ -48,18 +48,15 @@ export function ProjectProvider({ children }) {
     });
   };
 
-  const addBooking = useCallback((newBooking) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === newBooking.projectId
-          ? {
-              ...project,
-              bookings: [...(project.bookings || []), newBooking]
-            }
+  const addBooking = (projectId, newBooking) => {
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === projectId
+          ? { ...project, bookings: [...(project.bookings || []), newBooking] }
           : project
       )
     );
-  }, []);
+  };
 
   const removeBooking = useCallback((projectId, bookingId) => {
     setProjects(prevProjects =>

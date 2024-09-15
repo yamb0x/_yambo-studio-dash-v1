@@ -1,9 +1,9 @@
 import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ArtistProvider } from './contexts/ArtistContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import theme from './styles/theme';
@@ -15,9 +15,9 @@ import { Container } from '@mui/material';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={HTML5Backend}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
         <ArtistProvider>
           <ProjectProvider>
             <Router>
@@ -35,8 +35,8 @@ function App() {
             </Router>
           </ProjectProvider>
         </ArtistProvider>
-      </DndProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </DndProvider>
   );
 }
 

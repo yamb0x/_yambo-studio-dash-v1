@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDrop } from 'react-dnd';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
-import { DndProvider, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import ProjectList from '../components/Gantt/ProjectList';
 import GanttChart from '../components/Gantt/GanttChart';
@@ -96,9 +95,13 @@ function GanttView() {
   console.log('Displayed project:', displayedProject);
 
   const handleAddBooking = useCallback((newBooking) => {
+    console.log('handleAddBooking called with:', newBooking);
     if (displayedProject) {
+      console.log('Adding booking to project:', displayedProject.id);
       addBooking(displayedProject.id, newBooking);
       forceUpdate({});
+    } else {
+      console.log('No displayed project to add booking to');
     }
   }, [displayedProject, addBooking]);
 
@@ -154,32 +157,8 @@ function GanttView() {
   const [, drop] = useDrop({
     accept: 'ARTIST',
     drop: (item, monitor) => {
-      if (displayedProject) {
-        const dropPosition = monitor.getClientOffset();
-        const ganttChartElement = document.getElementById('gantt-chart');
-        const ganttRect = ganttChartElement.getBoundingClientRect();
-        const dropX = dropPosition.x - ganttRect.left;
-        
-        const weekWidth = 200; // Make sure this matches the WEEK_WIDTH in GanttChart
-        const droppedWeek = Math.floor(dropX / weekWidth);
-        const startDate = moment(displayedProject.startDate).add(droppedWeek, 'weeks');
-        const endDate = startDate.clone().add(6, 'days');
-
-        const artist = artists.find(a => a.id === item.id);
-        const dailyRate = artist ? parseFloat(artist.dailyRate) || 0 : 0;
-
-        const newBooking = {
-          id: Date.now(),
-          projectId: displayedProject.id,
-          artistId: item.id,
-          artistName: item.name,
-          startDate: startDate.format('YYYY-MM-DD'),
-          endDate: endDate.format('YYYY-MM-DD'),
-          dailyRate: dailyRate,
-        };
-
-        handleAddBooking(newBooking);
-      }
+      console.log('Artist dropped in GanttView:', item);
+      // Handle the drop here if necessary
     },
   });
 
@@ -194,70 +173,84 @@ function GanttView() {
     }, {});
   }, [displayedProject]);
 
-  const handleArtistDrop = useCallback((artist) => {
-    // Implement the logic for handling artist drop
-    console.log('Artist dropped:', artist);
-  }, []);
+  const handleArtistDrop = useCallback((artist, date) => {
+    console.log('handleArtistDrop called in GanttView:', artist, date);
+    if (displayedProject) {
+      const newBooking = {
+        id: Date.now(),
+        artistId: artist.id,
+        artistName: artist.name,
+        startDate: date,
+        endDate: moment(date).add(1, 'day').format('YYYY-MM-DD'), // Default to 1-day booking
+      };
+      handleAddBooking(newBooking);
+    }
+  }, [displayedProject, handleAddBooking]);
 
   if (!displayedProject) {
     return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
   }
 
+  // Add this console log
+  console.log('GanttView render, selectedProject:', selectedProject);
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
-      <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
-        <ProjectList 
-          projects={activeProjects} 
-          selectedProject={selectedProject} 
-          onSelectProject={handleSelectProject} 
-        />
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
-        <Box sx={{ 
-          width: SIDE_PANEL_WIDTH,
-          flexShrink: 0,
-          overflowY: 'auto',
-          borderRight: isMobile ? 'none' : '1px solid #e0e0e0',
-          borderBottom: isMobile ? '1px solid #e0e0e0' : 'none',
-          padding: 2,
-        }}>
-          <ArtistList
-            artists={artists}
-            onArtistDrop={handleArtistDrop}
+    <>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', width: '100%' }}>
+        <Box sx={{ borderBottom: '1px solid #e0e0e0', p: 1 }}>
+          <ProjectList 
+            projects={activeProjects} 
+            selectedProject={selectedProject} 
+            onSelectProject={handleSelectProject} 
           />
         </Box>
+        <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
+          <Box sx={{ 
+            width: SIDE_PANEL_WIDTH,
+            flexShrink: 0,
+            overflowY: 'auto',
+            borderRight: isMobile ? 'none' : '1px solid #e0e0e0',
+            borderBottom: isMobile ? '1px solid #e0e0e0' : 'none',
+            padding: 2,
+          }}>
+            <ArtistList
+              artists={artists}
+              onArtistDrop={handleArtistDrop}
+            />
+          </Box>
 
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 'calc(100% - 200px)' }}>
-          <PanelGroup direction="vertical">
-            <Panel>
-              <Box ref={drop} sx={{ height: '100%', p: 2, overflowX: 'auto', overflowY: 'auto' }}>
-                <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
-                <GanttChart 
-                  key={displayedProject.id} 
-                  project={displayedProject}
-                  onUpdateBooking={handleUpdateBooking}
-                  onDeleteBooking={handleDeleteBooking}
-                />
-              </Box>
-            </Panel>
-            <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
-            <Panel defaultSize={30} minSize={10}>
-              <Box sx={{ height: '100%', overflowY: 'auto' }}>
-                <RightPanel 
-                  project={displayedProject}
-                  onAddDelivery={handleAddDelivery}
-                  onEditDelivery={handleEditDelivery}
-                  onDeleteDelivery={handleDeleteDelivery}
-                  onUpdateBudget={handleUpdateBudget}
-                  onUpdateRevenue={handleUpdateRevenue}
-                  artistColors={artistColors} 
-                />
-              </Box>
-            </Panel>
-          </PanelGroup>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 'calc(100% - 200px)' }}>
+            <PanelGroup direction="vertical">
+              <Panel>
+                <Box ref={drop} sx={{ height: '100%', p: 2, overflowX: 'auto', overflowY: 'auto' }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>Gantt Chart</Typography>
+                  <GanttChart 
+                    project={displayedProject}
+                    onUpdateBooking={handleUpdateBooking}
+                    onDeleteBooking={handleDeleteBooking}
+                    onArtistDrop={handleArtistDrop}
+                  />
+                </Box>
+              </Panel>
+              <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
+              <Panel defaultSize={30} minSize={10}>
+                <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                  <RightPanel 
+                    project={displayedProject}
+                    onAddDelivery={handleAddDelivery}
+                    onEditDelivery={handleEditDelivery}
+                    onDeleteDelivery={handleDeleteDelivery}
+                    onUpdateBudget={handleUpdateBudget}
+                    onUpdateRevenue={handleUpdateRevenue}
+                    artistColors={artistColors} 
+                  />
+                </Box>
+              </Panel>
+            </PanelGroup>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 

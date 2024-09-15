@@ -1,6 +1,7 @@
-import React, { useMemo, useCallback, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { useDrop } from 'react-dnd';
 import moment from 'moment';
+import { Box, Typography } from '@mui/material';
 import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 import { COLORS } from '../../constants';
@@ -13,7 +14,40 @@ const CHART_PADDING_TOP = 50;
 const ARTIST_COLUMN_WIDTH = 150;
 const TIMELINE_INDICATOR_WIDTH = 2;
 
-function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
+function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop }) {
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(0);
+
+  useEffect(() => {
+    if (chartRef.current) {
+      setChartWidth(chartRef.current.offsetWidth);
+    }
+  }, []);
+
+  const getDateFromPosition = useCallback((x) => {
+    if (chartWidth === 0) return project.startDate; // Default to start date if width is not set
+
+    const chartStart = moment(project.startDate);
+    const chartEnd = moment(project.endDate);
+    const totalDays = chartEnd.diff(chartStart, 'days');
+    const daysFromStart = Math.floor((x / chartWidth) * totalDays);
+    return moment(project.startDate).add(daysFromStart, 'days').format('YYYY-MM-DD');
+  }, [chartWidth, project.startDate, project.endDate]);
+
+  const [, drop] = useDrop({
+    accept: 'ARTIST',
+    drop: (item, monitor) => {
+      console.log('Artist dropped in GanttChart:', item);
+      const dropPos = monitor.getClientOffset();
+      const chartRect = chartRef.current.getBoundingClientRect();
+      const relativeX = dropPos.x - chartRect.left;
+      const date = getDateFromPosition(relativeX);
+      onArtistDrop(item, date);
+    },
+  });
+
+  console.log('GanttChart render, project:', project);
+
   const { projects, updateBooking } = useProjects();
   const [draggedBooking, setDraggedBooking] = useState(null);
 
@@ -62,7 +96,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
     onDeleteBooking(project.id, bookingId);
   }, [onDeleteBooking, project.id]);
 
-  const renderWeekHeaders = () => {
+  const renderWeekHeaders = useCallback(() => {
     const weekHeaders = [];
     weekHeaders.push(
       <Box key="artist-column" sx={{ width: ARTIST_COLUMN_WIDTH, flexShrink: 0 }} />
@@ -114,9 +148,9 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
       );
     }
     return weekHeaders;
-  };
+  }, [totalWeeks, chartStartDate]);
 
-  const renderDays = () => {
+  const renderDays = useCallback(() => {
     const days = [];
     for (let i = 0; i < totalWeeks * WORKING_DAYS_PER_WEEK; i++) {
       const currentDate = chartStartDate.clone().add(i, 'days');
@@ -150,130 +184,149 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking }) {
       );
     }
     return days;
-  };
+  }, [totalWeeks, chartStartDate]);
 
-  return (
-    <Box 
-      id="gantt-chart" 
-      sx={{ 
-        overflowX: 'auto',
-        overflowY: 'visible',
-        position: 'relative',
-        height: 'auto',
-        minHeight: '100%',
-        '& #drag-preview': {
-          display: 'none !important',
-        },
-      }}
-    >
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        minWidth: ARTIST_COLUMN_WIDTH + TIMELINE_INDICATOR_WIDTH + (WEEK_WIDTH * totalWeeks), 
-        height: `${(Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP}px`,
-        position: 'relative'
-      }}>
-        {/* Green Debug Indicator (Fixed at Gantt Start) */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: `${ARTIST_COLUMN_WIDTH}px`,
-            top: 0,
-            bottom: 0,
-            width: '1px',
-            backgroundColor: 'green',
-            zIndex: 3,
-          }}
-        />
-        {/* Week headers and Blue Timeline Indicator (Project Start) */}
-        <Box 
-          sx={{ 
-            position: 'sticky', 
-            top: 0, 
-            zIndex: 2, 
-            backgroundColor: 'white',
-            marginLeft: `-${indicatorOffset}px`, // Shift headers to align with green indicator
-          }}
-        >
-          <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', position: 'relative' }}>
-            {renderWeekHeaders()}
-            {/* Blue Timeline Indicator (Project Start) */}
-            <Box
-              sx={{
-                position: 'absolute',
-                left: `${ARTIST_COLUMN_WIDTH + indicatorOffset}px`,
-                top: 0,
-                bottom: 0,
-                width: `${TIMELINE_INDICATOR_WIDTH}px`,
-                backgroundColor: 'blue',
-                zIndex: 3,
-              }}
-            />
+  const renderGanttChart = useMemo(() => {
+    return (
+      <Box 
+        id="gantt-chart" 
+        sx={{ 
+          overflowX: 'auto',
+          overflowY: 'visible',
+          position: 'relative',
+          height: 'auto',
+          minHeight: '100%',
+          '& #drag-preview': {
+            display: 'none !important',
+          },
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minWidth: ARTIST_COLUMN_WIDTH + TIMELINE_INDICATOR_WIDTH + (WEEK_WIDTH * totalWeeks), 
+          height: `${(Object.keys(groupedBookings).length * ROW_HEIGHT) + CHART_PADDING_TOP}px`,
+          position: 'relative'
+        }}>
+          {/* Green Debug Indicator (Fixed at Gantt Start) */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: `${ARTIST_COLUMN_WIDTH}px`,
+              top: 0,
+              bottom: 0,
+              width: '1px',
+              backgroundColor: 'green',
+              zIndex: 3,
+            }}
+          />
+          {/* Week headers and Blue Timeline Indicator (Project Start) */}
+          <Box 
+            sx={{ 
+              position: 'sticky', 
+              top: 0, 
+              zIndex: 2, 
+              backgroundColor: 'white',
+              marginLeft: `-${indicatorOffset}px`, // Shift headers to align with green indicator
+            }}
+          >
+            <Box sx={{ display: 'flex', borderBottom: '1px solid #ccc', position: 'relative' }}>
+              {renderWeekHeaders()}
+              {/* Blue Timeline Indicator (Project Start) */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: `${ARTIST_COLUMN_WIDTH + indicatorOffset}px`,
+                  top: 0,
+                  bottom: 0,
+                  width: `${TIMELINE_INDICATOR_WIDTH}px`,
+                  backgroundColor: 'blue',
+                  zIndex: 3,
+                }}
+              />
+            </Box>
+          </Box>
+          {/* Chart content */}
+          <Box sx={{ 
+            paddingTop: `${CHART_PADDING_TOP}px`, 
+            position: 'relative', 
+            height: `calc(100% - ${CHART_PADDING_TOP}px)`,
+            '& .day-separator': {
+              pointerEvents: 'none',
+            },
+            marginLeft: `-${indicatorOffset}px`, // Shift content to align with green indicator
+          }}>
+            {renderDays()}
+            {Object.entries(groupedBookings).map(([artistName, bookings], index) => (
+              <Box 
+                key={artistName} 
+                sx={{ 
+                  position: 'absolute', 
+                  top: `${index * ROW_HEIGHT}px`, 
+                  left: 0, 
+                  right: 0, 
+                  height: `${ROW_HEIGHT}px`, 
+                  borderBottom: '1px solid #eee',
+                  display: 'flex',
+                  alignItems: 'center',
+                  zIndex: 2,
+                }}
+              >
+                {bookings.map((booking) => (
+                  <DraggableEvent
+                    key={booking.id}
+                    booking={booking}
+                    project={currentProject}
+                    weekWidth={WEEK_WIDTH}
+                    dayWidth={DAY_WIDTH}
+                    rowHeight={ROW_HEIGHT}
+                    onUpdate={handleUpdate}
+                    startDate={chartStartDate}
+                    onDragStart={handleDragStart}
+                    artistColumnWidth={ARTIST_COLUMN_WIDTH}
+                    timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
+                    projectStartDate={projectStartDate}
+                    color={artistColors[artistName]}
+                    artistName={artistName}
+                    onDelete={handleDeleteBooking}
+                  />
+                ))}
+              </Box>
+            ))}
           </Box>
         </Box>
-        {/* Chart content */}
-        <Box sx={{ 
-          paddingTop: `${CHART_PADDING_TOP}px`, 
-          position: 'relative', 
-          height: `calc(100% - ${CHART_PADDING_TOP}px)`,
-          '& .day-separator': {
-            pointerEvents: 'none',
-          },
-          marginLeft: `-${indicatorOffset}px`, // Shift content to align with green indicator
-        }}>
-          {renderDays()}
-          {Object.entries(groupedBookings).map(([artistName, bookings], index) => (
-            <Box 
-              key={artistName} 
-              sx={{ 
-                position: 'absolute', 
-                top: `${index * ROW_HEIGHT}px`, 
-                left: 0, 
-                right: 0, 
-                height: `${ROW_HEIGHT}px`, 
-                borderBottom: '1px solid #eee',
-                display: 'flex',
-                alignItems: 'center',
-                zIndex: 2,
-              }}
-            >
-              {bookings.map((booking) => (
-                <DraggableEvent
-                  key={booking.id}
-                  booking={booking}
-                  project={currentProject}
-                  weekWidth={WEEK_WIDTH}
-                  dayWidth={DAY_WIDTH}
-                  rowHeight={ROW_HEIGHT}
-                  onUpdate={handleUpdate}
-                  startDate={chartStartDate}
-                  onDragStart={handleDragStart}
-                  artistColumnWidth={ARTIST_COLUMN_WIDTH}
-                  timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
-                  projectStartDate={projectStartDate}
-                  color={artistColors[artistName]}
-                  artistName={artistName}
-                  onDelete={handleDeleteBooking}
-                />
-              ))}
-            </Box>
-          ))}
-        </Box>
+        {draggedBooking && (
+          <Box
+            id="drag-preview"
+            sx={{
+              position: 'absolute',
+              height: `${ROW_HEIGHT - 10}px`,
+              backgroundColor: 'rgba(0, 123, 255, 0.5)',
+              border: '2px dashed #007bff',
+              pointerEvents: 'none',
+              zIndex: 1001,
+            }}
+          />
+        )}
       </Box>
-      {draggedBooking && (
-        <Box
-          id="drag-preview"
-          sx={{
-            position: 'absolute',
-            height: `${ROW_HEIGHT - 10}px`,
-            backgroundColor: 'rgba(0, 123, 255, 0.5)',
-            border: '2px dashed #007bff',
-            pointerEvents: 'none',
-            zIndex: 1001,
-          }}
-        />
-      )}
-    </Box>
+    );
+  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate]);
+
+  return (
+    <div 
+      ref={(node) => {
+        chartRef.current = node;
+        drop(node);
+      }} 
+      style={{ 
+        position: 'relative', 
+        width: '100%', 
+        height: '100%', 
+        backgroundColor: 'rgba(0, 0, 255, 0.1)' // Temporary blue background
+      }}
+    >
+      {renderGanttChart}
+    </div>
   );
 }
 

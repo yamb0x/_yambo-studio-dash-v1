@@ -30,6 +30,9 @@ function DraggableArtistItem({ artist }) {
     }),
   });
 
+  // Add this console log
+  console.log('DraggableArtistItem render:', artist.name, 'isDragging:', isDragging);
+
   const handleMouseEnter = useCallback(() => {
     setHoverIntensity(1);
     clearInterval(hoverTimerRef.current);
