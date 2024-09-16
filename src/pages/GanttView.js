@@ -30,16 +30,10 @@ function GanttView() {
     updateProjectBudget 
   } = useProjects();
 
-  console.log('All projects:', projects);
-  console.log('Project IDs:', projects.map(p => p.id));
-
   const { artists } = useArtists();
   const [selectedProject, setSelectedProject] = useState(null);
   const [forcedProject, setForcedProject] = useState(null);
   const [, forceUpdate] = useState();
-
-  console.log('projectId from URL:', projectId);
-  console.log('All projects:', projects);
 
   const activeProjects = useMemo(() => {
     const currentDate = new Date();
@@ -56,43 +50,48 @@ function GanttView() {
     });
   }, [projects]);
 
-  console.log('Active projects:', activeProjects);
-
   useEffect(() => {
+    const lastViewedProjectId = localStorage.getItem('lastViewedProjectId');
+    
     if (projectId) {
       const project = projects.find(p => p.id.toString() === projectId.toString());
-      console.log('Searching for project with ID:', projectId);
-      console.log('Found project:', project);
       if (project) {
         setForcedProject(project);
-        setSelectedProject(null);  // Clear the selected project when forcing a project
+        setSelectedProject(null);
+        localStorage.setItem('lastViewedProjectId', project.id);
+      } else if (lastViewedProjectId) {
+        navigate(`/gantt/${lastViewedProjectId}`);
+      } else if (activeProjects.length > 0) {
+        navigate(`/gantt/${activeProjects[0].id}`);
       } else {
-        console.log('Project not found, navigating to first active project');
-        if (activeProjects.length > 0) {
-          navigate(`/gantt/${activeProjects[0].id}`);
-        } else {
-          navigate('/gantt');
-        }
+        navigate('/gantt');
       }
     } else {
       setForcedProject(null);
-      if (activeProjects.length > 0 && !selectedProject) {
+      if (lastViewedProjectId) {
+        const lastProject = projects.find(p => p.id.toString() === lastViewedProjectId);
+        if (lastProject) {
+          setSelectedProject(lastProject);
+          navigate(`/gantt/${lastViewedProjectId}`);
+        } else if (activeProjects.length > 0) {
+          setSelectedProject(activeProjects[0]);
+          navigate(`/gantt/${activeProjects[0].id}`);
+        }
+      } else if (activeProjects.length > 0 && !selectedProject) {
         setSelectedProject(activeProjects[0]);
+        navigate(`/gantt/${activeProjects[0].id}`);
       }
     }
-  }, [projectId, projects, activeProjects, selectedProject, navigate]);
+  }, [projectId, projects, activeProjects, navigate, selectedProject]);
 
   const handleSelectProject = useCallback((project) => {
     setSelectedProject(project);
     setForcedProject(null);
     navigate(`/gantt/${project.id}`);
+    localStorage.setItem('lastViewedProjectId', project.id);
   }, [navigate]);
 
   const displayedProject = forcedProject || selectedProject || (projectId ? projects.find(p => p.id.toString() === projectId.toString()) : null);
-
-  console.log('Forced project:', forcedProject);
-  console.log('Selected project:', selectedProject);
-  console.log('Displayed project:', displayedProject);
 
   const handleAddBooking = useCallback((newBooking) => {
     console.log('handleAddBooking called with:', newBooking);
