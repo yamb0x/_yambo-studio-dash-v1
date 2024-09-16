@@ -7,6 +7,7 @@ import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
 import { Link } from 'react-router-dom';
+import Calculator from '../components/Calculator';
 
 const paperStyle = {
   border: '1px solid #e0e0e0',
@@ -493,30 +494,37 @@ function Dashboard() {
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
-              <Typography variant="h6" gutterBottom>
-                Notes
-              </Typography>
-              <TextField
-                multiline
-                value={notes}
-                onChange={handleNotesChange}
-                fullWidth
-                variant="outlined"
-                sx={{
-                  flexGrow: 1,
-                  '& .MuiOutlinedInput-root': {
-                    height: '100%',
-                    '& textarea': {
-                      height: '100% !important',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
-                    },
-                  },
-                }}
-              />
-            </Paper>
+            <Grid container spacing={2} sx={{ height: '100%' }}>
+              <Grid item xs={6}>
+                <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
+                  <Typography variant="h6" gutterBottom>
+                    Notes
+                  </Typography>
+                  <TextField
+                    multiline
+                    value={notes}
+                    onChange={handleNotesChange}
+                    fullWidth
+                    variant="outlined"
+                    sx={{
+                      flexGrow: 1,
+                      '& .MuiOutlinedInput-root': {
+                        height: '100%',
+                        '& textarea': {
+                          height: '100% !important',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
+                        },
+                      },
+                    }}
+                  />
+                </Paper>
+              </Grid>
+              <Grid item xs={6}>
+                <Calculator />
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Box>

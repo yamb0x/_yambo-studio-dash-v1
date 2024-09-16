@@ -22,6 +22,30 @@ const lightTheme = createTheme({
       hover: '#e0e0e0',
     },
   },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: `
+        ::selection {
+          background-color: #000000;
+          color: #ffffff;
+        }
+      `,
+    },
+    MuiButtonBase: {
+      defaultProps: {
+        disableRipple: true,
+      },
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.1s, opacity 0.1s',
+          '&:active': {
+            transform: 'scale(0.97)',
+            opacity: 0.8,
+          },
+        },
+      },
+    },
+  },
   // ... rest of the existing theme configuration
 });
 
@@ -45,6 +69,30 @@ const darkTheme = createTheme({
     action: {
       active: '#ffffff',
       hover: '#1f1f1f',
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: `
+        ::selection {
+          background-color: #ffffff;
+          color: #000000;
+        }
+      `,
+    },
+    MuiButtonBase: {
+      defaultProps: {
+        disableRipple: true,
+      },
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.1s, opacity 0.1s',
+          '&:active': {
+            transform: 'scale(0.97)',
+            opacity: 0.8,
+          },
+        },
+      },
     },
   },
   // ... rest of the existing theme configuration (typography, etc.)

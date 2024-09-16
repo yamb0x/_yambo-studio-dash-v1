@@ -25,7 +25,7 @@ function Header({ toggleDarkMode, isDarkMode }) {
             variant="subtitle2" 
             component="div" 
             sx={{ 
-              marginLeft: 2, 
+              marginLeft: 1, 
               color: 'text.secondary',
               fontSize: '0.8rem'
             }}
