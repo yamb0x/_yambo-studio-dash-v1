@@ -201,6 +201,82 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     );
   };
 
+  const handleExportData = useCallback(() => {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Project Export - ${project.name}</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; }
+          h1, h2 { color: #2c3e50; }
+          table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <h1>Project: ${project.name}</h1>
+        
+        <h2>Project Details</h2>
+        <table>
+          <tr><th>Start Date</th><td>${project.startDate}</td></tr>
+          <tr><th>End Date</th><td>${project.endDate}</td></tr>
+          <tr><th>Budget</th><td>$${project.budget.toLocaleString()}</td></tr>
+          <tr><th>Total Costs</th><td>$${totalCosts.toFixed(2)}</td></tr>
+          <tr><th>Additional Expenses</th><td>$${revenue}</td></tr>
+        </table>
+
+        <h2>Artists Booked</h2>
+        <table>
+          <tr>
+            <th>Artist Name</th>
+            <th>Total Cost</th>
+            <th>Bookings</th>
+          </tr>
+          ${sortedArtists.map(([artistName, data]) => `
+            <tr>
+              <td>${artistName}</td>
+              <td>$${data.totalCost.toFixed(2)}</td>
+              <td>
+                ${data.bookings.map(booking => `
+                  ${moment(booking.startDate).format('MMM D')} - ${moment(booking.endDate).format('MMM D')} (${calculateBookingDays(booking)} days)<br>
+                `).join('')}
+              </td>
+            </tr>
+          `).join('')}
+        </table>
+
+        <h2>Project Deliverables</h2>
+        <table>
+          <tr>
+            <th>Delivery Name</th>
+            <th>Date</th>
+          </tr>
+          ${project.deliveries ? project.deliveries.map(delivery => `
+            <tr>
+              <td>${delivery.name}</td>
+              <td>${delivery.date}</td>
+            </tr>
+          `).join('') : '<tr><td colspan="2">No deliverables</td></tr>'}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${project.name}_export.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [project, totalCosts, revenue, sortedArtists, calculateBookingDays]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
       <Box sx={{ display: 'flex', flex: 1, mb: 2 }}>
@@ -399,7 +475,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
-              onClick={() => console.log('Export data functionality to be implemented')}
+              onClick={handleExportData}
               sx={{ ml: 2, mb: 2 }}
             >
               Export Project Data
