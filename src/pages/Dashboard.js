@@ -258,6 +258,70 @@ function Dashboard() {
     );
   };
 
+  const handleExportData = () => {
+    const htmlContent = generateHTMLContent(projects, artists);
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
+  const generateHTMLContent = (projects, artists) => {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Project Management Dashboard Export</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          h1, h2 { color: #2c3e50; }
+          table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <h1>Project Management Dashboard Export</h1>
+        
+        <h2>Projects</h2>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Budget</th>
+          </tr>
+          ${projects.map(project => `
+            <tr>
+              <td>${project.name}</td>
+              <td>${project.startDate}</td>
+              <td>${project.endDate}</td>
+              <td>$${project.budget.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+        </table>
+
+        <h2>Artists</h2>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Specialty</th>
+          </tr>
+          ${artists.map(artist => `
+            <tr>
+              <td>${artist.name}</td>
+              <td>${artist.email}</td>
+              <td>${artist.specialty || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </body>
+      </html>
+    `;
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh', backgroundColor: isDarkMode ? theme.palette.background.default : 'white' }}>
       {/* Main content */}
@@ -266,7 +330,7 @@ function Dashboard() {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <Paper sx={{ ...paperStyle, p: 2, backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
-              <Typography variant="h6" gutterBottom>{projectStats.total}</Typography>
+              <Typography variant="h6" gutterBottom>Total Projects</Typography>
               <Typography variant="h4">{projectStats.total}</Typography>
               <Typography variant="body2" color="text.secondary">
                 +{projectStats.newLastQuarter} from last quarter
