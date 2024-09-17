@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { database, ref, set, get, push, remove } from '../firebase';
 
 const ProjectContext = createContext();
@@ -84,47 +84,59 @@ export function ProjectProvider({ children }) {
     }
   };
 
-  const addDelivery = useCallback((projectId, newDelivery) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: [...(project.deliveries || []), newDelivery]
-            }
-          : project
-      )
-    );
+  const addDelivery = useCallback(async (projectId, newDelivery) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = [...(project.deliveries || []), newDelivery];
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects =>
+        prevProjects.map(p =>
+          p.id === projectId
+            ? { ...p, deliveries: updatedDeliveries }
+            : p
+        )
+      );
+    }
   }, []);
 
-  const removeDelivery = useCallback((projectId, deliveryId) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: project.deliveries.filter(delivery => delivery.id !== deliveryId)
-            }
-          : project
-      )
-    );
+  const removeDelivery = useCallback(async (projectId, deliveryId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = project.deliveries.filter(delivery => delivery.id !== deliveryId);
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects =>
+        prevProjects.map(p =>
+          p.id === projectId
+            ? { ...p, deliveries: updatedDeliveries }
+            : p
+        )
+      );
+    }
   }, []);
 
-  const updateDelivery = useCallback((projectId, deliveryId, updatedDelivery) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: project.deliveries.map(delivery =>
-                delivery.id === deliveryId
-                  ? { ...delivery, ...updatedDelivery }
-                  : delivery
-              )
-            }
-          : project
-      )
-    );
+  const updateDelivery = useCallback(async (projectId, deliveryId, updatedDelivery) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = project.deliveries.map(delivery =>
+        delivery.id === deliveryId
+          ? { ...delivery, ...updatedDelivery }
+          : delivery
+      );
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects =>
+        prevProjects.map(p =>
+          p.id === projectId
+            ? { ...p, deliveries: updatedDeliveries }
+            : p
+        )
+      );
+    }
   }, []);
 
   const deleteDelivery = useCallback((projectId, deliveryId) => {
@@ -140,7 +152,9 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
-  const updateProjectBudget = useCallback((projectId, newBudget) => {
+  const updateProjectBudget = useCallback(async (projectId, newBudget) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    await set(projectRef, { budget: newBudget }, { merge: true });
     setProjects(prevProjects =>
       prevProjects.map(project =>
         project.id === projectId
