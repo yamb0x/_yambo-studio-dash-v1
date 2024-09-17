@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import GanttView from './pages/GanttView';
 import DatabaseView from './pages/DatabaseView';
 import { Container } from '@mui/material';
+import { testFirebaseConnection } from './firebase'; // Import the test function
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -21,6 +22,7 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('darkMode', isDarkMode);
+    testFirebaseConnection();
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {
