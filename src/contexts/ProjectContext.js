@@ -164,11 +164,17 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
-  const deleteProject = async (projectId) => {
-    const projectRef = ref(database, `projects/${projectId}`);
-    await remove(projectRef);
-    setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
-  };
+  const deleteProject = useCallback(async (projectId) => {
+    try {
+      const projectRef = ref(database, `projects/${projectId}`);
+      await remove(projectRef);
+      setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
+      console.log(`Project ${projectId} deleted successfully from Firebase and local state.`);
+    } catch (error) {
+      console.error(`Error deleting project ${projectId}:`, error);
+      // Optionally, you can handle the error here, e.g., show an error message to the user
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
