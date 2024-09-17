@@ -32,12 +32,13 @@ function ProjectForm({ project = {}, onClose }) {
     setOpen(false);  // Close the dropdown after selection
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (project.id) {
-      updateProject(formData);
+      // Make sure editingProject.id is correctly set
+      await updateProject({ ...formData, id: project.id });
     } else {
-      addProject({ ...formData, id: Date.now() });
+      await addProject(formData);
     }
     onClose();
   };

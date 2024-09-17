@@ -20,7 +20,10 @@ export function ProjectProvider({ children }) {
           id: key,
           ...projectsData[key]
         }));
+        console.log('Fetched projects:', projectsArray);
         setProjects(projectsArray);
+      } else {
+        console.log('No projects found in database');
       }
     };
     fetchProjects();
@@ -31,10 +34,16 @@ export function ProjectProvider({ children }) {
     const newProjectRef = push(projectsRef);
     const newProject = { ...project, id: newProjectRef.key };
     await set(newProjectRef, newProject);
+    console.log('Added new project:', newProject);
     setProjects(prevProjects => [...prevProjects, newProject]);
   }, []);
 
   const updateProject = useCallback(async (updatedProject) => {
+    console.log('Updating project:', updatedProject);
+    if (!updatedProject.id) {
+      console.error('Attempted to update project without ID:', updatedProject);
+      return;
+    }
     const projectRef = ref(database, `projects/${updatedProject.id}`);
     await set(projectRef, updatedProject);
     setProjects(prevProjects => prevProjects.map(project => 
@@ -43,12 +52,18 @@ export function ProjectProvider({ children }) {
   }, []);
 
   const deleteProject = useCallback(async (projectId) => {
+    console.log('Deleting project with ID:', projectId);
+    if (!projectId) {
+      console.error('Attempted to delete project without ID');
+      return;
+    }
     const projectRef = ref(database, `projects/${projectId}`);
     await remove(projectRef);
     setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
   }, []);
 
   const updateBooking = useCallback(async (projectId, updatedBooking) => {
+    console.log('Updating booking for project:', projectId, updatedBooking);
     const projectRef = ref(database, `projects/${projectId}`);
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
@@ -60,10 +75,13 @@ export function ProjectProvider({ children }) {
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+    } else {
+      console.error('Project not found for booking update:', projectId);
     }
   }, []);
 
   const addBooking = useCallback(async (projectId, newBooking) => {
+    console.log('Adding booking to project:', projectId, newBooking);
     const projectRef = ref(database, `projects/${projectId}`);
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
@@ -73,10 +91,13 @@ export function ProjectProvider({ children }) {
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+    } else {
+      console.error('Project not found for adding booking:', projectId);
     }
   }, []);
 
   const removeBooking = useCallback(async (projectId, bookingId) => {
+    console.log('Removing booking from project:', projectId, bookingId);
     const projectRef = ref(database, `projects/${projectId}`);
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
@@ -86,6 +107,8 @@ export function ProjectProvider({ children }) {
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+    } else {
+      console.error('Project not found for removing booking:', projectId);
     }
   }, []);
 
