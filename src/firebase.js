@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, push, remove } from "firebase/database";
+import { getDatabase, ref, set, get, push, remove, onValue, off } from "firebase/database";
 
 const firebaseConfig = {
   // Replace this with your actual Firebase configuration
@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
 // Test function to write and read data
-async function testFirebaseConnection() {
+export async function testFirebaseConnection() {
   const testRef = ref(database, 'test');
   
   try {
@@ -31,9 +31,16 @@ async function testFirebaseConnection() {
     } else {
       console.log("No data available");
     }
+
+    // Remove test data
+    await remove(testRef);
+    console.log("Test data removed");
+
+    return true;
   } catch (error) {
     console.error("Error testing Firebase connection:", error);
+    return false;
   }
 }
 
-export { database, ref, set, get, push, remove, testFirebaseConnection };
+export { database, ref, set, get, push, remove, onValue, off };

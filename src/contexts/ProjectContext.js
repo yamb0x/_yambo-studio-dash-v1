@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { database, ref, set, get, push, remove } from '../firebase';
+import { database, ref, set, get, push, remove, onValue, off } from '../firebase';
 
 const ProjectContext = createContext();
 
@@ -12,49 +12,39 @@ export function ProjectProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      setLoading(true);
-      const projectsRef = ref(database, 'projects');
-      const snapshot = await get(projectsRef);
+    const projectsRef = ref(database, 'projects');
+    
+    const unsubscribe = onValue(projectsRef, (snapshot) => {
       if (snapshot.exists()) {
         const projectsData = snapshot.val();
         const projectsArray = Object.keys(projectsData).map(key => ({
           id: key,
           ...projectsData[key]
         }));
-        console.log('Fetched projects:', projectsArray);
         setProjects(projectsArray);
       } else {
-        console.log('No projects found in database');
         setProjects([]);
       }
       setLoading(false);
-    };
-    fetchProjects();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const addProject = useCallback(async (newProject) => {
     const projectsRef = ref(database, 'projects');
     const newProjectRef = push(projectsRef);
-    const projectWithId = { ...newProject, id: newProjectRef.key };
-    await set(newProjectRef, projectWithId);
-    setProjects(prevProjects => [...prevProjects, projectWithId]);
+    await set(newProjectRef, newProject);
   }, []);
 
   const updateProject = useCallback(async (updatedProject) => {
     const projectRef = ref(database, `projects/${updatedProject.id}`);
     await set(projectRef, updatedProject);
-    setProjects(prevProjects => 
-      prevProjects.map(project => 
-        project.id === updatedProject.id ? updatedProject : project
-      )
-    );
   }, []);
 
   const deleteProject = useCallback(async (projectId) => {
     const projectRef = ref(database, `projects/${projectId}`);
     await remove(projectRef);
-    setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
   }, []);
 
   const updateBooking = useCallback(async (projectId, updatedBooking) => {
