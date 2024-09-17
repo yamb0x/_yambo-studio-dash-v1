@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { database, ref, set, get, push, remove } from '../firebase';
 
 const ProjectContext = createContext();
 
@@ -8,22 +8,42 @@ export function useProjects() {
 }
 
 export function ProjectProvider({ children }) {
-  const [projects, setProjects] = useState(() => {
-    const storedProjects = localStorage.getItem('projects');
-    console.log('Initial projects from localStorage:', storedProjects);
-    return storedProjects ? JSON.parse(storedProjects) : [];
-  });
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Saving projects to localStorage:', projects);
-    localStorage.setItem('projects', JSON.stringify(projects));
-  }, [projects]);
-
-  const addProject = useCallback((newProject) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
+    const fetchProjects = async () => {
+      setLoading(true);
+      const projectsRef = ref(database, 'projects');
+      const snapshot = await get(projectsRef);
+      if (snapshot.exists()) {
+        const projectsData = snapshot.val();
+        const projectsArray = Object.keys(projectsData).map(key => ({
+          id: key,
+          ...projectsData[key]
+        }));
+        console.log('Fetched projects:', projectsArray);
+        setProjects(projectsArray);
+      } else {
+        console.log('No projects found in database');
+        setProjects([]);
+      }
+      setLoading(false);
+    };
+    fetchProjects();
   }, []);
 
-  const updateProject = useCallback((updatedProject) => {
+  const addProject = useCallback(async (newProject) => {
+    const projectsRef = ref(database, 'projects');
+    const newProjectRef = push(projectsRef);
+    const projectWithId = { ...newProject, id: newProjectRef.key };
+    await set(newProjectRef, projectWithId);
+    setProjects(prevProjects => [...prevProjects, projectWithId]);
+  }, []);
+
+  const updateProject = useCallback(async (updatedProject) => {
+    const projectRef = ref(database, `projects/${updatedProject.id}`);
+    await set(projectRef, updatedProject);
     setProjects(prevProjects => 
       prevProjects.map(project => 
         project.id === updatedProject.id ? updatedProject : project
@@ -31,119 +51,52 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
-  const updateBooking = (projectId, updatedBooking) => {
-    setProjects(prevProjects => {
-      return prevProjects.map(project => {
-        if (project.id === projectId) {
-          const updatedBookings = project.bookings.map(booking => 
-            booking.id === updatedBooking.id ? updatedBooking : booking
-          );
-          return {
-            ...project,
-            bookings: updatedBookings,
-          };
-        }
-        return project;
-      });
-    });
-  };
-
-  const addBooking = (projectId, newBooking) => {
-    setProjects(prevProjects => 
-      prevProjects.map(project => 
-        project.id === projectId
-          ? { ...project, bookings: [...(project.bookings || []), newBooking] }
-          : project
-      )
-    );
-  };
-
-  const removeBooking = useCallback((projectId, bookingId) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              bookings: project.bookings.filter(booking => booking.id !== bookingId)
-            }
-          : project
-      )
-    );
-  }, []);
-
-  const addDelivery = useCallback((projectId, newDelivery) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: [...(project.deliveries || []), newDelivery]
-            }
-          : project
-      )
-    );
-  }, []);
-
-  const removeDelivery = useCallback((projectId, deliveryId) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: project.deliveries.filter(delivery => delivery.id !== deliveryId)
-            }
-          : project
-      )
-    );
-  }, []);
-
-  const updateDelivery = useCallback((projectId, deliveryId, updatedDelivery) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: project.deliveries.map(delivery =>
-                delivery.id === deliveryId
-                  ? { ...delivery, ...updatedDelivery }
-                  : delivery
-              )
-            }
-          : project
-      )
-    );
-  }, []);
-
-  const deleteDelivery = useCallback((projectId, deliveryId) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              deliveries: project.deliveries.filter(delivery => delivery.id !== deliveryId)
-            }
-          : project
-      )
-    );
-  }, []);
-
-  const updateProjectBudget = useCallback((projectId, newBudget) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? { ...project, budget: newBudget }
-          : project
-      )
-    );
-  }, []);
-
-  const deleteProject = useCallback((projectId) => {
+  const deleteProject = useCallback(async (projectId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    await remove(projectRef);
     setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('projects', JSON.stringify(projects));
-  }, [projects]);
+  const updateBooking = useCallback(async (projectId, updatedBooking) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = project.bookings.map(booking => 
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      );
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
+  }, []);
+
+  const addBooking = useCallback(async (projectId, newBooking) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = [...(project.bookings || []), newBooking];
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
+  }, []);
+
+  const removeBooking = useCallback(async (projectId, bookingId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = project.bookings.filter(booking => booking.id !== bookingId);
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
+  }, []);
 
   const getActiveProjects = useMemo(() => {
     const currentDate = new Date();
@@ -162,19 +115,14 @@ export function ProjectProvider({ children }) {
 
   const value = {
     projects,
+    loading,
     addProject,
     updateProject,
     deleteProject,
+    updateBooking,
     addBooking,
     removeBooking,
-    updateBooking,
-    addDelivery,
-    updateDelivery,
-    deleteDelivery,
-    updateProjectBudget,
-    getActiveProjects, // Add this new function to the context value
-    addDelivery,
-    removeDelivery,
+    getActiveProjects,
   };
 
   return (
