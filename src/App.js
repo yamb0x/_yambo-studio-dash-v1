@@ -6,19 +6,22 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ArtistProvider } from './contexts/ArtistContext';
 import { ProjectProvider } from './contexts/ProjectContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { lightTheme, darkTheme } from './styles/theme';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import GanttView from './pages/GanttView';
 import DatabaseView from './pages/DatabaseView';
-import { Container } from '@mui/material';
-import { testFirebaseConnection } from './firebase'; // Import the test function
+import LoginForm from './components/Auth/LoginForm';
+import { Container, CircularProgress } from '@mui/material';
+import { testFirebaseConnection } from './firebase';
 
-function App() {
+function AppContent() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode === 'true';
   });
+  const { currentUser, loading } = useAuth();
 
   useEffect(() => {
     localStorage.setItem('darkMode', isDarkMode);
@@ -28,6 +31,14 @@ function App() {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (!currentUser) {
+    return <LoginForm />;
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -52,6 +63,14 @@ function App() {
         </ArtistProvider>
       </ThemeProvider>
     </DndProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

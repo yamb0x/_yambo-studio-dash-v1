@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, push, remove, onValue, off } from "firebase/database";
+import { getDatabase, ref, set, get, push, remove, onValue } from "firebase/database";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   // Replace this with your actual Firebase configuration
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+const auth = getAuth(app);
 
 // Test function to write and read data
 export async function testFirebaseConnection() {
@@ -43,4 +45,8 @@ export async function testFirebaseConnection() {
   }
 }
 
-export { database, ref, set, get, push, remove, onValue, off };
+// Export the database and auth instances
+export { database, auth };
+
+// Export the necessary Firebase functions
+export { ref, set, get, push, remove, onValue };

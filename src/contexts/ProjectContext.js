@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { database, ref, set, get, push, remove, onValue, off } from '../firebase';
+import { useAuth } from './AuthContext';
 
 const ProjectContext = createContext();
 
@@ -10,8 +11,15 @@ export function useProjects() {
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
+    if (!currentUser) {
+      setProjects([]);
+      setLoading(false);
+      return;
+    }
+
     const projectsRef = ref(database, 'projects');
     
     const unsubscribe = onValue(projectsRef, (snapshot) => {
@@ -29,7 +37,7 @@ export function ProjectProvider({ children }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [currentUser]);
 
   const addProject = useCallback(async (newProject) => {
     const projectsRef = ref(database, 'projects');
