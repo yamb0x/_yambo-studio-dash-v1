@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { database, ref, set, get, push, remove } from '../firebase';
 
 const ProjectContext = createContext();
 
@@ -8,68 +8,81 @@ export function useProjects() {
 }
 
 export function ProjectProvider({ children }) {
-  const [projects, setProjects] = useState(() => {
-    const storedProjects = localStorage.getItem('projects');
-    console.log('Initial projects from localStorage:', storedProjects);
-    return storedProjects ? JSON.parse(storedProjects) : [];
-  });
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    console.log('Saving projects to localStorage:', projects);
-    localStorage.setItem('projects', JSON.stringify(projects));
-  }, [projects]);
-
-  const addProject = useCallback((newProject) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
+    const fetchProjects = async () => {
+      const projectsRef = ref(database, 'projects');
+      const snapshot = await get(projectsRef);
+      if (snapshot.exists()) {
+        const projectsData = snapshot.val();
+        const projectsArray = Object.keys(projectsData).map(key => ({
+          id: key,
+          ...projectsData[key]
+        }));
+        setProjects(projectsArray);
+      }
+    };
+    fetchProjects();
   }, []);
 
-  const updateProject = useCallback((updatedProject) => {
+  const addProject = async (newProject) => {
+    const projectsRef = ref(database, 'projects');
+    const newProjectRef = push(projectsRef);
+    await set(newProjectRef, newProject);
+    setProjects(prevProjects => [...prevProjects, { id: newProjectRef.key, ...newProject }]);
+  };
+
+  const updateProject = async (updatedProject) => {
+    const projectRef = ref(database, `projects/${updatedProject.id}`);
+    await set(projectRef, updatedProject);
     setProjects(prevProjects => 
       prevProjects.map(project => 
         project.id === updatedProject.id ? updatedProject : project
       )
     );
-  }, []);
-
-  const updateBooking = (projectId, updatedBooking) => {
-    setProjects(prevProjects => {
-      return prevProjects.map(project => {
-        if (project.id === projectId) {
-          const updatedBookings = project.bookings.map(booking => 
-            booking.id === updatedBooking.id ? updatedBooking : booking
-          );
-          return {
-            ...project,
-            bookings: updatedBookings,
-          };
-        }
-        return project;
-      });
-    });
   };
 
-  const addBooking = (projectId, newBooking) => {
-    setProjects(prevProjects => 
-      prevProjects.map(project => 
-        project.id === projectId
-          ? { ...project, bookings: [...(project.bookings || []), newBooking] }
-          : project
-      )
-    );
+  const updateBooking = async (projectId, updatedBooking) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = project.bookings.map(booking => 
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      );
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
   };
 
-  const removeBooking = useCallback((projectId, bookingId) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              bookings: project.bookings.filter(booking => booking.id !== bookingId)
-            }
-          : project
-      )
-    );
-  }, []);
+  const addBooking = async (projectId, newBooking) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = [...(project.bookings || []), newBooking];
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
+  };
+
+  const removeBooking = async (projectId, bookingId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedBookings = project.bookings.filter(booking => booking.id !== bookingId);
+      await set(projectRef, { ...project, bookings: updatedBookings });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, bookings: updatedBookings } : p
+      ));
+    }
+  };
 
   const addDelivery = useCallback((projectId, newDelivery) => {
     setProjects(prevProjects =>
@@ -137,9 +150,11 @@ export function ProjectProvider({ children }) {
     );
   }, []);
 
-  const deleteProject = useCallback((projectId) => {
+  const deleteProject = async (projectId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    await remove(projectRef);
     setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
-  }, []);
+  };
 
   useEffect(() => {
     localStorage.setItem('projects', JSON.stringify(projects));
@@ -165,16 +180,10 @@ export function ProjectProvider({ children }) {
     addProject,
     updateProject,
     deleteProject,
+    updateBooking,
     addBooking,
     removeBooking,
-    updateBooking,
-    addDelivery,
-    updateDelivery,
-    deleteDelivery,
-    updateProjectBudget,
-    getActiveProjects, // Add this new function to the context value
-    addDelivery,
-    removeDelivery,
+    // Include other functions here
   };
 
   return (
