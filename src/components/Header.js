@@ -3,9 +3,20 @@ import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '
 import { Link as RouterLink } from 'react-router-dom';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 function Header({ toggleDarkMode, isDarkMode }) {
   const theme = useTheme();
+  const { logout } = useAuth(); // Get the logout function from AuthContext
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // You might want to redirect to the login page or refresh the app state here
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
+  };
 
   return (
     <AppBar 
@@ -31,6 +42,24 @@ function Header({ toggleDarkMode, isDarkMode }) {
             }}
           >
             dashboard v1.2.6
+          </Typography>
+          <Typography 
+            variant="subtitle2" 
+            component="button" 
+            onClick={handleLogout}
+            sx={{ 
+              marginLeft: 2, 
+              color: isDarkMode ? 'white' : 'text.secondary',
+              fontSize: '0.8rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            Log out
           </Typography>
         </Box>
         <Button color="inherit" component={RouterLink} to="/">
