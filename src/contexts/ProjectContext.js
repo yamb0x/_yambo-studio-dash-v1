@@ -153,6 +153,19 @@ export function ProjectProvider({ children }) {
     }
   }, []);
 
+  const updateProjectSetting = useCallback(async (projectId, setting, value) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedProject = { ...project, [setting]: value };
+      await set(projectRef, updatedProject);
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? updatedProject : p
+      ));
+    }
+  }, []);
+
   const value = {
     projects,
     loading,
@@ -165,7 +178,8 @@ export function ProjectProvider({ children }) {
     getActiveProjects,
     addDelivery,
     updateDelivery,
-    deleteDelivery
+    deleteDelivery,
+    updateProjectSetting
   };
 
   return (

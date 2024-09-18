@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Chip, Slider, Button, Dialog, DialogTitle, DialogContent, DialogActions, ListItemSecondaryAction } from '@mui/material';
+import { Box, Typography, TextField, IconButton, Divider, List, ListItem, ListItemText, Chip, Slider, Button, Dialog, DialogTitle, DialogContent, DialogActions, ListItemSecondaryAction, Checkbox, FormControlLabel } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -15,7 +15,7 @@ const countryToTimezone = {
 };
 
 function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
-  const { addDelivery, updateDelivery, deleteDelivery } = useProjects();
+  const { addDelivery, updateDelivery, deleteDelivery, updateProjectSetting } = useProjects();
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -30,6 +30,8 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
   const [openDeliveryDialog, setOpenDeliveryDialog] = useState(false);
   const [newDelivery, setNewDelivery] = useState({ name: '', date: '' });
   const [editingDelivery, setEditingDelivery] = useState(null);
+  const [showCurrentDate, setShowCurrentDate] = useState(project.showCurrentDate !== false);
+  const [showCurrentWeek, setShowCurrentWeek] = useState(project.showCurrentWeek === true);
 
   const calculateBookingDays = useCallback((booking) => {
     if (!booking?.startDate || !booking?.endDate) return 0;
@@ -142,6 +144,18 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
       await addDelivery(project.id, { ...newDelivery, id: Date.now().toString() });
     }
     handleCloseDialog();
+  };
+
+  const handleShowCurrentDateChange = (event) => {
+    const newValue = event.target.checked;
+    setShowCurrentDate(newValue);
+    updateProjectSetting(project.id, 'showCurrentDate', newValue);
+  };
+
+  const handleShowCurrentWeekChange = (event) => {
+    const newValue = event.target.checked;
+    setShowCurrentWeek(newValue);
+    updateProjectSetting(project.id, 'showCurrentWeek', newValue);
   };
 
   useEffect(() => {
@@ -423,6 +437,33 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
             ))}
           </List>
         </Box>
+      </Box>
+
+      <Divider />
+
+      {/* Add the checkboxes here, after the project data and artists booked sections */}
+      <Box sx={{ mt: 2, mb: 2, pl: 2, display: 'flex', alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showCurrentDate}
+              onChange={handleShowCurrentDateChange}
+              name="showCurrentDate"
+            />
+          }
+          label="Show current date"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showCurrentWeek}
+              onChange={handleShowCurrentWeekChange}
+              name="showCurrentWeek"
+            />
+          }
+          label="Show current week"
+          sx={{ ml: 2 }}
+        />
       </Box>
 
       <Divider />

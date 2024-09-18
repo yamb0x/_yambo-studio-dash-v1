@@ -41,7 +41,7 @@ function Header({ toggleDarkMode, isDarkMode }) {
               fontSize: '0.8rem'
             }}
           >
-            dashboard v1.2.6
+            dashboard v1.4.4
           </Typography>
           <Typography 
             variant="subtitle2" 
