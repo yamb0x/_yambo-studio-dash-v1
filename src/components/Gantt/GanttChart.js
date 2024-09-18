@@ -241,21 +241,20 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
             pointerEvents: 'none',
           }}
         >
-          <Typography
-            variant="caption"
+          <Box
             sx={{
               position: 'absolute',
-              top: '-20px',
+              bottom: '-20px',
               left: '2px',
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'left bottom',
+              transform: 'translateX(-50%)',
               whiteSpace: 'nowrap',
               color: 'red',
               fontWeight: 'bold',
+              fontSize: '0.75rem',
             }}
           >
             {delivery.name}
-          </Typography>
+          </Box>
         </Box>
       );
     });

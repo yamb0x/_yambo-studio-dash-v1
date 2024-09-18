@@ -15,7 +15,7 @@ const countryToTimezone = {
 };
 
 function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
-  const { addDelivery, removeDelivery, updateDelivery } = useProjects();
+  const { addDelivery, updateDelivery, deleteDelivery } = useProjects();
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -121,8 +121,12 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
 
   const handleEditDelivery = (delivery) => {
     setEditingDelivery(delivery);
-    setNewDelivery({ name: delivery.name, date: delivery.date });
+    setNewDelivery({ ...delivery });
     setOpenDeliveryDialog(true);
+  };
+
+  const handleDeleteDelivery = async (deliveryId) => {
+    await deleteDelivery(project.id, deliveryId);
   };
 
   const handleCloseDialog = () => {
@@ -131,20 +135,13 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     setEditingDelivery(null);
   };
 
-  const handleDeliverySubmit = () => {
+  const handleDeliverySubmit = async () => {
     if (editingDelivery) {
-      updateDelivery(project.id, editingDelivery.id, newDelivery);
+      await updateDelivery(project.id, { ...newDelivery, id: editingDelivery.id });
     } else {
-      addDelivery(project.id, {
-        id: Date.now().toString(),
-        ...newDelivery
-      });
+      await addDelivery(project.id, { ...newDelivery, id: Date.now().toString() });
     }
     handleCloseDialog();
-  };
-
-  const handleDeleteDelivery = (deliveryId) => {
-    removeDelivery(project.id, deliveryId);
   };
 
   useEffect(() => {

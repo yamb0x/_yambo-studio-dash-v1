@@ -111,6 +111,48 @@ export function ProjectProvider({ children }) {
     });
   }, [projects]);
 
+  // New functions for deliverables
+  const addDelivery = useCallback(async (projectId, newDelivery) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = [...(project.deliveries || []), newDelivery];
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, deliveries: updatedDeliveries } : p
+      ));
+    }
+  }, []);
+
+  const updateDelivery = useCallback(async (projectId, updatedDelivery) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = (project.deliveries || []).map(delivery => 
+        delivery.id === updatedDelivery.id ? updatedDelivery : delivery
+      );
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, deliveries: updatedDeliveries } : p
+      ));
+    }
+  }, []);
+
+  const deleteDelivery = useCallback(async (projectId, deliveryId) => {
+    const projectRef = ref(database, `projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    if (snapshot.exists()) {
+      const project = snapshot.val();
+      const updatedDeliveries = (project.deliveries || []).filter(delivery => delivery.id !== deliveryId);
+      await set(projectRef, { ...project, deliveries: updatedDeliveries });
+      setProjects(prevProjects => prevProjects.map(p => 
+        p.id === projectId ? { ...p, deliveries: updatedDeliveries } : p
+      ));
+    }
+  }, []);
+
   const value = {
     projects,
     loading,
@@ -121,6 +163,9 @@ export function ProjectProvider({ children }) {
     addBooking,
     removeBooking,
     getActiveProjects,
+    addDelivery,
+    updateDelivery,
+    deleteDelivery
   };
 
   return (
