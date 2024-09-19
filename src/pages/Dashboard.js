@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, useTheme } from '@mui/material';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, useTheme, keyframes } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend, addHours, subHours } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Calculator from '../components/Calculator';
 import CurrencyExchange from '../components/CurrencyExchange';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 const paperStyle = {
   border: '1px solid #e0e0e0',
@@ -97,6 +98,7 @@ function Dashboard() {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const currentDate = useMemo(() => {
     const now = new Date();
@@ -236,6 +238,75 @@ function Dashboard() {
     }
   }, [projects, artists, currentDate, involvementPeriod, excludedArtists, calculateCurrentlyBookedArtists]);
 
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getArtistTime = (country) => {
+    const timeOffsetMap = {
+      'USA': -4, // EDT (UTC-4)
+      'UK': 1,   // BST (UTC+1)
+      'Canada': -4, // EDT (UTC-4)
+      'Australia': 10, // AEST (UTC+10)
+      'Japan': 9, // JST (UTC+9)
+      'Germany': 2, // CEST (UTC+2)
+      'France': 2, // CEST (UTC+2)
+      'Italy': 2, // CEST (UTC+2)
+      'Spain': 2, // CEST (UTC+2)
+      'Russia': 3, // MSK (UTC+3)
+      'China': 8, // CST (UTC+8)
+      'India': 5.5, // IST (UTC+5:30)
+      'Brazil': -3, // BRT (UTC-3)
+      'Mexico': -5, // CDT (UTC-5)
+      'South Africa': 2, // SAST (UTC+2)
+      'New Zealand': 12, // NZST (UTC+12)
+      'Argentina': -3, // ART (UTC-3)
+      'Sweden': 2, // CEST (UTC+2)
+      'Netherlands': 2, // CEST (UTC+2)
+      'Switzerland': 2, // CEST (UTC+2)
+      'South Korea': 9, // KST (UTC+9)
+      'Singapore': 8, // SGT (UTC+8)
+      'Norway': 2, // CEST (UTC+2)
+      'Denmark': 2, // CEST (UTC+2)
+      'Finland': 3, // EEST (UTC+3)
+      'Belgium': 2, // CEST (UTC+2)
+      'Austria': 2, // CEST (UTC+2)
+      'Portugal': 1, // WEST (UTC+1)
+      'Greece': 3, // EEST (UTC+3)
+      'Ireland': 1, // IST (UTC+1)
+      'Poland': 2, // CEST (UTC+2)
+      'Turkey': 3, // TRT (UTC+3)
+      'Israel': 3, // IDT (UTC+3)
+      'United Arab Emirates': 4, // GST (UTC+4)
+      'Thailand': 7, // ICT (UTC+7)
+      'Indonesia': 7, // WIB (UTC+7)
+      'Malaysia': 8, // MYT (UTC+8)
+      'Philippines': 8, // PHT (UTC+8)
+      'Vietnam': 7, // ICT (UTC+7)
+      'Saudi Arabia': 3, // AST (UTC+3)
+      'Egypt': 2, // EET (UTC+2)
+      'South Africa': 2, // SAST (UTC+2)
+      'Nigeria': 1, // WAT (UTC+1)
+      'Kenya': 3, // EAT (UTC+3)
+      'Morocco': 1, // WEST (UTC+1)
+      'Chile': -4, // CLT (UTC-4)
+      'Colombia': -5, // COT (UTC-5)
+      'Peru': -5, // PET (UTC-5)
+      'Venezuela': -4, // VET (UTC-4)
+    };
+
+    const userOffset = -currentTime.getTimezoneOffset() / 60; // Convert to hours and invert
+    const artistOffset = timeOffsetMap[country] || 0;
+    const timeDifference = artistOffset - userOffset;
+
+    console.log(`Country: ${country}, User Offset: ${userOffset}, Artist Offset: ${artistOffset}, Difference: ${timeDifference}`);
+
+    const artistTime = addHours(currentTime, timeDifference);
+
+    return `${format(artistTime, 'HH:mm')} (${country})`;
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -362,6 +433,12 @@ function Dashboard() {
 
   // You can adjust this value to change the height of the Notes component
   const notesHeight = '100%'; // Changed from fixed pixel value to percentage
+
+  const blinkAnimation = keyframes`
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+  `;
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', backgroundColor: isDarkMode ? theme.palette.background.default : 'white' }}>
@@ -494,13 +571,20 @@ function Dashboard() {
                 </Typography>
                 <List>
                   {currentlyBookedArtists.map((artist) => (
-                    <ListItem key={artist.id}>
-                      <ListItemAvatar>
-                        <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-                          {artist.name.charAt(0)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText primary={artist.name} />
+                    <ListItem key={artist.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FiberManualRecordIcon
+                          sx={{
+                            color: 'green',
+                            mr: 2,
+                            animation: `${blinkAnimation} 2s ease-in-out infinite`,
+                          }}
+                        />
+                        <ListItemText primary={artist.name} />
+                      </Box>
+                      <Typography variant="body2">
+                        {getArtistTime(artist.country)}
+                      </Typography>
                     </ListItem>
                   ))}
                 </List>
