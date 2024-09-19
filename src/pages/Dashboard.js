@@ -5,9 +5,10 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Calculator from '../components/Calculator';
+import CurrencyExchange from '../components/CurrencyExchange';
 
 const paperStyle = {
   border: '1px solid #e0e0e0',
@@ -90,14 +91,22 @@ function Dashboard() {
   const { projects } = useProjects();
   const { artists } = useArtists();
   const [tabValue, setTabValue] = useState(0);
-  const [bookingPeriod, setBookingPeriod] = useState('all');
-  const [artistBookings, setArtistBookings] = useState([]);
-  const [mostBookedArtists, setMostBookedArtists] = useState([]);
+  const [involvementPeriod, setInvolvementPeriod] = useState('all');
+  const [mostInvolvedArtists, setMostInvolvedArtists] = useState([]);
   const [notes, setNotes] = useState('');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
 
-  const currentDate = new Date();
+  const currentDate = useMemo(() => {
+    const now = new Date();
+    let validDate = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+    while (validDate.getDay() === 0 || validDate.getDay() === 6) {
+      validDate = addDays(validDate, 1);
+    }
+    return validDate;
+  }, []);
+
   const lastQuarterStart = subMonths(currentDate, 3);
 
   const projectStats = useMemo(() => {
@@ -149,9 +158,35 @@ function Dashboard() {
     }, 0);
   };
 
+  const excludedArtists = ['Yambo', 'Clem Shepherd'];
+
+  const calculateCurrentlyBookedArtists = useCallback(() => {
+    console.log('Calculating currently booked artists for:', format(currentDate, 'yyyy-MM-dd'));
+    
+    return artists.filter(artist => {
+      if (excludedArtists.includes(artist.name)) return false;
+
+      for (const project of projects) {
+        if (project.bookings) {
+          for (const booking of project.bookings) {
+            if (booking.artistId === artist.id) {
+              const bookingStart = startOfDay(parseISO(booking.startDate));
+              const bookingEnd = endOfDay(parseISO(booking.endDate));
+              const isBooked = isWithinInterval(currentDate, { start: bookingStart, end: bookingEnd });
+              console.log(`Artist: ${artist.name}, Project: ${project.name}, Booking: ${format(bookingStart, 'yyyy-MM-dd')} to ${format(bookingEnd, 'yyyy-MM-dd')}, Is booked: ${isBooked}`);
+              if (isBooked) return true;
+            }
+          }
+        }
+      }
+      return false;
+    });
+  }, [artists, projects, currentDate, excludedArtists]);
+
   useEffect(() => {
-    console.log('All projects:', projects);
-    console.log('All artists:', artists);
+    const bookedArtists = calculateCurrentlyBookedArtists();
+    console.log('Booked artists:', bookedArtists.map(artist => artist.name));
+    setCurrentlyBookedArtists(bookedArtists);
 
     const filterDate = {
       'past3Months': subMonths(currentDate, 3),
@@ -159,52 +194,54 @@ function Dashboard() {
       'lastYear': subYears(currentDate, 1),
     };
 
-    // Calculate artist bookings
-    const bookings = artists.map(artist => {
-      const artistProjects = projects.filter(project => {
-        const projectStart = parseISO(project.startDate);
-        const projectEnd = parseISO(project.endDate);
-        
-        if (bookingPeriod === 'all') {
-          return project.bookings && project.bookings.some(booking => booking.artistId === artist.id);
-        } else if (bookingPeriod === 'lastYear') {
-          return project.bookings && 
-                 project.bookings.some(booking => booking.artistId === artist.id) &&
-                 isAfter(projectStart, filterDate.lastYear) &&
-                 isBefore(projectEnd, currentDate);
-        } else {
-          return project.bookings && 
-                 project.bookings.some(booking => booking.artistId === artist.id) &&
-                 isAfter(projectEnd, filterDate[bookingPeriod]);
-        }
+    // Calculate artist involvement
+    const artistInvolvement = artists
+      .filter(artist => !excludedArtists.includes(artist.name))
+      .map(artist => {
+        const involvedProjects = projects.filter(project => {
+          const projectStart = parseISO(project.startDate);
+          const projectEnd = parseISO(project.endDate);
+          
+          if (involvementPeriod === 'all') {
+            return project.bookings && project.bookings.some(booking => booking.artistId === artist.id);
+          } else if (involvementPeriod === 'lastYear') {
+            return project.bookings && 
+                   project.bookings.some(booking => booking.artistId === artist.id) &&
+                   isAfter(projectStart, filterDate.lastYear) &&
+                   isBefore(projectEnd, currentDate);
+          } else {
+            return project.bookings && 
+                   project.bookings.some(booking => booking.artistId === artist.id) &&
+                   isAfter(projectEnd, filterDate[involvementPeriod]);
+          }
+        });
+
+        return {
+          ...artist,
+          projectCount: involvedProjects.length,
+          projectNames: involvedProjects.map(project => project.name)
+        };
       });
 
-      return {
-        ...artist,
-        bookings: artistProjects.length,
-        projectNames: artistProjects.map(project => project.name)
-      };
-    });
-
-    setArtistBookings(bookings);
-    
-    // Sort and get top 8 most booked artists
-    const topArtists = [...bookings].sort((a, b) => b.bookings - a.bookings).slice(0, 8);
-    setMostBookedArtists(topArtists);
+    // Sort and get top 8 most involved artists
+    const topArtists = [...artistInvolvement]
+      .sort((a, b) => b.projectCount - a.projectCount)
+      .slice(0, 8);
+    setMostInvolvedArtists(topArtists);
 
     // Load saved notes
     const savedNotes = localStorage.getItem('dashboardNotes');
     if (savedNotes) {
       setNotes(savedNotes);
     }
-  }, [projects, artists, bookingPeriod]);
+  }, [projects, artists, currentDate, involvementPeriod, excludedArtists, calculateCurrentlyBookedArtists]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  const handleBookingPeriodChange = (event) => {
-    setBookingPeriod(event.target.value);
+  const handleInvolvementPeriodChange = (event) => {
+    setInvolvementPeriod(event.target.value);
   };
 
   const calculateProgress = (project) => {
@@ -322,6 +359,9 @@ function Dashboard() {
       </html>
     `;
   };
+
+  // You can adjust this value to change the height of the Notes component
+  const notesHeight = '100%'; // Changed from fixed pixel value to percentage
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', backgroundColor: isDarkMode ? theme.palette.background.default : 'white' }}>
@@ -443,60 +483,96 @@ function Dashboard() {
           </Box>
         </Paper>
 
-        {/* Most booked artists and Notes */}
+        {/* Most involved artists and Notes */}
         <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Most Booked Artists
+            <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white', display: 'flex', flexDirection: 'column' }}>
+              {/* Currently Booked Artists */}
+              <Box sx={{ flex: '0 0 40%', overflow: 'auto', mb: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Currently Booked Artists ({format(currentDate, 'yyyy-MM-dd')})
                 </Typography>
-                <FormControl variant="outlined" size="small">
-                  <Select
-                    value={bookingPeriod}
-                    onChange={handleBookingPeriodChange}
-                    displayEmpty
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderRadius: 0,
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
-                      },
-                      minWidth: 120,
-                    }}
-                  >
-                    <MenuItem value="all">All Time</MenuItem>
-                    <MenuItem value="past3Months">Past 3 Months</MenuItem>
-                    <MenuItem value="pastYear">Past Year</MenuItem>
-                    <MenuItem value="lastYear">Last Year</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              <List>
-                {mostBookedArtists.map((artist, index) => (
-                  <React.Fragment key={artist.id}>
-                    <ListItem>
+                <List>
+                  {currentlyBookedArtists.map((artist) => (
+                    <ListItem key={artist.id}>
                       <ListItemAvatar>
                         <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
                           {artist.name.charAt(0)}
                         </Avatar>
                       </ListItemAvatar>
-                      <ListItemText 
-                        primary={artist.name} 
-                        secondary={`${artist.bookings} bookings`} 
-                      />
+                      <ListItemText primary={artist.name} />
                     </ListItem>
-                    {index < mostBookedArtists.length - 1 && <Divider variant="inset" component="li" sx={{ borderColor: theme.palette.divider }} />}
-                  </React.Fragment>
-                ))}
-              </List>
+                  ))}
+                </List>
+                {currentlyBookedArtists.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No artists currently booked
+                  </Typography>
+                )}
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Most Involved Artists */}
+              <Box sx={{ flex: '1 1 60%', overflow: 'auto' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">
+                    Most Involved Artists
+                  </Typography>
+                  <FormControl variant="outlined" size="small">
+                    <Select
+                      value={involvementPeriod}
+                      onChange={handleInvolvementPeriodChange}
+                      displayEmpty
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderRadius: 0,
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
+                        },
+                        minWidth: 120,
+                      }}
+                    >
+                      <MenuItem value="all">All Time</MenuItem>
+                      <MenuItem value="past3Months">Past 3 Months</MenuItem>
+                      <MenuItem value="pastYear">Past Year</MenuItem>
+                      <MenuItem value="lastYear">Last Year</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+                <List>
+                  {mostInvolvedArtists.map((artist, index) => (
+                    <React.Fragment key={artist.id}>
+                      <ListItem>
+                        <ListItemAvatar>
+                          <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
+                            {artist.name.charAt(0)}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText 
+                          primary={artist.name} 
+                          secondary={`${artist.projectCount} projects`} 
+                        />
+                      </ListItem>
+                      {index < mostInvolvedArtists.length - 1 && <Divider variant="inset" component="li" sx={{ borderColor: theme.palette.divider }} />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </Box>
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
             <Grid container spacing={2} sx={{ height: '100%' }}>
               <Grid item xs={6}>
-                <Paper sx={{ ...paperStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
+                <Paper sx={{ 
+                  ...paperStyle, 
+                  p: 2, 
+                  height: '100%',
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' 
+                }}>
                   <Typography variant="h6" gutterBottom>
                     Notes
                   </Typography>
@@ -522,7 +598,23 @@ function Dashboard() {
                 </Paper>
               </Grid>
               <Grid item xs={6}>
-                <Calculator />
+                <Grid container direction="column" spacing={2} sx={{ height: '100%' }}>
+                  <Grid item xs={4}>
+                    <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
+                      <CurrencyExchange />
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Paper sx={{ 
+                      ...paperStyle, 
+                      p: 2, 
+                      height: '100%',
+                      backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' 
+                    }}>
+                      <Calculator />
+                    </Paper>
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>

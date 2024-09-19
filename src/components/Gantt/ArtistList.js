@@ -101,7 +101,7 @@ function ArtistList() {
   }, [artists, sortOption]);
 
   const skillOptions = [
-    'Animation', 'Look Development', 'Rigging', 'Creative Direction',
+    'Animation', 'Look Dev', 'Rigging', 'Creative Direction',
     'Production', 'Simulations', 'CAD', 'Houdini', 'Color Grading',
     'Compositing', '2D Animation'
   ];
