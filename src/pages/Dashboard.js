@@ -243,6 +243,12 @@ function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  const isWorkingHours = (country) => {
+    const artistTime = getArtistTime(country);
+    const hours = artistTime.getHours();
+    return hours >= 9 && hours < 18;
+  };
+
   const getArtistTime = (country) => {
     const timeOffsetMap = {
       'USA': -4, // EDT (UTC-4)
@@ -304,7 +310,7 @@ function Dashboard() {
 
     const artistTime = addHours(currentTime, timeDifference);
 
-    return `${format(artistTime, 'HH:mm')} (${country})`;
+    return artistTime;
   };
 
   const handleTabChange = (event, newValue) => {
@@ -431,8 +437,11 @@ function Dashboard() {
     `;
   };
 
-  // You can adjust this value to change the height of the Notes component
-  const notesHeight = '100%'; // Changed from fixed pixel value to percentage
+  // You can adjust these values to change the heights of the components
+  const currentlyBookedArtistsHeight = '585px'; // Adjust this value
+  const notesHeight = '585px'; // Adjust this value
+  const currencyExchangeHeight = '150px'; // Adjust this value
+  const calculatorHeight = '420px'; // Adjust this value
 
   const blinkAnimation = keyframes`
     0% { opacity: 0.4; }
@@ -560,90 +569,48 @@ function Dashboard() {
           </Box>
         </Paper>
 
-        {/* Most involved artists and Notes */}
+        {/* Currently Booked Artists and Notes */}
         <Grid container spacing={3} sx={{ flexGrow: 1, mb: 3 }}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white', display: 'flex', flexDirection: 'column' }}>
-              {/* Currently Booked Artists */}
-              <Box sx={{ flex: '0 0 40%', overflow: 'auto', mb: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Currently Booked Artists ({format(currentDate, 'yyyy-MM-dd')})
-                </Typography>
-                <List>
-                  {currentlyBookedArtists.map((artist) => (
+            <Paper sx={{ 
+              ...paperStyle, 
+              p: 2, 
+              height: currentlyBookedArtistsHeight, 
+              backgroundColor: isDarkMode ? theme.palette.background.paper : 'white', 
+              display: 'flex', 
+              flexDirection: 'column' 
+            }}>
+              <Typography variant="h6" gutterBottom>
+                Currently Booked Artists ({format(currentDate, 'yyyy-MM-dd')})
+              </Typography>
+              <List sx={{ flexGrow: 1, overflow: 'auto' }}>
+                {currentlyBookedArtists.map((artist) => {
+                  const artistTime = getArtistTime(artist.country);
+                  const workingHours = isWorkingHours(artist.country);
+                  return (
                     <ListItem key={artist.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <FiberManualRecordIcon
                           sx={{
-                            color: 'green',
+                            color: workingHours ? 'green' : 'red',
                             mr: 2,
-                            animation: `${blinkAnimation} 2s ease-in-out infinite`,
+                            animation: workingHours ? `${blinkAnimation} 2s ease-in-out infinite` : 'none',
                           }}
                         />
                         <ListItemText primary={artist.name} />
                       </Box>
                       <Typography variant="body2">
-                        {getArtistTime(artist.country)}
+                        {format(artistTime, 'HH:mm')} ({artist.country})
                       </Typography>
                     </ListItem>
-                  ))}
-                </List>
-                {currentlyBookedArtists.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    No artists currently booked
-                  </Typography>
-                )}
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Most Involved Artists */}
-              <Box sx={{ flex: '1 1 60%', overflow: 'auto' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Most Involved Artists
-                  </Typography>
-                  <FormControl variant="outlined" size="small">
-                    <Select
-                      value={involvementPeriod}
-                      onChange={handleInvolvementPeriodChange}
-                      displayEmpty
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderRadius: 0,
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: isDarkMode ? theme.palette.primary.main : '#000000',
-                        },
-                        minWidth: 120,
-                      }}
-                    >
-                      <MenuItem value="all">All Time</MenuItem>
-                      <MenuItem value="past3Months">Past 3 Months</MenuItem>
-                      <MenuItem value="pastYear">Past Year</MenuItem>
-                      <MenuItem value="lastYear">Last Year</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                <List>
-                  {mostInvolvedArtists.map((artist, index) => (
-                    <React.Fragment key={artist.id}>
-                      <ListItem>
-                        <ListItemAvatar>
-                          <Avatar src={getArtistImage(artist.name)[0]} alt={artist.name}>
-                            {artist.name.charAt(0)}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText 
-                          primary={artist.name} 
-                          secondary={`${artist.projectCount} projects`} 
-                        />
-                      </ListItem>
-                      {index < mostInvolvedArtists.length - 1 && <Divider variant="inset" component="li" sx={{ borderColor: theme.palette.divider }} />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              </Box>
+                  );
+                })}
+              </List>
+              {currentlyBookedArtists.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No artists currently booked
+                </Typography>
+              )}
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -652,7 +619,7 @@ function Dashboard() {
                 <Paper sx={{ 
                   ...paperStyle, 
                   p: 2, 
-                  height: '100%',
+                  height: notesHeight,
                   display: 'flex', 
                   flexDirection: 'column',
                   backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' 
@@ -683,16 +650,21 @@ function Dashboard() {
               </Grid>
               <Grid item xs={6}>
                 <Grid container direction="column" spacing={2} sx={{ height: '100%' }}>
-                  <Grid item xs={4}>
-                    <Paper sx={{ ...paperStyle, p: 2, height: '100%', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
-                      <CurrencyExchange />
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={8}>
+                  <Grid item>
                     <Paper sx={{ 
                       ...paperStyle, 
                       p: 2, 
-                      height: '100%',
+                      height: currencyExchangeHeight, 
+                      backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' 
+                    }}>
+                      <CurrencyExchange />
+                    </Paper>
+                  </Grid>
+                  <Grid item>
+                    <Paper sx={{ 
+                      ...paperStyle, 
+                      p: 2, 
+                      height: calculatorHeight,
                       backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' 
                     }}>
                       <Calculator />
