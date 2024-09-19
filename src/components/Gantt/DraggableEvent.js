@@ -4,6 +4,7 @@ import moment from 'moment';
 import CloseIcon from '@mui/icons-material/Close';
 import { COLORS } from '../../constants';
 import { useDrag } from 'react-dnd';
+import { useArtistData } from '../../hooks/useArtistData';
 
 // Function to calculate the inverse color
 const getInverseColor = (hexColor) => {
@@ -25,6 +26,7 @@ const getInverseColor = (hexColor) => {
 };
 
 function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName, onDelete }) {
+  const { artistData, isLoading } = useArtistData(booking.artistId);
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const eventRef = useRef(null);
@@ -34,7 +36,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
   const bookingStart = moment(booking.startDate);
   const bookingEnd = moment(booking.endDate);
   const numberOfDays = bookingEnd.diff(bookingStart, 'days') + 1;
-  const dailyRate = booking.dailyRate || 0;
+  const dailyRate = artistData ? artistData.dailyRate : 0;
   const totalCost = dailyRate * numberOfDays;
 
   const inverseColor = getInverseColor(color);
@@ -183,7 +185,7 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
         {artistName}
       </Link>
       <Typography variant="caption" sx={{ color: inverseColor, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-        {`$${dailyRate} x ${numberOfDays} = $${totalCost}`}
+        {isLoading ? 'Loading...' : `$${dailyRate} x ${numberOfDays} = $${totalCost}`}
       </Typography>
       <Box
         className="resize-handle"

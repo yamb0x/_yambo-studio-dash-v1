@@ -6,6 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { COLORS } from '../../constants';
 import moment from 'moment-timezone';
 import { useProjects } from '../../contexts/ProjectContext';
+import { useArtists } from '../../contexts/ArtistContext';  // Add this import
 
 const countryToTimezone = {
   'US': 'America/New_York',
@@ -16,6 +17,7 @@ const countryToTimezone = {
 
 function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalculated, artistColors = {} }) {
   const { addDelivery, updateDelivery, deleteDelivery, updateProjectSetting } = useProjects();
+  const { artists } = useArtists();  // Add this line to get the artists data
   const [isEditingRevenue, setIsEditingRevenue] = useState(false);
   const [revenue, setRevenue] = useState(() => {
     const savedRevenue = localStorage.getItem(`project_${project.id}_revenue`);
@@ -40,19 +42,23 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
   }, []);
 
-  const totalArtistsCosts = useMemo(() => {
+  // Calculate total booking costs
+  const totalBookingCosts = useMemo(() => {
     if (!project || !project.bookings || !Array.isArray(project.bookings)) {
       return 0;
     }
     return project.bookings.reduce((total, booking) => {
-      const days = calculateBookingDays(booking);
-      return total + (booking.dailyRate || 0) * days;
+      const artist = artists.find(a => a.id === booking.artistId);
+      const dailyRate = artist?.dailyRate || 0;
+      const duration = booking.duration || 0;
+      return total + (dailyRate * duration);
     }, 0);
-  }, [project, calculateBookingDays]);
+  }, [project, artists]);
 
+  // Calculate total costs (bookings + additional expenses)
   const totalCosts = useMemo(() => {
-    return totalArtistsCosts + revenue;
-  }, [totalArtistsCosts, revenue]);
+    return totalBookingCosts + revenue;
+  }, [totalBookingCosts, revenue]);
 
   const groupedBookings = useMemo(() => {
     if (!project || !project.bookings || !Array.isArray(project.bookings)) {
@@ -61,22 +67,24 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     const grouped = {};
     project.bookings.forEach(booking => {
       if (!grouped[booking.artistName]) {
+        const artist = artists.find(a => a.id === booking.artistId);  // Find the artist
         grouped[booking.artistName] = {
           bookings: [],
           totalCost: 0,
           skills: new Set(),
-          country: booking.artistCountry,
+          country: artist?.country,
+          dailyRate: artist?.dailyRate,  // Use the daily rate from the artist data
         };
       }
       grouped[booking.artistName].bookings.push(booking);
-      const days = calculateBookingDays(booking);
-      grouped[booking.artistName].totalCost += (booking.dailyRate || 0) * days;
+      // Use the artist's daily rate for the calculation
+      grouped[booking.artistName].totalCost += (grouped[booking.artistName].dailyRate || 0) * (booking.duration || 0);
       if (booking.skills) {
         booking.skills.split(',').forEach(skill => grouped[booking.artistName].skills.add(skill.trim()));
       }
     });
     return grouped;
-  }, [project, calculateBookingDays]);
+  }, [project, artists]);  // Add artists to the dependency array
 
   const sortedArtists = useMemo(() => {
     return Object.entries(groupedBookings)
@@ -187,27 +195,17 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     { value: 40, label: '40%' },
   ];
 
-  const getAdjustedDate = (date) => {
-    const projectStart = moment(project.startDate);
-    const daysSinceStart = date.diff(projectStart, 'days');
-    const weeksOnGantt = Math.floor(daysSinceStart / 5);
-    const daysInWeek = daysSinceStart % 5;
-    
-    return projectStart.clone()
-      .add(weeksOnGantt * 7, 'days')
-      .add(daysInWeek, 'days');
-  };
-
   const renderBooking = (booking) => {
-    const adjustedStartDate = getAdjustedDate(moment(booking.startDate));
-    const adjustedEndDate = getAdjustedDate(moment(booking.endDate));
+    // Use the dates directly from the database
+    const startDate = moment(booking.startDate);
+    const endDate = moment(booking.endDate);
     
-    // Use the booking's own duration calculation
-    const duration = booking.duration || calculateBookingDays(booking);
+    // Calculate the duration based on the stored dates
+    const duration = endDate.diff(startDate, 'days') + 1;
 
     return (
       <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.2, fontWeight: 300 }}>
-        {adjustedStartDate.format('MMM D')} - {adjustedEndDate.format('MMM D')} ({duration} days)
+        {startDate.format('MMM D')} - {endDate.format('MMM D')} ({duration} days)
       </Typography>
     );
   };
@@ -253,7 +251,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
               <td>$${data.totalCost.toFixed(2)}</td>
               <td>
                 ${data.bookings.map(booking => `
-                  ${moment(booking.startDate).format('MMM D')} - ${moment(booking.endDate).format('MMM D')} (${calculateBookingDays(booking)} days)<br>
+                  ${moment(booking.startDate).format('MMM D')} - ${moment(booking.endDate).format('MMM D')} (${booking.duration || 0} days)<br>
                 `).join('')}
               </td>
             </tr>
@@ -286,7 +284,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [project, totalCosts, revenue, sortedArtists, calculateBookingDays]);
+  }, [project, totalCosts, revenue, sortedArtists]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
@@ -300,7 +298,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
                 primary={
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="body1" sx={{ fontWeight: 400 }}>Project Budget</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${project?.budget || 0}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${Math.round(project?.budget || 0)}</Typography>
                   </Box>
                 }
                 secondary={
@@ -315,12 +313,12 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
                 primary={
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="body1" sx={{ fontWeight: 400 }}>Total Costs</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${totalCosts.toFixed(2)}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 300 }}>${Math.round(totalCosts)}</Typography>
                   </Box>
                 }
                 secondary={
                   <Typography variant="body2" sx={{ fontWeight: 300, color: 'text.secondary' }}>
-                    Total amount spent on artists booking + Revenue
+                    Total amount spent on artists booking + Additional Expenses
                   </Typography>
                 }
               />
@@ -345,7 +343,7 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
                           inputProps={{ min: 0, step: 1 }}
                         />
                       ) : (
-                        <Typography variant="body2" sx={{ fontWeight: 300 }}>${revenue}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 300 }}>${Math.round(revenue)}</Typography>
                       )}
                     </Box>
                   </Box>
@@ -419,14 +417,21 @@ function RightPanel({ project, onUpdateBudget, onUpdateRevenue, onTotalCostsCalc
                   primary={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="body1" sx={{ fontWeight: 400 }}>{artistName}</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 300 }}>${data.totalCost.toFixed(2)}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 300 }}>
+                        ${Math.round(data.bookings.reduce((total, booking) => {
+                          const duration = booking.duration || 0;
+                          return total + (duration * (data.dailyRate || 0));
+                        }, 0))}
+                      </Typography>
                     </Box>
                   }
                   secondary={
                     <React.Fragment>
                       {data.bookings.map((booking, bookingIndex) => (
                         <Box key={bookingIndex} sx={{ mt: bookingIndex === 0 ? 0.5 : 0.25 }}>
-                          {renderBooking(booking)}
+                          <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.2, fontWeight: 300 }}>
+                            {moment(booking.startDate).format('MMM D')} - {moment(booking.endDate).format('MMM D')} ({booking.duration || 0} days)
+                          </Typography>
                         </Box>
                       ))}
                     </React.Fragment>

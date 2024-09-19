@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { database, ref, set, get, push, remove, onValue, off } from '../firebase';
 import { useAuth } from './AuthContext';
+import { offsetDateForStorage, reverseOffsetForDisplay } from '../utils/dateUtils';
+import moment from 'moment';
 
 const ProjectContext = createContext();
 
@@ -60,9 +62,23 @@ export function ProjectProvider({ children }) {
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
       const project = snapshot.val();
-      const updatedBookings = project.bookings.map(booking => 
-        booking.id === updatedBooking.id ? updatedBooking : booking
-      );
+      const updatedBookings = project.bookings.map(booking => {
+        if (booking.id === updatedBooking.id) {
+          const offsetStartDate = offsetDateForStorage(updatedBooking.startDate, project.startDate);
+          const offsetEndDate = offsetDateForStorage(updatedBooking.endDate, project.startDate);
+          
+          // Calculate duration based on the timeline representation
+          const duration = calculateDuration(offsetStartDate, offsetEndDate, project.startDate);
+          
+          return {
+            ...updatedBooking,
+            startDate: offsetStartDate,
+            endDate: offsetEndDate,
+            duration: duration
+          };
+        }
+        return booking;
+      });
       await set(projectRef, { ...project, bookings: updatedBookings });
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
@@ -75,7 +91,19 @@ export function ProjectProvider({ children }) {
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
       const project = snapshot.val();
-      const updatedBookings = [...(project.bookings || []), newBooking];
+      const offsetStartDate = offsetDateForStorage(newBooking.startDate, project.startDate);
+      const offsetEndDate = offsetDateForStorage(newBooking.endDate, project.startDate);
+      
+      // Calculate duration based on the timeline representation
+      const duration = calculateDuration(offsetStartDate, offsetEndDate, project.startDate);
+      
+      const bookingWithOffsetDates = {
+        ...newBooking,
+        startDate: offsetStartDate,
+        endDate: offsetEndDate,
+        duration: duration
+      };
+      const updatedBookings = [...(project.bookings || []), bookingWithOffsetDates];
       await set(projectRef, { ...project, bookings: updatedBookings });
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
@@ -165,6 +193,12 @@ export function ProjectProvider({ children }) {
       ));
     }
   }, []);
+
+  const calculateDuration = (startDate, endDate, projectStartDate) => {
+    const start = moment(reverseOffsetForDisplay(startDate, projectStartDate));
+    const end = moment(reverseOffsetForDisplay(endDate, projectStartDate));
+    return end.diff(start, 'days') + 1;
+  };
 
   const value = {
     projects,

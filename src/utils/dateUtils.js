@@ -30,3 +30,29 @@ export function getBusinessDaysBetweenDates(startDate, endDate) {
 
   return businessDays;
 }
+
+export function offsetDateForStorage(date, projectStartDate) {
+  const start = moment(projectStartDate);
+  const current = moment(date);
+  const daysSinceStart = current.diff(start, 'days');
+  const weeksElapsed = Math.floor(daysSinceStart / 5);
+  const daysInCurrentWeek = daysSinceStart % 5;
+  
+  return start.clone()
+    .add(weeksElapsed * 7, 'days')
+    .add(daysInCurrentWeek, 'days')
+    .format('YYYY-MM-DD');
+}
+
+export function reverseOffsetForDisplay(date, projectStartDate) {
+  const start = moment(projectStartDate);
+  const current = moment(date);
+  const totalDays = current.diff(start, 'days');
+  const weeksElapsed = Math.floor(totalDays / 7);
+  const daysInCurrentWeek = Math.min(totalDays % 7, 5);
+  
+  return start.clone()
+    .add(weeksElapsed * 5, 'days')
+    .add(daysInCurrentWeek, 'days')
+    .format('YYYY-MM-DD');
+}

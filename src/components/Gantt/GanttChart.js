@@ -6,6 +6,7 @@ import DraggableEvent from './DraggableEvent';
 import { useProjects } from '../../contexts/ProjectContext';
 import { COLORS } from '../../constants';
 import { useArtists } from '../../contexts/ArtistContext';
+import { reverseOffsetForDisplay } from '../../utils/dateUtils';
 
 const WEEK_WIDTH = 250;
 const DAY_WIDTH = WEEK_WIDTH / 5;
@@ -288,8 +289,14 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
     const currentDate = moment();
     const weekStart = currentDate.clone().startOf('week');
     const weekEnd = currentDate.clone().endOf('week');
-    const left = getWorkdayPosition(weekStart) + ARTIST_COLUMN_WIDTH;
-    const width = (getWorkdayPosition(weekEnd) - getWorkdayPosition(weekStart)) + DAY_WIDTH;
+    
+    // Adjust the start position to remove one day from the beginning
+    const adjustedStart = weekStart.clone().add(1, 'day');
+    
+    const left = getWorkdayPosition(adjustedStart) + ARTIST_COLUMN_WIDTH;
+    
+    // Keep the original end position
+    const width = (getWorkdayPosition(weekEnd) - getWorkdayPosition(adjustedStart)) + DAY_WIDTH;
 
     return (
       <Box
@@ -306,6 +313,41 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
       />
     );
   }, [project.showCurrentWeek, getWorkdayPosition, ARTIST_COLUMN_WIDTH, DAY_WIDTH]);
+
+  const renderBookings = useCallback(() => {
+    return Object.entries(groupedBookings).map(([artistName, bookings], index) => (
+      <Box key={artistName} sx={{ position: 'relative', height: `${ROW_HEIGHT}px`, marginBottom: '4px' }}>
+        {bookings.map((booking) => {
+          const displayStartDate = reverseOffsetForDisplay(booking.startDate, project.startDate);
+          const displayEndDate = reverseOffsetForDisplay(booking.endDate, project.startDate);
+          const startOffset = moment(displayStartDate).diff(chartStartDate, 'days');
+          const duration = booking.duration; // Use the stored duration
+
+          return (
+            <DraggableEvent
+              key={booking.id}
+              booking={{...booking, startDate: displayStartDate, endDate: displayEndDate}}
+              project={project}
+              weekWidth={WEEK_WIDTH}
+              dayWidth={DAY_WIDTH}
+              rowHeight={ROW_HEIGHT}
+              onUpdate={handleUpdate}
+              startDate={chartStartDate}
+              onDragStart={handleDragStart}
+              artistColumnWidth={ARTIST_COLUMN_WIDTH}
+              timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
+              projectStartDate={projectStartDate}
+              color={artistColors[artistName]}
+              artistName={artistName}
+              onDelete={handleDeleteBooking}
+              left={startOffset * DAY_WIDTH}
+              width={duration * DAY_WIDTH}
+            />
+          );
+        })}
+      </Box>
+    ));
+  }, [groupedBookings, project, chartStartDate, handleUpdate, handleDragStart, handleDeleteBooking, artistColors]);
 
   const renderGanttChart = useMemo(() => {
     console.log('Rendering Gantt Chart with bookings:', project.bookings);
@@ -378,49 +420,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
             marginLeft: `-${indicatorOffset}px`, // Shift content to align with green indicator
           }}>
             {renderDays()}
-            {Object.entries(groupedBookings).map(([artistName, bookings], index) => (
-              <Box 
-                key={artistName} 
-                sx={{ 
-                  position: 'absolute', 
-                  top: `${index * ROW_HEIGHT}px`, 
-                  left: 0, 
-                  right: 0, 
-                  height: `${ROW_HEIGHT}px`, 
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  zIndex: 2,
-                }}
-              >
-                {bookings.map((booking) => {
-                  const updatedBooking = {
-                    ...booking,
-                    dailyRate: getArtistDailyRate(booking.artistId),
-                  };
-                  console.log('Rendering DraggableEvent with booking:', updatedBooking);
-                  return (
-                    <DraggableEvent
-                      key={booking.id}
-                      booking={updatedBooking}
-                      project={currentProject}
-                      weekWidth={WEEK_WIDTH}
-                      dayWidth={DAY_WIDTH}
-                      rowHeight={ROW_HEIGHT}
-                      onUpdate={handleUpdate}
-                      startDate={chartStartDate}
-                      onDragStart={handleDragStart}
-                      artistColumnWidth={ARTIST_COLUMN_WIDTH}
-                      timelineIndicatorWidth={TIMELINE_INDICATOR_WIDTH}
-                      projectStartDate={projectStartDate}
-                      color={artistColors[artistName]}
-                      artistName={artistName}
-                      onDelete={handleDeleteBooking}
-                    />
-                  );
-                })}
-              </Box>
-            ))}
+            {renderBookings()}
             {renderDeliveries()}
             {renderCurrentWeekIndicator()}
             {renderCurrentDateIndicator()}
@@ -441,7 +441,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
         )}
       </Box>
     );
-  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate, renderDeliveries, renderCurrentWeekIndicator, renderCurrentDateIndicator, theme.palette.background.default, theme.palette.text.primary, theme.palette.divider]);
+  }, [project, chartWidth, groupedBookings, artistColors, handleUpdate, handleDragStart, handleDeleteBooking, renderWeekHeaders, renderDays, draggedBooking, indicatorOffset, currentProject, projectStartDate, chartStartDate, getArtistDailyRate, renderDeliveries, renderCurrentWeekIndicator, renderCurrentDateIndicator, theme.palette.background.default, theme.palette.text.primary, theme.palette.divider, renderBookings]);
 
   return (
     <div 
