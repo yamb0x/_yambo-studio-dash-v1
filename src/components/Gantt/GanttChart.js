@@ -50,7 +50,8 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
     },
   });
 
-  console.log('GanttChart render, project:', project);
+  // Remove or comment out this console.log
+  // console.log('GanttChart render, project:', project);
 
   const { projects, updateBooking } = useProjects();
   const { artists } = useArtists();

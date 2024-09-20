@@ -89,16 +89,21 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
 }
 
 function Dashboard() {
+  console.log('Dashboard render');
+
   const { projects } = useProjects();
   const { artists } = useArtists();
-  const [tabValue, setTabValue] = useState(0);
-  const [involvementPeriod, setInvolvementPeriod] = useState('all');
-  const [mostInvolvedArtists, setMostInvolvedArtists] = useState([]);
-  const [notes, setNotes] = useState('');
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
-  const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
+  
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute instead of every second
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    console.log('Current time changed:', currentTime);
+  }, [currentTime]);
 
   const currentDate = useMemo(() => {
     const now = new Date();
@@ -163,8 +168,6 @@ function Dashboard() {
   const excludedArtists = ['Yambo', 'Clem Shepherd'];
 
   const calculateCurrentlyBookedArtists = useCallback(() => {
-    console.log('Calculating currently booked artists for:', format(currentDate, 'yyyy-MM-dd'));
-    
     return artists.filter(artist => {
       if (excludedArtists.includes(artist.name)) return false;
 
@@ -175,7 +178,6 @@ function Dashboard() {
               const bookingStart = startOfDay(parseISO(booking.startDate));
               const bookingEnd = endOfDay(parseISO(booking.endDate));
               const isBooked = isWithinInterval(currentDate, { start: bookingStart, end: bookingEnd });
-              console.log(`Artist: ${artist.name}, Project: ${project.name}, Booking: ${format(bookingStart, 'yyyy-MM-dd')} to ${format(bookingEnd, 'yyyy-MM-dd')}, Is booked: ${isBooked}`);
               if (isBooked) return true;
             }
           }
@@ -185,9 +187,16 @@ function Dashboard() {
     });
   }, [artists, projects, currentDate, excludedArtists]);
 
+  const [tabValue, setTabValue] = useState(0);
+  const [involvementPeriod, setInvolvementPeriod] = useState('all');
+  const [mostInvolvedArtists, setMostInvolvedArtists] = useState([]);
+  const [notes, setNotes] = useState('');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const [currentlyBookedArtists, setCurrentlyBookedArtists] = useState([]);
+
   useEffect(() => {
     const bookedArtists = calculateCurrentlyBookedArtists();
-    console.log('Booked artists:', bookedArtists.map(artist => artist.name));
     setCurrentlyBookedArtists(bookedArtists);
 
     const filterDate = {
@@ -237,11 +246,6 @@ function Dashboard() {
       setNotes(savedNotes);
     }
   }, [projects, artists, currentDate, involvementPeriod, excludedArtists, calculateCurrentlyBookedArtists]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const isWorkingHours = (country) => {
     const artistTime = getArtistTime(country);
@@ -305,8 +309,6 @@ function Dashboard() {
     const userOffset = -currentTime.getTimezoneOffset() / 60; // Convert to hours and invert
     const artistOffset = timeOffsetMap[country] || 0;
     const timeDifference = artistOffset - userOffset;
-
-    console.log(`Country: ${country}, User Offset: ${userOffset}, Artist Offset: ${artistOffset}, Difference: ${timeDifference}`);
 
     const artistTime = addHours(currentTime, timeDifference);
 

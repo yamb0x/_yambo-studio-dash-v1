@@ -190,8 +190,8 @@ function GanttView() {
     return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
   }
 
-  // Add this console log
-  console.log('GanttView render, selectedProject:', selectedProject);
+  // Remove or comment out this console.log
+  // console.log('GanttView render, selectedProject:', selectedProject);
 
   return (
     <>

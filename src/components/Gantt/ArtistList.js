@@ -30,8 +30,8 @@ function DraggableArtistItem({ artist }) {
     }),
   });
 
-  // Add this console log
-  console.log('DraggableArtistItem render:', artist.name, 'isDragging:', isDragging);
+  // Remove or comment out this console.log
+  // console.log('DraggableArtistItem render:', artist.name, 'isDragging:', isDragging);
 
   const handleMouseEnter = useCallback(() => {
     setHoverIntensity(1);
