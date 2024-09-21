@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   IconButton, TableSortLabel, Modal, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, Chip
@@ -7,6 +7,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useProjects } from '../../contexts/ProjectContext';
 import ProjectForm from '../Forms/ProjectForm';
+import { useFinancialVisibility } from '../../contexts/FinancialVisibilityContext';
 
 const modalStyle = {
   position: 'absolute',
@@ -21,6 +22,7 @@ const modalStyle = {
 
 function ProjectTable() {
   const { projects, deleteProject } = useProjects();
+  const { showFinancialInfo } = useFinancialVisibility();
   const [orderBy, setOrderBy] = useState('startDate');
   const [order, setOrder] = useState('desc');
   const [openModal, setOpenModal] = useState(false);
@@ -62,7 +64,7 @@ function ProjectTable() {
     setProjectToDelete(null);
   };
 
-  const sortedProjects = React.useMemo(() => {
+  const sortedProjects = useMemo(() => {
     const comparator = (a, b) => {
       if (orderBy === 'startDate' || orderBy === 'endDate') {
         const dateA = new Date(a[orderBy]);
@@ -80,20 +82,42 @@ function ProjectTable() {
     return [...projects].sort(comparator);
   }, [projects, order, orderBy]);
 
+  const columns = [
+    { field: 'name', headerName: 'Name' },
+    { field: 'startDate', headerName: 'Start Date' },
+    { field: 'endDate', headerName: 'End Date' },
+    { 
+      field: 'budget', 
+      headerName: 'Budget',
+      renderCell: (project) => showFinancialInfo ? `$${project.budget}` : '***'
+    },
+    { 
+      field: 'projectType', 
+      headerName: 'Project Type',
+      renderCell: (project) => (
+        <>
+          {project.projectType && project.projectType.map((type) => (
+            <Chip key={type} label={type} size="small" style={{ margin: '2px' }} />
+          ))}
+        </>
+      )
+    }
+  ];
+
   return (
     <>
       <TableContainer>
         <Table size="small">
           <TableHead>
             <TableRow>
-              {['name', 'startDate', 'endDate', 'budget', 'projectType'].map((column) => (
-                <TableCell key={column}>
+              {columns.map((column) => (
+                <TableCell key={column.field}>
                   <TableSortLabel
-                    active={orderBy === column}
-                    direction={orderBy === column ? order : 'asc'}
-                    onClick={() => handleRequestSort(column)}
+                    active={orderBy === column.field}
+                    direction={orderBy === column.field ? order : 'asc'}
+                    onClick={() => handleRequestSort(column.field)}
                   >
-                    {column.charAt(0).toUpperCase() + column.slice(1)}
+                    {column.headerName}
                   </TableSortLabel>
                 </TableCell>
               ))}
@@ -103,15 +127,11 @@ function ProjectTable() {
           <TableBody>
             {sortedProjects.map((project) => (
               <TableRow key={project.id} hover>
-                <TableCell>{project.name}</TableCell>
-                <TableCell>{project.startDate}</TableCell>
-                <TableCell>{project.endDate}</TableCell>
-                <TableCell>${project.budget}</TableCell>
-                <TableCell>
-                  {project.projectType && project.projectType.map((type) => (
-                    <Chip key={type} label={type} size="small" style={{ margin: '2px' }} />
-                  ))}
-                </TableCell>
+                {columns.map((column) => (
+                  <TableCell key={column.field}>
+                    {column.renderCell ? column.renderCell(project) : project[column.field]}
+                  </TableCell>
+                ))}
                 <TableCell align="right">
                   <IconButton size="small" onClick={() => handleEdit(project)}>
                     <EditIcon fontSize="small" />

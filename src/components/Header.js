@@ -1,13 +1,15 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme, Switch, FormControlLabel } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { useFinancialVisibility } from '../contexts/FinancialVisibilityContext';
 
 function Header({ toggleDarkMode, isDarkMode }) {
   const theme = useTheme();
   const { logout } = useAuth(); // Get the logout function from AuthContext
+  const { showFinancialInfo, setShowFinancialInfo } = useFinancialVisibility();
 
   const handleLogout = async () => {
     try {
@@ -17,6 +19,19 @@ function Header({ toggleDarkMode, isDarkMode }) {
       console.error("Failed to log out", error);
     }
   };
+
+  const financialToggle = (
+    <FormControlLabel
+      control={
+        <Switch
+          checked={showFinancialInfo}
+          onChange={() => setShowFinancialInfo(!showFinancialInfo)}
+          color="primary"
+        />
+      }
+      label="$"
+    />
+  );
 
   return (
     <AppBar 
@@ -41,7 +56,7 @@ function Header({ toggleDarkMode, isDarkMode }) {
               fontSize: '0.8rem'
             }}
           >
-            dashboard v1.4.4
+            dashboard v1.4.9
           </Typography>
           <Typography 
             variant="subtitle2" 
@@ -74,6 +89,7 @@ function Header({ toggleDarkMode, isDarkMode }) {
         <IconButton sx={{ ml: 1 }} onClick={toggleDarkMode} color="inherit">
           {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
+        {financialToggle}
       </Toolbar>
     </AppBar>
   );

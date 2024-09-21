@@ -18,7 +18,7 @@ const StyledSelect = styled(Select)({
 });
 
 // Keep the existing DraggableArtistItem component unchanged
-function DraggableArtistItem({ artist }) {
+function DraggableArtistItem({ artist, showFinancialInfo }) {
   const [hoverIntensity, setHoverIntensity] = useState(0);
   const hoverTimerRef = useRef(null);
 
@@ -72,12 +72,15 @@ function DraggableArtistItem({ artist }) {
         },
       }}
     >
-      <ListItemText primary={artist.name} secondary={`$${artist.dailyRate}/day`} />
+      <ListItemText 
+        primary={artist.name} 
+        secondary={showFinancialInfo ? `$${artist.dailyRate}/day` : artist.skills} 
+      />
     </StyledListItem>
   );
 }
 
-function ArtistList() {
+function ArtistList({ showFinancialInfo }) {
   const { artists } = useArtists();
   const [sortOption, setSortOption] = useState('all');
 
@@ -129,7 +132,7 @@ function ArtistList() {
       </FormControl>
       <List>
         {sortedAndFilteredArtists().map((artist) => (
-          <DraggableArtistItem key={artist.id} artist={artist} />
+          <DraggableArtistItem key={artist.id} artist={artist} showFinancialInfo={showFinancialInfo} />
         ))}
       </List>
     </StyledBox>

@@ -16,7 +16,7 @@ const CHART_PADDING_TOP = 50;
 const ARTIST_COLUMN_WIDTH = 150;
 const TIMELINE_INDICATOR_WIDTH = 2;
 
-function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop }) {
+function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop, showFinancialInfo }) {
   const chartRef = useRef(null);
   const [chartWidth, setChartWidth] = useState(0);
   const theme = useTheme();
@@ -343,12 +343,13 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop })
               onDelete={handleDeleteBooking}
               left={startOffset * DAY_WIDTH}
               width={duration * DAY_WIDTH}
+              showFinancialInfo={showFinancialInfo}
             />
           );
         })}
       </Box>
     ));
-  }, [groupedBookings, project, chartStartDate, handleUpdate, handleDragStart, handleDeleteBooking, artistColors]);
+  }, [groupedBookings, project, chartStartDate, handleUpdate, handleDragStart, handleDeleteBooking, artistColors, showFinancialInfo]);
 
   const renderGanttChart = useMemo(() => {
     console.log('Rendering Gantt Chart with bookings:', project.bookings);

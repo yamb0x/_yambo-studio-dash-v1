@@ -25,7 +25,23 @@ const getInverseColor = (hexColor) => {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 };
 
-function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUpdate, startDate, onDragStart, artistColumnWidth, timelineIndicatorWidth, projectStartDate, color, artistName, onDelete }) {
+function DraggableEvent({ 
+  booking, 
+  project, 
+  weekWidth, 
+  dayWidth, 
+  rowHeight, 
+  onUpdate, 
+  startDate, 
+  onDragStart, 
+  artistColumnWidth, 
+  timelineIndicatorWidth, 
+  projectStartDate, 
+  color, 
+  artistName, 
+  onDelete,
+  showFinancialInfo // Add this prop
+}) {
   const { artistData, isLoading } = useArtistData(booking.artistId);
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -184,9 +200,11 @@ function DraggableEvent({ booking, project, weekWidth, dayWidth, rowHeight, onUp
       >
         {artistName}
       </Link>
-      <Typography variant="caption" sx={{ color: inverseColor, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-        {isLoading ? 'Loading...' : `$${dailyRate} x ${numberOfDays} = $${totalCost}`}
-      </Typography>
+      {showFinancialInfo && ( // Add this condition
+        <Typography variant="caption" sx={{ color: inverseColor, fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+          {isLoading ? 'Loading...' : `$${dailyRate} x ${numberOfDays} = $${totalCost}`}
+        </Typography>
+      )}
       <Box
         className="resize-handle"
         sx={{

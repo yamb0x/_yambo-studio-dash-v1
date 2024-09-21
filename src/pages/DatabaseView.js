@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';  // Add this line
 import { Typography, Container, Button, Modal, Box, Paper, Grid } from '@mui/material';
@@ -6,6 +6,7 @@ import ProjectTable from '../components/Database/ProjectTable';
 import ArtistTable from '../components/Database/ArtistTable';
 import ProjectForm from '../components/Forms/ProjectForm';
 import ArtistForm from '../components/Forms/ArtistForm';
+import { useFinancialVisibility } from '../contexts/FinancialVisibilityContext';
 
 const modalStyle = {
   position: 'absolute',
@@ -21,6 +22,7 @@ const modalStyle = {
 function DatabaseView() {
   const { projects } = useProjects();
   const { artists } = useArtists();  // Add this line
+  const { showFinancialInfo } = useFinancialVisibility();
 
   console.log('Artists in DatabaseView:', artists);
 
@@ -30,6 +32,28 @@ function DatabaseView() {
 
   const [openProjectModal, setOpenProjectModal] = useState(false);
   const [openArtistModal, setOpenArtistModal] = useState(false);
+
+  const projectColumns = useMemo(() => [
+    // ... other columns ...
+    {
+      field: 'budget',
+      headerName: 'Budget',
+      width: 150,
+      renderCell: (params) => showFinancialInfo ? `$${params.value}` : '***',
+    },
+    // ... other columns ...
+  ], [showFinancialInfo]);
+
+  const artistColumns = useMemo(() => [
+    // ... other columns ...
+    {
+      field: 'dailyRate',
+      headerName: 'Daily Rate',
+      width: 150,
+      renderCell: (params) => showFinancialInfo ? `$${params.value}` : '***',
+    },
+    // ... other columns ...
+  ], [showFinancialInfo]);
 
   return (
     <Container maxWidth={false} disableGutters>
@@ -65,7 +89,7 @@ function DatabaseView() {
                   Add New Project
                 </Button>
               </Box>
-              <ProjectTable projects={projects} />
+              <ProjectTable projects={projects} columns={projectColumns} />
             </Paper>
           </Grid>
           
@@ -99,7 +123,7 @@ function DatabaseView() {
                   Add New Artist
                 </Button>
               </Box>
-              <ArtistTable artists={artists} />
+              <ArtistTable artists={artists} columns={artistColumns} />
             </Paper>
           </Grid>
         </Grid>

@@ -15,6 +15,7 @@ import DatabaseView from './pages/DatabaseView';
 import LoginForm from './components/Auth/LoginForm';
 import { Container, CircularProgress } from '@mui/material';
 import { testFirebaseConnection } from './firebase';
+import { FinancialVisibilityProvider } from './contexts/FinancialVisibilityContext';
 
 function AppContent() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -68,9 +69,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <FinancialVisibilityProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </FinancialVisibilityProvider>
   );
 }
 

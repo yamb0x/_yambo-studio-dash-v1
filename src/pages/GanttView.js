@@ -11,6 +11,7 @@ import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { COLORS } from '../constants';
 import moment from 'moment';
+import { useFinancialVisibility } from '../contexts/FinancialVisibilityContext';
 
 function GanttView() {
   const { projectId } = useParams();
@@ -186,6 +187,9 @@ function GanttView() {
     }
   }, [displayedProject, handleAddBooking]);
 
+  const { showFinancialInfo } = useFinancialVisibility();
+  console.log('showFinancialInfo in GanttView:', showFinancialInfo);
+
   if (!displayedProject) {
     return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
   }
@@ -215,6 +219,7 @@ function GanttView() {
             <ArtistList
               artists={artists}
               onArtistDrop={handleArtistDrop}
+              showFinancialInfo={showFinancialInfo}
             />
           </Box>
 
@@ -228,23 +233,28 @@ function GanttView() {
                     onUpdateBooking={handleUpdateBooking}
                     onDeleteBooking={handleDeleteBooking}
                     onArtistDrop={handleArtistDrop}
+                    showFinancialInfo={showFinancialInfo}
                   />
                 </Box>
               </Panel>
-              <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
-              <Panel defaultSize={30} minSize={10}>
-                <Box sx={{ height: '100%', overflowY: 'auto' }}>
-                  <RightPanel 
-                    project={displayedProject}
-                    onAddDelivery={handleAddDelivery}
-                    onEditDelivery={handleEditDelivery}
-                    onDeleteDelivery={handleDeleteDelivery}
-                    onUpdateBudget={handleUpdateBudget}
-                    onUpdateRevenue={handleUpdateRevenue}
-                    artistColors={artistColors} 
-                  />
-                </Box>
-              </Panel>
+              {showFinancialInfo && (
+                <>
+                  <PanelResizeHandle style={{ height: '1px', background: '#e0e0e0' }} />
+                  <Panel defaultSize={30} minSize={10}>
+                    <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                      <RightPanel 
+                        project={displayedProject}
+                        onAddDelivery={handleAddDelivery}
+                        onEditDelivery={handleEditDelivery}
+                        onDeleteDelivery={handleDeleteDelivery}
+                        onUpdateBudget={handleUpdateBudget}
+                        onUpdateRevenue={handleUpdateRevenue}
+                        artistColors={artistColors} 
+                      />
+                    </Box>
+                  </Panel>
+                </>
+              )}
             </PanelGroup>
           </Box>
         </Box>
