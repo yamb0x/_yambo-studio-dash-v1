@@ -21,8 +21,8 @@ const modalStyle = {
 
 function ProjectTable() {
   const { projects, deleteProject } = useProjects();
-  const [orderBy, setOrderBy] = useState('name');
-  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('startDate');
+  const [order, setOrder] = useState('desc');
   const [openModal, setOpenModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -64,6 +64,11 @@ function ProjectTable() {
 
   const sortedProjects = React.useMemo(() => {
     const comparator = (a, b) => {
+      if (orderBy === 'startDate' || orderBy === 'endDate') {
+        const dateA = new Date(a[orderBy]);
+        const dateB = new Date(b[orderBy]);
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
+      }
       if (b[orderBy] < a[orderBy]) {
         return order === 'asc' ? 1 : -1;
       }
