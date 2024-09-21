@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend, addHours, subHours } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend, addHours, subHours, differenceInDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Calculator from '../components/Calculator';
 import CurrencyExchange from '../components/CurrencyExchange';
@@ -32,8 +32,33 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
   const profit = project.budget - totalExpenses;
   const isProfitable = profit >= 0;
 
+  const nextDelivery = useMemo(() => {
+    if (!project.deliveries || project.deliveries.length === 0) return null;
+    const currentDate = new Date();
+    return project.deliveries
+      .filter(delivery => new Date(delivery.date) > currentDate)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+  }, [project.deliveries]);
+
+  const getDeliveryColor = useCallback((deliveryDate) => {
+    const daysUntilDelivery = differenceInDays(new Date(deliveryDate), new Date());
+    if (daysUntilDelivery >= 7) return theme.palette.info.main; // Blue
+    if (daysUntilDelivery <= 1) return theme.palette.error.main; // Red
+    
+    // Interpolate between blue and red
+    const blueComponent = Math.round((daysUntilDelivery - 1) * 255 / 6);
+    const redComponent = 255 - blueComponent;
+    return `rgb(${redComponent}, 0, ${blueComponent})`;
+  }, [theme]);
+
   return (
-    <Card sx={{ ...paperStyle, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? theme.palette.background.paper : 'white' }}>
+    <Card sx={{ 
+      ...paperStyle, 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+    }}>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Link to={`/gantt/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <Typography variant="h6" gutterBottom>{project.name}</Typography>
@@ -65,6 +90,18 @@ function ProjectCard({ project, calculateProgress, calculateTotalCosts }) {
             <Typography variant="body2" sx={{ ml: 0.5 }}>Details</Typography>
           </IconButton>
         </Box>
+        {nextDelivery && (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mt: 1, 
+              color: getDeliveryColor(nextDelivery.date),
+              fontWeight: 'regular'
+            }}
+          >
+            Next Delivery is "{nextDelivery.name}" at {format(parseISO(nextDelivery.date), 'MMM d, yyyy')}
+          </Typography>
+        )}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box sx={{ mt: 2, opacity: expanded ? 1 : 0, transition: 'opacity 0.3s' }}>
             <Typography variant="body2">Budget: ${project.budget.toLocaleString()}</Typography>
