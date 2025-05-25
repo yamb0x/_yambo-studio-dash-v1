@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { database, ref, set, get, push, remove, onValue } from '../firebase';
 import { useAuth } from './AuthContext';
+import { useHistory } from './HistoryContext';
 import { offsetDateForStorage, reverseOffsetForDisplay } from '../utils/dateUtils';
 import moment from 'moment';
 
@@ -14,6 +15,7 @@ export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
+  const { recordHistory } = useHistory();
 
   useEffect(() => {
     if (!currentUser) {
@@ -65,6 +67,7 @@ export function ProjectProvider({ children }) {
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
       const project = snapshot.val();
+      const oldBooking = project.bookings.find(b => b.id === updatedBooking.id);
       const updatedBookings = project.bookings.map(booking => {
         if (booking.id === updatedBooking.id) {
           const offsetStartDate = offsetDateForStorage(updatedBooking.startDate, project.startDate);
@@ -86,8 +89,17 @@ export function ProjectProvider({ children }) {
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+      
+      // Record history
+      if (oldBooking) {
+        const newBooking = updatedBookings.find(b => b.id === updatedBooking.id);
+        await recordHistory(projectId, updatedBooking.id, 'updated', {
+          before: oldBooking,
+          after: newBooking
+        });
+      }
     }
-  }, []);
+  }, [recordHistory]);
 
   const addBooking = useCallback(async (projectId, newBooking) => {
     const projectRef = ref(database, `projects/${projectId}`);
@@ -111,21 +123,36 @@ export function ProjectProvider({ children }) {
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+      
+      // Record history
+      await recordHistory(projectId, bookingWithOffsetDates.id, 'created', {
+        before: null,
+        after: bookingWithOffsetDates
+      });
     }
-  }, []);
+  }, [recordHistory]);
 
   const removeBooking = useCallback(async (projectId, bookingId) => {
     const projectRef = ref(database, `projects/${projectId}`);
     const snapshot = await get(projectRef);
     if (snapshot.exists()) {
       const project = snapshot.val();
+      const bookingToRemove = project.bookings.find(booking => booking.id === bookingId);
       const updatedBookings = project.bookings.filter(booking => booking.id !== bookingId);
       await set(projectRef, { ...project, bookings: updatedBookings });
       setProjects(prevProjects => prevProjects.map(p => 
         p.id === projectId ? { ...p, bookings: updatedBookings } : p
       ));
+      
+      // Record history
+      if (bookingToRemove) {
+        await recordHistory(projectId, bookingId, 'deleted', {
+          before: bookingToRemove,
+          after: null
+        });
+      }
     }
-  }, []);
+  }, [recordHistory]);
 
   const getActiveProjects = useMemo(() => {
     const currentDate = new Date();

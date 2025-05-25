@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ArtistProvider } from './contexts/ArtistContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { HistoryProvider } from './contexts/HistoryContext';
 import { lightTheme, darkTheme } from './styles/theme';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
@@ -46,21 +47,23 @@ function AppContent() {
       <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
         <CssBaseline />
         <ArtistProvider>
-          <ProjectProvider>
-            <Router>
-              <div className="App">
-                <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
-                <Container maxWidth={false} disableGutters>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/gantt" element={<GanttView />} />
-                    <Route path="/gantt/:projectId" element={<GanttView />} />
-                    <Route path="/database" element={<DatabaseView />} />
-                  </Routes>
-                </Container>
-              </div>
-            </Router>
-          </ProjectProvider>
+          <HistoryProvider>
+            <ProjectProvider>
+              <Router>
+                <div className="App">
+                  <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
+                  <Container maxWidth={false} disableGutters>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/gantt" element={<GanttView />} />
+                      <Route path="/gantt/:projectId" element={<GanttView />} />
+                      <Route path="/database" element={<DatabaseView />} />
+                    </Routes>
+                  </Container>
+                </div>
+              </Router>
+            </ProjectProvider>
+          </HistoryProvider>
         </ArtistProvider>
       </ThemeProvider>
     </DndProvider>
