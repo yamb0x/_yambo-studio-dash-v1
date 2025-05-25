@@ -9,6 +9,13 @@
     "artists": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "history": {
+      "$projectId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".indexOn": ["timestamp", "userId", "bookingId"]
+      }
     }
   }
 }

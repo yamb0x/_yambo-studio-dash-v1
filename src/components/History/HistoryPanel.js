@@ -26,18 +26,23 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  DragIndicator as DragIcon
+  DragIndicator as DragIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { useHistory } from '../../contexts/HistoryContext';
+import { useProjects } from '../../contexts/ProjectContext';
+import { exportHistoryToCSV } from '../../utils/historyExport';
 
 export default function HistoryPanel({ projectId }) {
   const [expanded, setExpanded] = useState(false);
   const [filter, setFilter] = useState('all');
   const [dateRange, setDateRange] = useState('week');
   const { historyEntries, loading, fetchHistory, subscribeToHistory } = useHistory();
+  const { projects } = useProjects();
   
   const projectHistory = historyEntries[projectId] || [];
+  const project = projects.find(p => p.id === projectId);
 
   useEffect(() => {
     if (projectId && expanded) {
@@ -135,6 +140,12 @@ export default function HistoryPanel({ projectId }) {
 
   const groupedHistory = groupHistoryByDate(filteredHistory);
 
+  const handleExport = () => {
+    if (project && projectHistory.length > 0) {
+      exportHistoryToCSV(projectHistory, project.name);
+    }
+  };
+
   return (
     <Paper
       elevation={0}
@@ -179,34 +190,47 @@ export default function HistoryPanel({ projectId }) {
         
         {/* Filters */}
         <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Action</InputLabel>
-              <Select
-                value={filter}
-                label="Action"
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Changes</MenuItem>
-                <MenuItem value="created">Created</MenuItem>
-                <MenuItem value="updated">Updated</MenuItem>
-                <MenuItem value="deleted">Deleted</MenuItem>
-              </Select>
-            </FormControl>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Action</InputLabel>
+                <Select
+                  value={filter}
+                  label="Action"
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Changes</MenuItem>
+                  <MenuItem value="created">Created</MenuItem>
+                  <MenuItem value="updated">Updated</MenuItem>
+                  <MenuItem value="deleted">Deleted</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Time Range</InputLabel>
+                <Select
+                  value={dateRange}
+                  label="Time Range"
+                  onChange={(e) => setDateRange(e.target.value)}
+                >
+                  <MenuItem value="today">Today</MenuItem>
+                  <MenuItem value="week">Last 7 days</MenuItem>
+                  <MenuItem value="month">Last 30 days</MenuItem>
+                  <MenuItem value="all">All time</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
             
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={dateRange}
-                label="Time Range"
-                onChange={(e) => setDateRange(e.target.value)}
+            {projectHistory.length > 0 && (
+              <Button
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={handleExport}
+                variant="outlined"
               >
-                <MenuItem value="today">Today</MenuItem>
-                <MenuItem value="week">Last 7 days</MenuItem>
-                <MenuItem value="month">Last 30 days</MenuItem>
-                <MenuItem value="all">All time</MenuItem>
-              </Select>
-            </FormControl>
+                Export CSV
+              </Button>
+            )}
           </Box>
         </Box>
 
