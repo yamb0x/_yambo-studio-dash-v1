@@ -141,6 +141,42 @@ function Dashboard() {
     console.log('Current time changed:', currentTime);
   }, [currentTime]);
 
+  // Test Firebase connection on mount
+  useEffect(() => {
+    if (currentUser) {
+      import('../firebase').then(({ database, ref, get }) => {
+        const testRef = ref(database, '.info/connected');
+        get(testRef).then((snapshot) => {
+          console.log('Firebase connection test - connected:', snapshot.val());
+        }).catch((error) => {
+          console.error('Firebase connection test error:', error);
+        });
+
+        // Try to read projects directly
+        const projectsRef = ref(database, 'projects');
+        get(projectsRef).then((snapshot) => {
+          console.log('Direct projects read - exists:', snapshot.exists());
+          if (snapshot.exists()) {
+            console.log('Direct projects data:', snapshot.val());
+          }
+        }).catch((error) => {
+          console.error('Direct projects read error:', error);
+        });
+
+        // Try to read artists directly
+        const artistsRef = ref(database, 'artists');
+        get(artistsRef).then((snapshot) => {
+          console.log('Direct artists read - exists:', snapshot.exists());
+          if (snapshot.exists()) {
+            console.log('Direct artists data:', snapshot.val());
+          }
+        }).catch((error) => {
+          console.error('Direct artists read error:', error);
+        });
+      });
+    }
+  }, [currentUser]);
+
   const currentDate = useMemo(() => {
     const now = new Date();
     let validDate = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate()));

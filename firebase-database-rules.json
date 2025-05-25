@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "projects": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "artists": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
