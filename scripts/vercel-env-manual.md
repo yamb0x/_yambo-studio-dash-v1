@@ -10,7 +10,7 @@ Copy and paste these environment variables into your Vercel project settings:
 ```
 REACT_APP_FIREBASE_API_KEY=AIzaSyAEtA8Q_nMUXGYwgXj3SrPiREGAetKX8jQ
 REACT_APP_FIREBASE_AUTH_DOMAIN=yambo-studio-dashboard-v1.firebaseapp.com
-REACT_APP_FIREBASE_DATABASE_URL=https://yambo-studio-dashboard-v1-default-rtdb.europe-west1.firebasedatabase.app
+REACT_APP_FIREBASE_DATABASE_URL=https://yambo-studio-dashboard-v1-default-rtdb.europe-west1.firebasedatabase.app/
 REACT_APP_FIREBASE_PROJECT_ID=yambo-studio-dashboard-v1
 REACT_APP_FIREBASE_STORAGE_BUCKET=yambo-studio-dashboard-v1.appspot.com
 REACT_APP_FIREBASE_MESSAGING_SENDER_ID=961203853384

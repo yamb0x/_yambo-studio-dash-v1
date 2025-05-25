@@ -12,18 +12,16 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-// Debug: Log config in development only
-if (process.env.NODE_ENV === 'development') {
-  console.log('Firebase Config Loaded:', {
-    apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
-    authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
-    databaseURL: firebaseConfig.databaseURL ? 'Set' : 'Missing',
-    projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
-    storageBucket: firebaseConfig.storageBucket ? 'Set' : 'Missing',
-    messagingSenderId: firebaseConfig.messagingSenderId ? 'Set' : 'Missing',
-    appId: firebaseConfig.appId ? 'Set' : 'Missing'
-  });
-}
+// Debug: Log config
+console.log('Firebase Config Loaded:', {
+  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
+  databaseURL: firebaseConfig.databaseURL ? firebaseConfig.databaseURL : 'Missing',
+  projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
+  storageBucket: firebaseConfig.storageBucket ? 'Set' : 'Missing',
+  messagingSenderId: firebaseConfig.messagingSenderId ? 'Set' : 'Missing',
+  appId: firebaseConfig.appId ? 'Set' : 'Missing'
+});
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
