@@ -195,8 +195,10 @@ function GanttView() {
     return <Typography>No project selected or project not found. Project ID: {projectId}</Typography>;
   }
 
-  // Remove or comment out this console.log
-  // console.log('GanttView render, selectedProject:', selectedProject);
+  // Debug logs
+  console.log('GanttView render, selectedProject:', selectedProject);
+  console.log('GanttView render, displayedProject:', displayedProject);
+  console.log('GanttView render timestamp:', new Date().toISOString());
 
   return (
     <>
@@ -208,9 +210,17 @@ function GanttView() {
             onSelectProject={handleSelectProject} 
           />
         </Box>
-        {selectedProject && (
+        {displayedProject && (
           <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
-            <HistoryPanel projectId={selectedProject.id} />
+            {console.log('About to render HistoryPanel with displayedProject:', displayedProject)}
+            {(() => {
+              try {
+                return <HistoryPanel projectId={displayedProject.id} />;
+              } catch (error) {
+                console.error('HistoryPanel render error:', error);
+                return <div>Error loading history panel</div>;
+              }
+            })()}
           </Box>
         )}
         <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>

@@ -35,22 +35,37 @@ import { useProjects } from '../../contexts/ProjectContext';
 import { exportHistoryToCSV } from '../../utils/historyExport';
 
 export default function HistoryPanel({ projectId }) {
+  console.log('HistoryPanel render start, projectId:', projectId);
+  
   const [expanded, setExpanded] = useState(false);
   const [filter, setFilter] = useState('all');
   const [dateRange, setDateRange] = useState('week');
-  const { historyEntries, loading, fetchHistory, subscribeToHistory } = useHistory();
-  const { projects } = useProjects();
+  
+  // Always call hooks
+  const historyContext = useHistory();
+  const projectContext = useProjects();
+  
+  console.log('HistoryPanel contexts loaded:', { historyContext, projectContext });
+  console.log('HistoryPanel expanded state:', expanded);
+  
+  // Extract values with defaults
+  const historyEntries = historyContext?.historyEntries || {};
+  const loading = historyContext?.loading || false;
+  const fetchHistory = historyContext?.fetchHistory || (() => {});
+  const subscribeToHistory = historyContext?.subscribeToHistory || (() => {});
+  const projects = projectContext?.projects || [];
   
   const projectHistory = historyEntries[projectId] || [];
   const project = projects.find(p => p.id === projectId);
 
   useEffect(() => {
-    if (projectId && expanded) {
+    if (projectId) {
+      // Always subscribe to get real-time updates for the count
       fetchHistory(projectId);
       const unsubscribe = subscribeToHistory(projectId);
       return () => unsubscribe();
     }
-  }, [projectId, expanded, fetchHistory, subscribeToHistory]);
+  }, [projectId, fetchHistory, subscribeToHistory]);
 
   const getActionIcon = (action) => {
     switch (action) {
@@ -96,16 +111,18 @@ export default function HistoryPanel({ projectId }) {
       
       if (dateChanged) {
         try {
+          const artistName = after.artistName || before.artistName || 'Unknown Artist';
           const beforeStart = format(parseISO(before.startDate), 'MMM d');
           const beforeEnd = format(parseISO(before.endDate), 'MMM d');
           const afterStart = format(parseISO(after.startDate), 'MMM d');
           const afterEnd = format(parseISO(after.endDate), 'MMM d');
-          return `Moved booking: ${beforeStart} - ${beforeEnd} → ${afterStart} - ${afterEnd}`;
+          return `Moved ${artistName}: ${beforeStart} - ${beforeEnd} → ${afterStart} - ${afterEnd}`;
         } catch (e) {
           return 'Updated booking dates';
         }
       } else if (rateChanged) {
-        return `Updated daily rate: $${before.dailyRate} → $${after.dailyRate}`;
+        const artistName = after.artistName || before.artistName || 'Unknown Artist';
+        return `Updated ${artistName}'s rate: $${before.dailyRate} → $${after.dailyRate}`;
       }
       return 'Updated booking details';
     }
