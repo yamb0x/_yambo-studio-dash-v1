@@ -7,6 +7,7 @@ import ProjectList from '../components/Gantt/ProjectList';
 import GanttChart from '../components/Gantt/GanttChart';
 import ArtistList from '../components/Gantt/ArtistList';
 import RightPanel from '../components/Gantt/RightPanel';
+import HistoryPanel from '../components/History/HistoryPanel';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
 import { COLORS } from '../constants';
@@ -207,6 +208,11 @@ function GanttView() {
             onSelectProject={handleSelectProject} 
           />
         </Box>
+        {selectedProject && (
+          <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
+            <HistoryPanel projectId={selectedProject.id} />
+          </Box>
+        )}
         <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100% - 48px)' }}>
           <Box sx={{ 
             width: SIDE_PANEL_WIDTH,
