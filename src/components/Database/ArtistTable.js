@@ -27,16 +27,6 @@ function ArtistTable({ artists }) {
   const { deleteArtist } = useArtists();
   const { showFinancialInfo } = useFinancialVisibility();
   
-  // Add error boundary for corrupted data
-  if (!Array.isArray(artists)) {
-    console.error('ArtistTable: artists prop is not an array:', artists);
-    return (
-      <Typography color="error">
-        Error loading artists. Please refresh the page.
-      </Typography>
-    );
-  }
-  
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
@@ -45,6 +35,16 @@ function ArtistTable({ artists }) {
   const [artistToDelete, setArtistToDelete] = useState(null);
   const [openBookingPopup, setOpenBookingPopup] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
+  
+  // Add error boundary for corrupted data (after hooks)
+  if (!Array.isArray(artists)) {
+    console.error('ArtistTable: artists prop is not an array:', artists);
+    return (
+      <Typography color="error">
+        Error loading artists. Please refresh the page.
+      </Typography>
+    );
+  }
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
