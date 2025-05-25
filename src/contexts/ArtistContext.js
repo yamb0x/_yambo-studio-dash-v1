@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { database, ref, set, get, push, remove, onValue } from '../firebase';
+import { database, ref, set, push, remove, onValue } from '../firebase';
 import { useAuth } from './AuthContext';
 
 const ArtistContext = createContext();

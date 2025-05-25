@@ -10,20 +10,20 @@ const CurrencyExchange = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const fetchExchangeRate = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+        const data = await response.json();
+        setExchangeRate(data.rates[toCurrency]);
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+      }
+      setLoading(false);
+    };
+
     fetchExchangeRate();
   }, [fromCurrency, toCurrency]);
-
-  const fetchExchangeRate = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
-      const data = await response.json();
-      setExchangeRate(data.rates[toCurrency]);
-    } catch (error) {
-      console.error('Error fetching exchange rate:', error);
-    }
-    setLoading(false);
-  };
 
   const handleSwap = () => {
     setFromCurrency(toCurrency);

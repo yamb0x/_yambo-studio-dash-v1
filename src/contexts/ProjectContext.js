@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { database, ref, set, get, push, remove, onValue, off } from '../firebase';
+import { database, ref, set, get, push, remove, onValue } from '../firebase';
 import { useAuth } from './AuthContext';
 import { offsetDateForStorage, reverseOffsetForDisplay } from '../utils/dateUtils';
 import moment from 'moment';

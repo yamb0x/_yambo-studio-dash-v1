@@ -3,14 +3,13 @@ import { getDatabase, ref, set, get, push, remove, onValue } from "firebase/data
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  // Replace this with your actual Firebase configuration
-  apiKey: "AIzaSyAEtA8Q_nMUXGYwgXj3SrPiREGAetKX8jQ",
-  authDomain: "yambo-studio-dashboard-v1.firebaseapp.com",
-  databaseURL: "https://yambo-studio-dashboard-v1-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "yambo-studio-dashboard-v1",
-  storageBucket: "yambo-studio-dashboard-v1.appspot.com",
-  messagingSenderId: "961203853384",
-  appId: "1:961203853384:web:b0f26f89b3808e5f63207d"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);

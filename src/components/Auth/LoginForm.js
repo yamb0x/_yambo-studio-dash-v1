@@ -54,17 +54,16 @@ function LoginForm({ onLoginSuccess }) {
             onChange={(e) => setEmail(e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': { borderRadius: 0 },
-              '& .MuiInputLabel-root': { fontSize: '0.9rem' },
+              '& .MuiInputLabel-root': { 
+                fontSize: '0.8rem',
+                color: 'gray',
+                '&.Mui-focused': {
+                  color: 'black',
+                }
+              },
               '& .MuiInputBase-input': { fontSize: '0.9rem', padding: '12px 14px' },
               '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 borderColor: 'black',
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: 'black',
-              },
-              '& .MuiInputLabel-root': {
-                color: 'gray',
-                fontSize: '0.8rem',
               },
               '& .MuiInputBase-input::placeholder': {
                 color: 'gray',
@@ -85,17 +84,16 @@ function LoginForm({ onLoginSuccess }) {
             onChange={(e) => setPassword(e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': { borderRadius: 0 },
-              '& .MuiInputLabel-root': { fontSize: '0.9rem' },
+              '& .MuiInputLabel-root': { 
+                fontSize: '0.8rem',
+                color: 'gray',
+                '&.Mui-focused': {
+                  color: 'black',
+                }
+              },
               '& .MuiInputBase-input': { fontSize: '0.9rem', padding: '12px 14px' },
               '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 borderColor: 'black',
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: 'black',
-              },
-              '& .MuiInputLabel-root': {
-                color: 'gray',
-                fontSize: '0.8rem',
               },
               '& .MuiInputBase-input::placeholder': {
                 color: 'gray',

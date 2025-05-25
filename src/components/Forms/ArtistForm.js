@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, MenuItem, Typography, Checkbox, FormControlLabel, Select, Chip, ListItemText, Autocomplete, ListSubheader, Grid } from '@mui/material';
+import { TextField, Button, Box, InputAdornment, MenuItem, Typography, Checkbox, FormControlLabel, Chip, Autocomplete, Grid } from '@mui/material';
 import { useArtists } from '../../contexts/ArtistContext';
 
 // Complete list of countries
@@ -288,15 +288,15 @@ function ArtistForm({ artist = {}, onClose }) {
     setFormData(prevData => ({ ...prevData, [name]: value }));
   };
 
-  const handleSkillChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setFormData(prevData => ({
-      ...prevData,
-      skills: typeof value === 'string' ? value.split(',') : value,
-    }));
-  };
+  // const handleSkillChange = (event) => {
+  //   const {
+  //     target: { value },
+  //   } = event;
+  //   setFormData(prevData => ({
+  //     ...prevData,
+  //     skills: typeof value === 'string' ? value.split(',') : value,
+  //   }));
+  // };
 
   const handleSubmit = (e) => {
     e.preventDefault();

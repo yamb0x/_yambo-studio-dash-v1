@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Avatar, InputAdornment, Card, CardContent, LinearProgress, Divider, List, ListItem, ListItemText, ListItemAvatar, Select, MenuItem, FormControl, InputLabel, Collapse, IconButton, useTheme, keyframes } from '@mui/material';
-import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
+import { Typography, Grid, Paper, Box, Tabs, Tab, TextField, Card, CardContent, LinearProgress, List, ListItem, ListItemText, Collapse, IconButton, useTheme, keyframes } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
-import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, isWeekend, addHours, subHours, differenceInDays } from 'date-fns';
+import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, addHours, differenceInDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Calculator from '../components/Calculator';
 import CurrencyExchange from '../components/CurrencyExchange';
@@ -202,7 +201,7 @@ function Dashboard() {
     }, 0);
   };
 
-  const excludedArtists = ['Yambo', 'Clem Shepherd'];
+  const excludedArtists = useMemo(() => ['Yambo', 'Clem Shepherd'], []);
 
   const calculateCurrentlyBookedArtists = useCallback(() => {
     return artists.filter(artist => {
@@ -226,7 +225,7 @@ function Dashboard() {
 
   const [tabValue, setTabValue] = useState(0);
   const [involvementPeriod, setInvolvementPeriod] = useState('all');
-  const [mostInvolvedArtists, setMostInvolvedArtists] = useState([]);
+  // const [mostInvolvedArtists, setMostInvolvedArtists] = useState([]); // Unused - commented out
   const [notes, setNotes] = useState('');
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -272,10 +271,10 @@ function Dashboard() {
       });
 
     // Sort and get top 8 most involved artists
-    const topArtists = [...artistInvolvement]
-      .sort((a, b) => b.projectCount - a.projectCount)
-      .slice(0, 8);
-    setMostInvolvedArtists(topArtists);
+    // const topArtists = [...artistInvolvement]
+    //   .sort((a, b) => b.projectCount - a.projectCount)
+    //   .slice(0, 8);
+    // setMostInvolvedArtists(topArtists); // Unused - commented out
 
     // Load saved notes
     const savedNotes = localStorage.getItem('dashboardNotes');
@@ -333,7 +332,6 @@ function Dashboard() {
       'Vietnam': 7, // ICT (UTC+7)
       'Saudi Arabia': 3, // AST (UTC+3)
       'Egypt': 2, // EET (UTC+2)
-      'South Africa': 2, // SAST (UTC+2)
       'Nigeria': 1, // WAT (UTC+1)
       'Kenya': 3, // EAT (UTC+3)
       'Morocco': 1, // WEST (UTC+1)
@@ -356,9 +354,9 @@ function Dashboard() {
     setTabValue(newValue);
   };
 
-  const handleInvolvementPeriodChange = (event) => {
-    setInvolvementPeriod(event.target.value);
-  };
+  // const handleInvolvementPeriodChange = (event) => { // Unused - commented out
+  //   setInvolvementPeriod(event.target.value);
+  // };
 
   const calculateProgress = (project) => {
     const start = parseISO(project.startDate);
@@ -387,37 +385,37 @@ function Dashboard() {
     isAfter(parseISO(project.startDate), currentDate)
   );
 
-  const getArtistImage = (artistName) => {
-    const imageName = artistName.toLowerCase().replace(/\s+/g, '');
-    const extensions = ['png', 'jpg', 'jpeg'];
-    
-    // Create an array of possible image URLs
-    const imageUrls = extensions.map(ext => `/assets/artists/${imageName}.${ext}`);
-    
-    return imageUrls;
-  };
+  // const getArtistImage = (artistName) => { // Unused - commented out
+  //   const imageName = artistName.toLowerCase().replace(/\s+/g, '');
+  //   const extensions = ['png', 'jpg', 'jpeg'];
+  //   
+  //   // Create an array of possible image URLs
+  //   const imageUrls = extensions.map(ext => `/assets/artists/${imageName}.${ext}`);
+  //   
+  //   return imageUrls;
+  // };
 
-  const renderProjectDeliveries = (project) => {
-    if (!project.deliveries || project.deliveries.length === 0) {
-      return <Typography>No deliveries scheduled</Typography>;
-    }
-    return (
-      <List>
-        {project.deliveries.map((delivery) => (
-          <ListItem key={delivery.id}>
-            <ListItemText primary={delivery.name} secondary={delivery.date} />
-          </ListItem>
-        ))}
-      </List>
-    );
-  };
+  // const renderProjectDeliveries = (project) => { // Unused - commented out
+  //   if (!project.deliveries || project.deliveries.length === 0) {
+  //     return <Typography>No deliveries scheduled</Typography>;
+  //   }
+  //   return (
+  //     <List>
+  //       {project.deliveries.map((delivery) => (
+  //         <ListItem key={delivery.id}>
+  //           <ListItemText primary={delivery.name} secondary={delivery.date} />
+  //         </ListItem>
+  //       ))}
+  //     </List>
+  //   );
+  // };
 
-  const handleExportData = () => {
-    const htmlContent = generateHTMLContent(projects, artists);
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  };
+  // const handleExportData = () => { // Unused - commented out
+  //   const htmlContent = generateHTMLContent(projects, artists);
+  //   const blob = new Blob([htmlContent], { type: 'text/html' });
+  //   const url = URL.createObjectURL(blob);
+  //   window.open(url, '_blank');
+  // };
 
   const generateHTMLContent = (projects, artists) => {
     return `

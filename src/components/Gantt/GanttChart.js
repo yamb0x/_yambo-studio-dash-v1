@@ -20,7 +20,7 @@ function GanttChart({ project, onUpdateBooking, onDeleteBooking, onArtistDrop, s
   const chartRef = useRef(null);
   const [chartWidth, setChartWidth] = useState(0);
   const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+  // const isDarkMode = theme.palette.mode === 'dark';
 
   useEffect(() => {
     if (chartRef.current) {

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Link, IconButton } from '@mui/material';
 import moment from 'moment';
 import CloseIcon from '@mui/icons-material/Close';
-import { COLORS } from '../../constants';
-import { useDrag } from 'react-dnd';
+// import { COLORS } from '../../constants';
+// import { useDrag } from 'react-dnd';
 import { useArtistData } from '../../hooks/useArtistData';
 
 // Function to calculate the inverse color
@@ -112,10 +112,10 @@ function DraggableEvent({
     };
   }, [isResizing, isDragging, eventLeft, eventWidth]);
 
-  const getDateFromPosition = (position) => {
-    const dayOffset = Math.round((position - artistColumnWidth) / dayWidth);
-    return moment(startDate).add(dayOffset, 'days');
-  };
+  // const getDateFromPosition = (position) => {
+  //   const dayOffset = Math.round((position - artistColumnWidth) / dayWidth);
+  //   return moment(startDate).add(dayOffset, 'days');
+  // };
 
   const handleArtistClick = (e) => {
     e.stopPropagation(); // Prevent dragging when clicking the link
