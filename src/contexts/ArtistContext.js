@@ -43,14 +43,24 @@ export function ArtistProvider({ children }) {
   }, [currentUser]);
 
   const addArtist = useCallback(async (newArtist) => {
-    const artistsRef = ref(database, 'artists');
-    const newArtistRef = push(artistsRef);
-    await set(newArtistRef, newArtist);
+    try {
+      const artistsRef = ref(database, 'artists');
+      const newArtistRef = push(artistsRef);
+      await set(newArtistRef, newArtist);
+    } catch (error) {
+      console.error('Error adding artist:', error);
+      throw error;
+    }
   }, []);
 
   const updateArtist = useCallback(async (updatedArtist) => {
-    const artistRef = ref(database, `artists/${updatedArtist.id}`);
-    await set(artistRef, updatedArtist);
+    try {
+      const artistRef = ref(database, `artists/${updatedArtist.id}`);
+      await set(artistRef, updatedArtist);
+    } catch (error) {
+      console.error('Error updating artist:', error);
+      throw error;
+    }
   }, []);
 
   const deleteArtist = useCallback(async (artistId) => {

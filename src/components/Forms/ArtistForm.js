@@ -269,7 +269,7 @@ const skillOptions = [
 ];
 
 function ArtistForm({ artist = {}, onClose }) {
-  const { addArtist, updateArtist } = useArtists();
+  const { addArtist, updateArtist, artists } = useArtists();
   const [formData, setFormData] = useState({
     name: '',
     dailyRate: '',
@@ -282,6 +282,7 @@ function ArtistForm({ artist = {}, onClose }) {
     favorite: false,
     ...artist
   });
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -298,18 +299,65 @@ function ArtistForm({ artist = {}, onClose }) {
   //   }));
   // };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (artist.id) {
-      updateArtist(formData);
-    } else {
-      addArtist(formData);
+    setError('');
+    
+    // Check for duplicate names when adding new artist
+    if (!artist.id) {
+      const duplicateArtist = artists.find(a => 
+        a.name.toLowerCase().trim() === formData.name.toLowerCase().trim()
+      );
+      
+      if (duplicateArtist) {
+        setError(`An artist named "${formData.name}" already exists. Please use a different name.`);
+        return;
+      }
     }
-    onClose();
+    
+    // Check for duplicate names when updating (but allow same name for same artist)
+    if (artist.id) {
+      const duplicateArtist = artists.find(a => 
+        a.id !== artist.id && 
+        a.name.toLowerCase().trim() === formData.name.toLowerCase().trim()
+      );
+      
+      if (duplicateArtist) {
+        setError(`An artist named "${formData.name}" already exists. Please use a different name.`);
+        return;
+      }
+    }
+
+    try {
+      if (artist.id) {
+        await updateArtist(formData);
+      } else {
+        await addArtist(formData);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error saving artist:', error);
+      setError('Failed to save artist. Please try again.');
+    }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ '& > :not(style)': { m: 1 } }}>
+      {error && (
+        <Box sx={{ 
+          p: 2, 
+          mb: 2, 
+          backgroundColor: 'error.light', 
+          color: 'error.contrastText',
+          borderRadius: 1,
+          border: '1px solid',
+          borderColor: 'error.main'
+        }}>
+          <Typography variant="body2">
+            {error}
+          </Typography>
+        </Box>
+      )}
       <TextField
         fullWidth
         label="Artist Name"
@@ -317,6 +365,8 @@ function ArtistForm({ artist = {}, onClose }) {
         value={formData.name}
         onChange={handleChange}
         required
+        error={!!error && error.includes('already exists')}
+        helperText={!!error && error.includes('already exists') ? 'Please choose a different name' : ''}
       />
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FormControlLabel

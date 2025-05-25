@@ -27,6 +27,16 @@ function ArtistTable({ artists }) {
   const { deleteArtist } = useArtists();
   const { showFinancialInfo } = useFinancialVisibility();
   
+  // Add error boundary for corrupted data
+  if (!Array.isArray(artists)) {
+    console.error('ArtistTable: artists prop is not an array:', artists);
+    return (
+      <Typography color="error">
+        Error loading artists. Please refresh the page.
+      </Typography>
+    );
+  }
+  
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
@@ -79,15 +89,25 @@ function ArtistTable({ artists }) {
     if (!artists || artists.length === 0) {
       return [];
     }
-    return [...artists].sort((a, b) => {
-      if (b[orderBy] < a[orderBy]) {
-        return order === 'asc' ? 1 : -1;
-      }
-      if (b[orderBy] > a[orderBy]) {
-        return order === 'asc' ? -1 : 1;
-      }
-      return 0;
-    });
+    
+    try {
+      return [...artists].filter(artist => artist && artist.name).sort((a, b) => {
+        // Handle missing properties safely
+        const aValue = a[orderBy] || '';
+        const bValue = b[orderBy] || '';
+        
+        if (bValue < aValue) {
+          return order === 'asc' ? 1 : -1;
+        }
+        if (bValue > aValue) {
+          return order === 'asc' ? -1 : 1;
+        }
+        return 0;
+      });
+    } catch (error) {
+      console.error('Error sorting artists:', error);
+      return artists.filter(artist => artist && artist.name) || [];
+    }
   }, [artists, order, orderBy]);
 
   if (!artists || artists.length === 0) {
