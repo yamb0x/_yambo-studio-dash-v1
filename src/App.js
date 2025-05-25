@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+
+// Temporary debug - remove after fixing
+console.log('ENV CHECK:', {
+  nodeEnv: process.env.NODE_ENV,
+  hasApiKey: !!process.env.REACT_APP_FIREBASE_API_KEY,
+  apiKeyLength: process.env.REACT_APP_FIREBASE_API_KEY?.length || 0
+});
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
