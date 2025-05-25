@@ -22,17 +22,21 @@ export function ProjectProvider({ children }) {
       return;
     }
 
+    console.log('Current user:', currentUser.email, 'UID:', currentUser.uid);
     const projectsRef = ref(database, 'projects');
     
     const unsubscribe = onValue(projectsRef, (snapshot) => {
+      console.log('Firebase projects snapshot exists:', snapshot.exists());
       if (snapshot.exists()) {
         const projectsData = snapshot.val();
+        console.log('Projects data:', projectsData);
         const projectsArray = Object.keys(projectsData).map(key => ({
           id: key,
           ...projectsData[key]
         }));
         setProjects(projectsArray);
       } else {
+        console.log('No projects found in database');
         setProjects([]);
       }
       setLoading(false);
