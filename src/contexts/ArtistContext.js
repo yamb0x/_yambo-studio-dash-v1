@@ -20,21 +20,17 @@ export function ArtistProvider({ children }) {
       return;
     }
 
-    console.log('ArtistContext - Current user:', currentUser.email, 'UID:', currentUser.uid);
     const artistsRef = ref(database, 'artists');
     
     const unsubscribe = onValue(artistsRef, (snapshot) => {
-      console.log('Firebase artists snapshot exists:', snapshot.exists());
       if (snapshot.exists()) {
         const artistsData = snapshot.val();
-        console.log('Artists data:', artistsData);
         const artistsArray = Object.keys(artistsData).map(key => ({
           id: key,
           ...artistsData[key]
         }));
         setArtists(artistsArray);
       } else {
-        console.log('No artists found in database');
         setArtists([]);
       }
       setLoading(false);

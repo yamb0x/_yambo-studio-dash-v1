@@ -147,9 +147,10 @@ npm test
 ## ⚠️ Important Considerations
 
 1. **Firebase Configuration**
-   - Currently hardcoded in `src/firebase.js`
-   - Should migrate to environment variables
-   - Update database rules for production
+   - Environment variables configured in `.env` file locally
+   - **CRITICAL**: Must set all Firebase env vars in production (Vercel, etc.)
+   - **Database URL must include region**: `https://yambo-studio-dashboard-v1-default-rtdb.europe-west1.firebasedatabase.app`
+   - Fallback URL hardcoded for safety but env vars should be properly set
 
 2. **Performance Optimizations**
    - Large dataset handling in Gantt view
@@ -160,6 +161,7 @@ npm test
    - No offline support
    - Limited to single organization
    - No role-based access control
+   - All users share the same data (no user isolation)
 
 ## 🛠️ Common Development Tasks
 
@@ -189,6 +191,20 @@ npm test
 - Monitor Network tab for Firebase requests
 - Check localStorage for persisted data
 
+## 🚀 Deployment Troubleshooting
+
+### Firebase Region Issues
+If you see "Database lives in a different region" warning:
+1. Ensure `REACT_APP_FIREBASE_DATABASE_URL` is set in production environment
+2. URL must be exact: `https://yambo-studio-dashboard-v1-default-rtdb.europe-west1.firebasedatabase.app`
+3. Restart/redeploy after changing environment variables
+
+### Missing Data in Production
+1. Check browser console for Firebase errors
+2. Verify all environment variables are set in hosting platform
+3. Ensure Firebase database rules allow authenticated reads/writes
+4. Check if using correct Firebase project (dev vs prod)
+
 ## 📈 Future Enhancement Opportunities
 
 1. **Performance**
@@ -201,9 +217,11 @@ npm test
    - Export functionality (PDF/Excel)
    - Team collaboration features
    - Mobile app version
+   - User-specific data isolation
 
 3. **Technical Debt**
    - Migrate to TypeScript
    - Add comprehensive test suite
    - Implement error boundaries
    - Add loading states consistently
+   - Remove debug console logs

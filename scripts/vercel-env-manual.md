@@ -1,11 +1,15 @@
 # Vercel Environment Variables Setup
 
+**⚠️ CRITICAL: All variables must be set correctly for the app to work!**
+
 Copy and paste these environment variables into your Vercel project settings:
 
 1. Go to https://vercel.com/dashboard
 2. Select your project
 3. Go to "Settings" → "Environment Variables"
 4. Add each of these variables:
+
+**IMPORTANT**: The database URL must be EXACTLY as shown below (including region):
 
 ```
 REACT_APP_FIREBASE_API_KEY=AIzaSyAEtA8Q_nMUXGYwgXj3SrPiREGAetKX8jQ
@@ -31,3 +35,8 @@ REACT_APP_FIREBASE_APP_ID=1:961203853384:web:b0f26f89b3808e5f63207d
 4. Confirm the redeployment
 
 This will make the environment variables available to your production build.
+
+## Troubleshooting:
+- If you see "Database lives in a different region" error, double-check the database URL
+- If data doesn't load, verify ALL environment variables are set correctly
+- Always redeploy after changing environment variables

@@ -12,19 +12,6 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-// Debug: Log config
-console.log('Firebase Config Loaded:', {
-  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
-  authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
-  databaseURL: firebaseConfig.databaseURL ? firebaseConfig.databaseURL : 'Missing',
-  projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
-  storageBucket: firebaseConfig.storageBucket ? 'Set' : 'Missing',
-  messagingSenderId: firebaseConfig.messagingSenderId ? 'Set' : 'Missing',
-  appId: firebaseConfig.appId ? 'Set' : 'Missing'
-});
-
-// Log the actual database URL to see what's being used
-console.log('Database URL from env:', process.env.REACT_APP_FIREBASE_DATABASE_URL || 'NOT SET IN ENVIRONMENT');
 
 const app = initializeApp(firebaseConfig);
 // Explicitly pass the database URL to ensure correct region
@@ -38,19 +25,15 @@ export async function testFirebaseConnection() {
   try {
     // Write data
     await set(testRef, { message: "Hello Firebase!" });
-    console.log("Data written successfully");
 
     // Read data
     const snapshot = await get(testRef);
-    if (snapshot.exists()) {
-      console.log("Data read successfully:", snapshot.val());
-    } else {
-      console.log("No data available");
+    if (!snapshot.exists()) {
+      // No data available
     }
 
     // Remove test data
     await remove(testRef);
-    console.log("Test data removed");
 
     return true;
   } catch (error) {

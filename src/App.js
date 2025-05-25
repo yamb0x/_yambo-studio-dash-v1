@@ -27,13 +27,6 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('darkMode', isDarkMode);
     testFirebaseConnection();
-    
-    // Temporary debug - remove after fixing
-    console.log('ENV CHECK:', {
-      nodeEnv: process.env.NODE_ENV,
-      hasApiKey: !!process.env.REACT_APP_FIREBASE_API_KEY,
-      apiKeyLength: process.env.REACT_APP_FIREBASE_API_KEY?.length || 0
-    });
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {
