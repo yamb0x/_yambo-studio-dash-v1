@@ -78,15 +78,6 @@ export default function HistoryPanel({ projectId }) {
     }
   };
 
-  const formatTimestamp = (timestamp) => {
-    const date = parseISO(timestamp);
-    if (isToday(date)) {
-      return `Today at ${format(date, 'HH:mm')}`;
-    } else if (isYesterday(date)) {
-      return `Yesterday at ${format(date, 'HH:mm')}`;
-    }
-    return format(date, 'MMM d, yyyy HH:mm');
-  };
 
   const getChangeDescription = (entry) => {
     const { action, changes } = entry;
