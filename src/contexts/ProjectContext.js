@@ -40,6 +40,9 @@ export function ProjectProvider({ children }) {
         setProjects([]);
       }
       setLoading(false);
+    }, (error) => {
+      console.error('Firebase read error:', error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
