@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { List, ListItem, ListItemText, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+import { List, ListItem, ListItemText, TextField, Box, InputAdornment } from '@mui/material';
+import { Search as SearchIcon } from '@mui/icons-material';
 import { useDrag } from 'react-dnd';
 import { useArtists } from '../../contexts/ArtistContext';
 import { styled } from '@mui/material/styles';
@@ -13,9 +14,6 @@ const StyledListItem = styled(ListItem)({
   // Remove fontFamily property
 });
 
-const StyledSelect = styled(Select)({
-  // Remove fontFamily property
-});
 
 // Keep the existing DraggableArtistItem component unchanged
 function DraggableArtistItem({ artist, showFinancialInfo }) {
@@ -82,56 +80,55 @@ function DraggableArtistItem({ artist, showFinancialInfo }) {
 
 function ArtistList({ showFinancialInfo }) {
   const { artists } = useArtists();
-  const [sortOption, setSortOption] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSortChange = (event) => {
-    setSortOption(event.target.value);
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
   };
 
-  const sortedAndFilteredArtists = useCallback(() => {
+  const filteredArtists = useCallback(() => {
+    if (!searchTerm.trim()) {
+      return artists;
+    }
+    
+    const lowercaseSearch = searchTerm.toLowerCase();
     return artists.filter((artist) => {
-      if (sortOption === 'all') return true;
-      if (sortOption === 'favorite') return artist.favorite === true;
-      if (sortOption.startsWith('skill:')) {
-        const skill = sortOption.split(':')[1];
-        return artist.skills && artist.skills.includes(skill);
-      }
-      if (sortOption === 'under500') return artist.dailyRate < 500;
-      if (sortOption === 'under400') return artist.dailyRate < 400;
-      if (sortOption === 'under300') return artist.dailyRate < 300;
-      return true;
+      return (
+        artist.name.toLowerCase().includes(lowercaseSearch) ||
+        (artist.skills && artist.skills.some(skill => 
+          skill.toLowerCase().includes(lowercaseSearch)
+        )) ||
+        (artist.country && artist.country.toLowerCase().includes(lowercaseSearch))
+      );
     });
-  }, [artists, sortOption]);
-
-  const skillOptions = [
-    'Animation', 'Look Dev', 'Rigging', 'Creative Direction',
-    'Production', 'Simulations', 'CAD', 'Houdini', 'Color Grading',
-    'Compositing', '2D Animation'
-  ];
+  }, [artists, searchTerm]);
 
   return (
     <StyledBox>
-      <FormControl fullWidth margin="normal">
-        <InputLabel id="sort-select-label">Filter Artists</InputLabel>
-        <StyledSelect
-          labelId="sort-select-label"
-          id="sort-select"
-          value={sortOption}
-          label="Filter Artists"
-          onChange={handleSortChange}
-        >
-          <MenuItem value="all">All</MenuItem>
-          <MenuItem value="favorite">Favorite</MenuItem>
-          {skillOptions.map((skill) => (
-            <MenuItem key={skill} value={`skill:${skill}`}>{skill}</MenuItem>
-          ))}
-          <MenuItem value="under500">Under $500</MenuItem>
-          <MenuItem value="under400">Under $400</MenuItem>
-          <MenuItem value="under300">Under $300</MenuItem>
-        </StyledSelect>
-      </FormControl>
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder="Search artists..."
+        value={searchTerm}
+        onChange={handleSearchChange}
+        size="small"
+        margin="normal"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          mb: 2,
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: 'background.paper',
+          }
+        }}
+      />
       <List>
-        {sortedAndFilteredArtists().map((artist) => (
+        {filteredArtists().map((artist) => (
           <DraggableArtistItem key={artist.id} artist={artist} showFinancialInfo={showFinancialInfo} />
         ))}
       </List>
