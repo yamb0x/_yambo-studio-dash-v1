@@ -23,8 +23,12 @@ console.log('Firebase Config Loaded:', {
   appId: firebaseConfig.appId ? 'Set' : 'Missing'
 });
 
+// Log the actual database URL to see what's being used
+console.log('Database URL from env:', process.env.REACT_APP_FIREBASE_DATABASE_URL);
+
 const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// Explicitly pass the database URL to ensure correct region
+const database = getDatabase(app, firebaseConfig.databaseURL || undefined);
 const auth = getAuth(app);
 
 // Test function to write and read data
