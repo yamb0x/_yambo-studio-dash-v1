@@ -4,6 +4,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useProjects } from '../contexts/ProjectContext';
 import { useArtists } from '../contexts/ArtistContext';
+import { useAuth } from '../contexts/AuthContext';
 import { format, isWithinInterval, parseISO, subMonths, subYears, isAfter, isBefore, startOfDay, endOfDay, addDays, addHours, differenceInDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import Calculator from '../components/Calculator';
@@ -129,6 +130,7 @@ function Dashboard() {
 
   const { projects } = useProjects();
   const { artists } = useArtists();
+  const { currentUser } = useAuth();
   
   const [currentTime, setCurrentTime] = useState(new Date());
 
