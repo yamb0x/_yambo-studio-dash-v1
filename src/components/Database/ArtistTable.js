@@ -36,6 +36,31 @@ function ArtistTable({ artists }) {
   const [openBookingPopup, setOpenBookingPopup] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
   
+  const sortedArtists = useMemo(() => {
+    if (!artists || artists.length === 0) {
+      return [];
+    }
+    
+    try {
+      return [...artists].filter(artist => artist && artist.name).sort((a, b) => {
+        // Handle missing properties safely
+        const aValue = a[orderBy] || '';
+        const bValue = b[orderBy] || '';
+        
+        if (bValue < aValue) {
+          return order === 'asc' ? 1 : -1;
+        }
+        if (bValue > aValue) {
+          return order === 'asc' ? -1 : 1;
+        }
+        return 0;
+      });
+    } catch (error) {
+      console.error('Error sorting artists:', error);
+      return artists.filter(artist => artist && artist.name) || [];
+    }
+  }, [artists, order, orderBy]);
+  
   // Add error boundary for corrupted data (after hooks)
   if (!Array.isArray(artists)) {
     console.error('ArtistTable: artists prop is not an array:', artists);
@@ -84,31 +109,6 @@ function ArtistTable({ artists }) {
     setSelectedArtist(artist);
     setOpenBookingPopup(true);
   };
-
-  const sortedArtists = useMemo(() => {
-    if (!artists || artists.length === 0) {
-      return [];
-    }
-    
-    try {
-      return [...artists].filter(artist => artist && artist.name).sort((a, b) => {
-        // Handle missing properties safely
-        const aValue = a[orderBy] || '';
-        const bValue = b[orderBy] || '';
-        
-        if (bValue < aValue) {
-          return order === 'asc' ? 1 : -1;
-        }
-        if (bValue > aValue) {
-          return order === 'asc' ? -1 : 1;
-        }
-        return 0;
-      });
-    } catch (error) {
-      console.error('Error sorting artists:', error);
-      return artists.filter(artist => artist && artist.name) || [];
-    }
-  }, [artists, order, orderBy]);
 
   if (!artists || artists.length === 0) {
     return <Typography>No artists available.</Typography>;
