@@ -42,7 +42,8 @@ src/
 ├── pages/             # Route components
 │   ├── Dashboard      # Main overview
 │   ├── GanttView      # Project timeline
-│   └── DatabaseView   # Data management
+│   ├── DatabaseView   # Data management
+│   └── ExperimentalDashboard # EXPERIMENTAL features
 └── utils/             # Helper functions
 ```
 
@@ -205,6 +206,16 @@ If you see "Database lives in a different region" warning:
 3. Ensure Firebase database rules allow authenticated reads/writes
 4. Check if using correct Firebase project (dev vs prod)
 
+## 🧪 Experimental Features
+
+The app includes an EXPERIMENTAL tab with features under development:
+- **MCP Integration**: AI-powered tools using Model Context Protocol
+- **Script Optimizer**: Generate multiple optimized versions of scripts
+- **Timeline Creator**: AI-generated project timelines with automatic Gantt integration
+- **New Dashboard Layout**: Widget-based, drag-and-drop interface
+
+See `docs/experimental-features-guide.md` for details on managing experimental features.
+
 ## 📈 Future Enhancement Opportunities
 
 1. **Performance**
@@ -225,3 +236,10 @@ If you see "Database lives in a different region" warning:
    - Implement error boundaries
    - Add loading states consistently
    - Remove debug console logs
+
+## 🧠 Session Code Memories
+- **Recent Implementations**: Add relevant code snippets from current development session to help with future work and context preservation
+  - Key Firebase authentication flow component
+  - Gantt chart drag-and-drop implementation
+  - Context provider for managing project state
+  - Utility functions for date and calculation helpers

@@ -11,6 +11,8 @@ import { HistoryProvider } from './contexts/HistoryContext';
 import { lightTheme, darkTheme } from './styles/theme';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
+// EXPERIMENTAL: Import for experimental dashboard - remove when merging or deleting
+import ExperimentalDashboard from './pages/ExperimentalDashboard';
 import GanttView from './pages/GanttView';
 import DatabaseView from './pages/DatabaseView';
 import LoginForm from './components/Auth/LoginForm';
@@ -55,6 +57,8 @@ function AppContent() {
                   <Container maxWidth={false} disableGutters>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
+                      {/* EXPERIMENTAL ROUTE: Remove this route when deleting experimental features */}
+                      <Route path="/experimental" element={<ExperimentalDashboard />} />
                       <Route path="/gantt" element={<GanttView />} />
                       <Route path="/gantt/:projectId" element={<GanttView />} />
                       <Route path="/database" element={<DatabaseView />} />

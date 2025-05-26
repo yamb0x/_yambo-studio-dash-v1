@@ -22,6 +22,57 @@ const lightTheme = createTheme({
       hover: '#e0e0e0',
     },
   },
+  typography: {
+    fontFamily: '"Basis Grotesque Regular", sans-serif',
+    h1: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h2: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h3: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h4: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h5: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h6: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    subtitle1: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    subtitle2: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    body1: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    body2: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    button: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+      fontWeight: 500,
+    },
+    caption: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    overline: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+  },
   components: {
     MuiCssBaseline: {
       styleOverrides: `
@@ -69,6 +120,57 @@ const darkTheme = createTheme({
     action: {
       active: '#ffffff',
       hover: '#1f1f1f',
+    },
+  },
+  typography: {
+    fontFamily: '"Basis Grotesque Regular", sans-serif',
+    h1: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h2: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h3: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h4: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h5: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    h6: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    subtitle1: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    subtitle2: {
+      fontFamily: '"Basis Grotesque Light", sans-serif',
+      fontWeight: 400,
+    },
+    body1: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    body2: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    button: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+      fontWeight: 500,
+    },
+    caption: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
+    },
+    overline: {
+      fontFamily: '"Basis Grotesque Regular", sans-serif',
     },
   },
   components: {

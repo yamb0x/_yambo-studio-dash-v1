@@ -80,6 +80,9 @@ function Header({ toggleDarkMode, isDarkMode }) {
         <Button color="inherit" component={RouterLink} to="/">
           Dashboard
         </Button>
+        <Button color="inherit" component={RouterLink} to="/experimental">
+          EXPERIMENTAL
+        </Button>
         <Button color="inherit" component={RouterLink} to="/gantt">
           Gantt
         </Button>
